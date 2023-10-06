@@ -1,0 +1,13 @@
+name = "GlobalOptimization"
+uuid = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
+authors = ["Grant Hecht"]
+version = "0.0.1-DEV"
+
+[compat]
+julia = "1.9"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

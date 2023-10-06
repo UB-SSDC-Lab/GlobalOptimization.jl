@@ -1,0 +1,3 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+GlobalOptimization = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
