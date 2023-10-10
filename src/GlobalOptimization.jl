@@ -1,6 +1,8 @@
 module GlobalOptimization
 
 using Format
+using StaticArrays
+using StructArrays
 using ThreadsX
 using Random: shuffle!
 

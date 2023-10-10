@@ -1,9 +1,9 @@
-mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
+mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, S, F <: Function} <: Optimizer
     # Optimization problem
     prob::Problem{F,S}
 
     # Swarm of particles
-    swarm::Swarm{T}
+    swarm::ST
 
     # PSO specific parameters/options
     inertiaRange::Tuple{T,T}
@@ -40,9 +40,10 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
 
         # Instantiate Swarm 
         N = length(prob.LB)
-        swarm = Swarm{T}(N, numParticles)
+        #swarm = Swarm{T}(N, numParticles)
+        swarm = StaticSwarm{N,T}(numParticles)
 
-        return new{T,S,F}(
+        return new{T,StaticSwarm{N,T},S,F}(
             prob, 
             swarm, 
             inertiaRange, 

@@ -1,5 +1,6 @@
+abstract type AbstractParticle{T <: AbstractFloat} end
 
-mutable struct Particle{T<:AbstractFloat}
+mutable struct Particle{T<:AbstractFloat} <: AbstractParticle{T}
     # Position, velocity, and personal best
     x::Vector{T}
     v::Vector{T}
@@ -27,14 +28,24 @@ mutable struct Particle{T<:AbstractFloat}
     end
 end
 
+struct StaticParticle{N, T <: AbstractFloat} <: AbstractParticle{T}
+    x::SVector{N, T}
+    v::SVector{N, T}
+    p::SVector{N, T}
+
+    fx::T
+    fp::T
+end
+
 # ===== Interface
 Base.length(p::Particle) = length(p.x)
+Base.length(p::StaticParticle{N, T}) where {N, T} = N
 
-position(p::Particle) = p.x
-velocity(p::Particle) = p.v
-personal_best(p::Particle) = p.p
-current_objective(p::Particle) = p.fx
-personal_best_objective(p::Particle) = p.fp
+position(p::AbstractParticle) = p.x
+velocity(p::AbstractParticle) = p.v
+personal_best(p::AbstractParticle) = p.p
+current_objective(p::AbstractParticle) = p.fx
+personal_best_objective(p::AbstractParticle) = p.fp
 
 function step!(p::Particle)
     p.x .+= p.v

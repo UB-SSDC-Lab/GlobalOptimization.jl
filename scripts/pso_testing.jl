@@ -2,6 +2,7 @@
 using GlobalOptimization
 using BenchmarkTools
 using Random
+using StaticArrays
 using Profile
 #Random.seed!(1234)
 
@@ -26,9 +27,11 @@ end
 end
 
 # Setup Problem
-d = 100
-LB = -5.12*ones(d)
-UB = 5.12*ones(d)
+d = 10
+#LB = -5.12*ones(d)
+#UB = 5.12*ones(d)
+LB = @SVector [-5.12 for i in 1:d]
+UB = @SVector [5.12 for i in 1:d]
 
 prob = Problem(layeb_1, LB, UB)
 res = optimize!(
