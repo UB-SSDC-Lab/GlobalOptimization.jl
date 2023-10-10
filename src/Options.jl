@@ -1,6 +1,5 @@
 
 struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
-
     # Display Options
     display::Bool 
     displayInterval::Int
@@ -41,7 +40,6 @@ struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
 
     #Maximum Reset Iterations
     maxResetIters::Int
-
 end
 
 function Options(;display=true, displayInterval=1, funcTol::T=1e-6,
