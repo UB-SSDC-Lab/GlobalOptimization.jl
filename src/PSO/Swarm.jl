@@ -147,7 +147,7 @@ function update_velocity!(s::Swarm)
 end
 
 function step!(s::Swarm)
-    @inbounds for i in 1:length(s)
+    @inbounds for i in eachindex(s)
         step!(s[i])
     end
     return nothing

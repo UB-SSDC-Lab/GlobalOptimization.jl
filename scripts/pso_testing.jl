@@ -2,7 +2,8 @@
 using GlobalOptimization
 using BenchmarkTools
 using Random
-Random.seed!(1234)
+using Profile
+#Random.seed!(1234)
 
 # Schwefel Function
 function schaffer(x)
@@ -15,9 +16,9 @@ function waveDrop(x)
     return obj
 end
 
-function layeb_1(x)
+@inline function layeb_1(x)
     obj = 0.0
-    for val in x
+    @fastmath for val in x
         xm1sq = (val - 1)^2
         obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
     end
@@ -25,15 +26,30 @@ function layeb_1(x)
 end
 
 # Setup Problem
-d = 2
+d = 100
 LB = -5.12*ones(d)
 UB = 5.12*ones(d)
 
 prob = Problem(layeb_1, LB, UB)
-pso  = PSO(prob; numParticles = 100)
+res = optimize!(
+    PSO(prob; numParticles = 1000),
+    Options(; display = true, useParallel = true, maxStallIters = 50)
+)
+#pso1 = PSO(prob; numParticles = 100)
+#pso2 = deepcopy(pso1)
 
 # optimize
-opts = Options(;display = false, maxStallIters = 25)
-res = @benchmark optimize!(_pso, $opts) setup=(_pso = PSO(prob; numParticles = 100))
-display(res)
-display(optimize!(PSO(prob; numParticles = 100), opts))
+#opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
+#opts_threads = Options(;display = false, maxStallIters = 25, useParallel = true)
+#res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = PSO(prob; numParticles = 100))
+#res_threads = @benchmark optimize!(_pso, $opts_threads) setup=(_pso = PSO(prob; numParticles = 100))
+#display(res_serial)
+#display(res_threads)
+#display(optimize!(PSO(prob; numParticles = 100), opts))
+
+#res = GlobalOptimization.optimize!(pso1, opts)
+#optimize!(pso1, opts)
+#Profile.clear_malloc_data()
+#optimize!(pso2, opts)
+
+

@@ -1,4 +1,3 @@
-
 mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
     # Optimization problem
     prob::Problem{F,S}
@@ -12,9 +11,6 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
     minNeighborSize::Int
     selfAdjustWeight::T
     socialAdjustWeight::T 
-
-    # Results data
-    results::Results{T}
 
     # Optimizer state flag
     # state = 0 : Not initialized
@@ -46,9 +42,6 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
         N = length(prob.LB)
         swarm = Swarm{T}(N, numParticles)
 
-        # Instantiate results
-        results = Results{T}(undef, N)
-
         return new{T,S,F}(
             prob, 
             swarm, 
@@ -57,7 +50,6 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
             minNeighborSize,
             selfAdjustWeight, 
 			socialAdjustWeight, 
-            results, 
             zero(Int),
             zero(T), 
             zero(T), 
@@ -102,13 +94,9 @@ end
 # ===== Methods
 
 function _optimize!(pso::PSO, opts::Options)
-    # Initialize PSO
     _initialize!(pso, opts)
-
-    # Iterate PSO
-    _iterate!(pso, opts)
-
-    return pso.results
+    res = _iterate!(pso, opts)
+    return res
 end
 
 function _initialize!(pso::PSO, opts::Options)
@@ -164,20 +152,12 @@ function _iterate!(pso::PSO, opts::Options)
         eval_callback!(pso, opts)
     end
 
-    # Set results
-    setResults!(pso, exitFlag)
-
-    return nothing
+    # Return results
+    return construct_results(pso, exitFlag)
 end
 
-function setResults!(pso::PSO, exitFlag::Int)
-    pso.results.fbest = pso.swarm.b 
-    pso.results.xbest .= pso.swarm.d
-    pso.results.iters = pso.iters 
-    pso.results.time = time() - pso.t0
-    pso.results.exitFlag = exitFlag
-
-    return nothing
+function construct_results(pso::PSO{T,S,F}, exitFlag::Int) where {T,S,F}
+    return Results(pso.swarm.b, pso.swarm.d, pso.iters, time() - pso.t0, exitFlag)
 end
 
 function eval_objective!(pso::PSO, opts; init = false)
@@ -273,7 +253,14 @@ update_velocity!(pso::PSO) = update_velocity!(pso.swarm)
 step!(pso::PSO) = step!(pso.swarm)
 
 function enforce_bounds!(pso::PSO)
-    if !(all(isinf.(pso.prob.LB)) && all(isinf.(pso.prob.UB)))
+    need_check = false
+    @inbounds for i in eachindex(pso.prob.LB)
+        if !isinf(pso.prob.LB[i]) || !isinf(pso.prob.UB[i])
+            need_check = true
+            break
+        end
+    end
+    if need_check
         enforce_bounds!(pso.swarm, pso.prob.LB, pso.prob.UB)
     end
     return nothing

@@ -1,5 +1,5 @@
 
-mutable struct Results{T,N}
+mutable struct Results{T}
     fbest::T 
     xbest::Vector{T}
 
@@ -7,14 +7,8 @@ mutable struct Results{T,N}
     time::T 
     exitFlag::Int
 
-    function Results{T}(::UndefInitializer, N::Integer) where {T}
-        new{T,N}(
-            T(NaN),
-            Vector{T}(undef, N),
-            zero(Int),
-            zero(T),
-            Int(255),
-        )
+    function Results(fbest::T, xbest::AbstractVector{T}, iters::Int, time::T, exitFlag::Int) where {T}
+        return new{T}(fbest, copy(xbest), iters, time, exitFlag)
     end
 end
 

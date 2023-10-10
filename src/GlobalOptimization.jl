@@ -4,6 +4,10 @@ using Format
 using ThreadsX
 using Random: shuffle!
 
+# Utilities
+include("rng.jl")
+
+# Base
 include("Problem.jl")
 include("Options.jl")
 include("Optimizers.jl")
