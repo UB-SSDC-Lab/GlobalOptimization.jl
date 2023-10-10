@@ -35,19 +35,21 @@ UB = @SVector [5.12 for i in 1:d]
 
 prob = Problem(layeb_1, LB, UB)
 opts = Options(;display = false, maxStallIters = 25, useParallel = false)
+mbh  = MBH{Float64}(prob)
+
 #res = optimize!(
 #    StaticPSO(prob; numParticles = 1000),
 #    Options(; display = true, useParallel = true, maxStallIters = 50)
 #)
-pso1 = StaticPSO(prob; numParticles = 100)
-pso2 = deepcopy(pso1)
+#pso1 = StaticPSO(prob; numParticles = 100)
+#pso2 = deepcopy(pso1)
 
 # optimize
-opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
+#opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
 #opts_threads = Options(;display = false, maxStallIters = 25, useParallel = true)
-res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = StaticPSO(prob; numParticles = 100))
+#res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = StaticPSO(prob; numParticles = 100))
 #res_threads = @benchmark optimize!(_pso, $opts_threads) setup=(_pso = StaticPSO(prob; numParticles = 100))
-display(res_serial)
+#display(res_serial)
 #display(res_threads)
 #display(optimize!(StaticPSO(prob; numParticles = 100), opts))
 

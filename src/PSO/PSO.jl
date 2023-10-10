@@ -1,6 +1,6 @@
-mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVector, F <: Function} <: Optimizer
+mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVector, F <: Function, N} <: Optimizer
     # Optimization problem
-    prob::Problem{F,BT}
+    prob::Problem{F,BT,N}
 
     # Swarm of particles
     swarm::ST
@@ -27,23 +27,22 @@ mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVec
     fStall::T
 
     function PSO{T}(
-        prob::Problem{F,BT}, 
+        prob::Problem{F,BT,N}, 
         numParticles::Integer,
         inertiaRange::Tuple{T,T}, 
         minNeighborFrac::T, 
         selfAdjustWeight::T, 
         socialAdjustWeight::T,
         ::Val{false},
-    ) where {T,BT,F <: Function}
+    ) where {T,BT,F <: Function,N}
 
         # Compute minimum neighborhood size
         minNeighborSize = max(2, floor(Int, numParticles * minNeighborFrac))
 
         # Instantiate Swarm 
-        N = length(prob.LB)
         swarm = Swarm{T}(N, numParticles)
 
-        return new{T,Swarm{T},BT,F}(
+        return new{T,Swarm{T},BT,F,N}(
             prob, 
             swarm, 
             inertiaRange, 
@@ -60,24 +59,22 @@ mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVec
         )
     end
     function PSO{T}(
-        prob::Problem{F,BT}, 
+        prob::Problem{F,BT,N}, 
         numParticles::Integer,
         inertiaRange::Tuple{T,T}, 
         minNeighborFrac::T, 
         selfAdjustWeight::T, 
         socialAdjustWeight::T,
         ::Val{true},
-    ) where {T,BT,F <: Function}
+    ) where {T,BT,F <: Function,N}
 
         # Compute minimum neighborhood size
         minNeighborSize = max(2, floor(Int, numParticles * minNeighborFrac))
 
         # Instantiate Swarm 
-        N = length(prob.LB)
-        #swarm = Swarm{T}(N, numParticles)
         swarm = StaticSwarm{N,T}(numParticles)
 
-        return new{T,StaticSwarm{N,T},BT,F}(
+        return new{T,StaticSwarm{N,T},BT,F,N}(
             prob, 
             swarm, 
             inertiaRange, 

@@ -20,9 +20,14 @@ include("PSO/Particle.jl")
 include("PSO/Swarm.jl")
 include("PSO/PSO.jl")
 
+# MBH
+include("MBH/Hopper.jl")
+include("MBH/MBH.jl")
+
 export Problem
 export Options
 export PSO, StaticPSO
+export MBH
 export optimize!
 
 end

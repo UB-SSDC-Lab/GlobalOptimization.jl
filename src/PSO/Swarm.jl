@@ -93,35 +93,6 @@ Base.eachindex(s::StaticSwarm) = eachindex(s.xs)
 Base.getindex(s::Swarm, i::Int) = s.particles[i]
 Base.getindex(s::StaticSwarm, i::Int) = StaticParticle(s.xs[i], s.vs[i], s.ps[i], s.fxs[i], s.fps[i])
 
-# function Base.setindex!(s::Swarm{T}, p::Particle{T}, i::Int) where {T}
-#     sp = s[i]
-#     sp.x .= p.x
-#     sp.v .= p.v
-#     sp.p .= p.p
-#     sp.fx = p.fx
-#     sp.fp = p.fp
-#     return nothing
-# end
-# function Base.setindex!(s::StaticSwarm{N,T}, p::StaticParticle{N,T}, i::Int) where {N,T}
-#     s.xs[i] = p.x
-#     s.vs[i] = p.v
-#     s.ps[i] = p.p
-#     s.fxs[i] = p.fx
-#     s.fps[i] = p.fp
-#     return nothing
-# end
-# function Base.setindex!(s::StaticSwarm{N,T}, p::Particle{T}, i::Int) where {N,T}
-#     if length(p) != N
-#         throw(ArgumentError("Particle dimension mismatch."))
-#     end
-#     s.xs[i] = SVector{N,T}(p.x)
-#     s.vs[i] = SVector{N,T}(p.v)
-#     s.ps[i] = SVector{N,T}(p.p)
-#     s.fxs[i] = p.fx
-#     s.fps[i] = p.fp
-#     return nothing
-# end
-
 global_best(s::AbstractSwarm) = s.d
 global_best_objective(s::AbstractSwarm) = s.b
 
