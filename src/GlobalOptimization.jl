@@ -22,7 +22,7 @@ include("PSO/PSO.jl")
 
 export Problem
 export Options
-export PSO
+export PSO, StaticPSO
 export optimize!
 
 end

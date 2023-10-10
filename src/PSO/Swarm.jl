@@ -93,34 +93,34 @@ Base.eachindex(s::StaticSwarm) = eachindex(s.xs)
 Base.getindex(s::Swarm, i::Int) = s.particles[i]
 Base.getindex(s::StaticSwarm, i::Int) = StaticParticle(s.xs[i], s.vs[i], s.ps[i], s.fxs[i], s.fps[i])
 
-function Base.setindex!(s::Swarm{T}, p::Particle{T}, i::Int) where {T}
-    sp = s[i]
-    sp.x .= p.x
-    sp.v .= p.v
-    sp.p .= p.p
-    sp.fx = p.fx
-    sp.fp = p.fp
-    return nothing
-end
-function Base.setindex!(s::StaticSwarm{N,T}, p::StaticParticle{N,T}, i::Int) where {N,T}
-    s.xs[i] = p.x
-    s.vs[i] = p.v
-    s.ps[i] = p.p
-    s.fxs[i] = p.fx
-    s.fps[i] = p.fp
-    return nothing
-end
-function Base.setindex!(s::StaticSwarm{N,T}, p::Particle{T}, i::Int) where {N,T}
-    if length(p) != N
-        throw(ArgumentError("Particle dimension mismatch."))
-    end
-    s.xs[i] = SVector{N,T}(p.x)
-    s.vs[i] = SVector{N,T}(p.v)
-    s.ps[i] = SVector{N,T}(p.p)
-    s.fxs[i] = p.fx
-    s.fps[i] = p.fp
-    return nothing
-end
+# function Base.setindex!(s::Swarm{T}, p::Particle{T}, i::Int) where {T}
+#     sp = s[i]
+#     sp.x .= p.x
+#     sp.v .= p.v
+#     sp.p .= p.p
+#     sp.fx = p.fx
+#     sp.fp = p.fp
+#     return nothing
+# end
+# function Base.setindex!(s::StaticSwarm{N,T}, p::StaticParticle{N,T}, i::Int) where {N,T}
+#     s.xs[i] = p.x
+#     s.vs[i] = p.v
+#     s.ps[i] = p.p
+#     s.fxs[i] = p.fx
+#     s.fps[i] = p.fp
+#     return nothing
+# end
+# function Base.setindex!(s::StaticSwarm{N,T}, p::Particle{T}, i::Int) where {N,T}
+#     if length(p) != N
+#         throw(ArgumentError("Particle dimension mismatch."))
+#     end
+#     s.xs[i] = SVector{N,T}(p.x)
+#     s.vs[i] = SVector{N,T}(p.v)
+#     s.ps[i] = SVector{N,T}(p.p)
+#     s.fxs[i] = p.fx
+#     s.fps[i] = p.fp
+#     return nothing
+# end
 
 global_best(s::AbstractSwarm) = s.d
 global_best_objective(s::AbstractSwarm) = s.b
@@ -156,7 +156,9 @@ function eval_objective!(s::StaticSwarm, f::F, opts::Options; init = false) wher
     if opts.useParallel
         ThreadsX.map!(f, s.fxs, s.xs)
     else
-        map!(f, s.fxs, s.xs)
+        @inbounds for i in eachindex(s)
+            s.fxs[i] = f(s.xs[i])
+        end
     end
 
     # Check objective function values if desired 
@@ -196,7 +198,7 @@ function initialize_best!(s::StaticSwarm)
     return nothing
 end
 
-function update_global_best!(s::AbstractSwarm)
+function update_global_best!(s::Swarm)
     updated = false
     @inbounds for i in eachindex(s)
         p = s[i]
@@ -211,6 +213,16 @@ function update_global_best!(s::AbstractSwarm)
     end
     return updated
 end
+function update_global_best!(s::StaticSwarm)
+     updated = false
+    @inbounds for i in eachindex(s)
+        if s.fps[i] < global_best_objective(s)
+            update_global_best!(s, s.ps[i], s.fps[i])
+            updated = true
+        end
+    end
+    return updated   
+end
 
 function update_global_best!(s::Swarm, best_pos, best_val)
     s.b = best_val
@@ -218,7 +230,9 @@ function update_global_best!(s::Swarm, best_pos, best_val)
     return nothing
 end
 function update_global_best!(
-    s::StaticSwarm{N,T}, best_pos::SVector{N,T}, best_val::T,
+    s::StaticSwarm{N,T}, 
+    best_pos::SVector{N,T}, 
+    best_val::T,
 ) where {N,T}
     s.b = best_val
     s.d = best_pos
@@ -290,19 +304,9 @@ function update_velocity!(s::StaticSwarm{N,T}) where {N,T}
         end
 
         # Update i's velocity 
-        px = s.xs[i]
-        pv = s.vs[i]
-        pp = s.ps[i]
-        np = s.ps[best]
-
-        # TODO: Remove use of MVector using vector operations instead of loop
-        v  = MVector{N,T}(undef)
-        for j in eachindex(v)
-            v[j] = s.w*pv[j] + 
-                s.y₁*rand()*(pp[j] - px[j]) + 
-                s.y₂*rand()*(np[j] - px[j])
-        end 
-        s.vs[i] = SVector{N,T}(v)
+        s.vs[i] = s.w*s.vs[i] + 
+            s.y₁*rand(SVector{N,T}).*(s.ps[i] - s.xs[i]) +
+            s.y₂*rand(SVector{N,T}).*(s.ps[best] - s.xs[i])
     end
     return nothing
 end

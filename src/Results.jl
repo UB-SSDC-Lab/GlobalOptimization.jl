@@ -1,15 +1,11 @@
 
-mutable struct Results{T}
+mutable struct Results{T, XT <: AbstractVector{T}}
     fbest::T 
-    xbest::Vector{T}
+    xbest::XT
 
     iters::Int
     time::T 
     exitFlag::Int
-
-    function Results(fbest::T, xbest::AbstractVector{T}, iters::Int, time::T, exitFlag::Int) where {T}
-        return new{T}(fbest, copy(xbest), iters, time, exitFlag)
-    end
 end
 
 function Base.show(io::Base.IO, res::Results)
