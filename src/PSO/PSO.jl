@@ -1,9 +1,9 @@
-mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
+mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVector, F <: Function} <: Optimizer
     # Optimization problem
-    prob::Problem{F,S}
+    prob::Problem{F,BT}
 
     # Swarm of particles
-    swarm::Swarm{T}
+    swarm::ST
 
     # PSO specific parameters/options
     inertiaRange::Tuple{T,T}
@@ -27,13 +27,14 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
     fStall::T
 
     function PSO{T}(
-        prob::Problem{F,S}, 
+        prob::Problem{F,BT}, 
         numParticles::Integer,
         inertiaRange::Tuple{T,T}, 
         minNeighborFrac::T, 
         selfAdjustWeight::T, 
         socialAdjustWeight::T,
-    ) where {T,S,F <: Function}
+        ::Val{false},
+    ) where {T,BT,F <: Function}
 
         # Compute minimum neighborhood size
         minNeighborSize = max(2, floor(Int, numParticles * minNeighborFrac))
@@ -42,7 +43,41 @@ mutable struct PSO{T <: AbstractFloat, S, F <: Function} <: Optimizer
         N = length(prob.LB)
         swarm = Swarm{T}(N, numParticles)
 
-        return new{T,S,F}(
+        return new{T,Swarm{T},BT,F}(
+            prob, 
+            swarm, 
+            inertiaRange, 
+            minNeighborFrac, 
+            minNeighborSize,
+            selfAdjustWeight, 
+			socialAdjustWeight, 
+            zero(Int),
+            zero(T), 
+            zero(T), 
+            zero(Int), 
+            zero(Int),
+            zero(T),
+        )
+    end
+    function PSO{T}(
+        prob::Problem{F,BT}, 
+        numParticles::Integer,
+        inertiaRange::Tuple{T,T}, 
+        minNeighborFrac::T, 
+        selfAdjustWeight::T, 
+        socialAdjustWeight::T,
+        ::Val{true},
+    ) where {T,BT,F <: Function}
+
+        # Compute minimum neighborhood size
+        minNeighborSize = max(2, floor(Int, numParticles * minNeighborFrac))
+
+        # Instantiate Swarm 
+        N = length(prob.LB)
+        #swarm = Swarm{T}(N, numParticles)
+        swarm = StaticSwarm{N,T}(numParticles)
+
+        return new{T,StaticSwarm{N,T},BT,F}(
             prob, 
             swarm, 
             inertiaRange, 
@@ -88,7 +123,37 @@ function PSO(
         nIRange, 
         T(minNeighborFrac),
         T(selfAdjustWeight), 
-        T(socialAdjustWeight))
+        T(socialAdjustWeight),
+        Val{false}())
+end
+function StaticPSO(
+    prob::Problem{F,S}; 
+    numParticles = 100, 
+    inertiaRange = (0.1, 1.1), 
+    minNeighborFrac = 0.25, 
+    selfAdjustWeight = 1.49, 
+    socialAdjustWeight = 1.49,
+) where {S,F <: Function}
+
+    # Error checking
+    length(inertiaRange) == 2 || throw(ArgumentError("inertiaRange must be of length 2."))
+    minNeighborFrac > 0       || throw(ArgumentError("minNeighborFrac must be > 0."))
+
+    # Type info
+    T = typeof(inertiaRange[1]) == typeof(inertiaRange[2]) ? 
+        typeof(inertiaRange[1]) : 
+        promote_type(inertiaRange[1], inertiaRange[2])
+    nIRange = (T(inertiaRange[1]), T(inertiaRange[2]))
+
+    # Call constructor
+    return PSO{T}(
+        prob, 
+        numParticles, 
+        nIRange, 
+        T(minNeighborFrac),
+        T(selfAdjustWeight), 
+        T(socialAdjustWeight),
+        Val{true}())
 end
 
 # ===== Methods
@@ -156,8 +221,8 @@ function _iterate!(pso::PSO, opts::Options)
     return construct_results(pso, exitFlag)
 end
 
-function construct_results(pso::PSO{T,S,F}, exitFlag::Int) where {T,S,F}
-    return Results(pso.swarm.b, pso.swarm.d, pso.iters, time() - pso.t0, exitFlag)
+function construct_results(pso::PSO, exitFlag::Int)
+    return Results(pso.swarm.b, copy(pso.swarm.d), pso.iters, time() - pso.t0, exitFlag)
 end
 
 function eval_objective!(pso::PSO, opts; init = false)

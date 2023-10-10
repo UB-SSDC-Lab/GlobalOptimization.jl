@@ -2,6 +2,7 @@
 using GlobalOptimization
 using BenchmarkTools
 using Random
+using StaticArrays
 using Profile
 #Random.seed!(1234)
 
@@ -26,26 +27,29 @@ end
 end
 
 # Setup Problem
-d = 100
-LB = -5.12*ones(d)
-UB = 5.12*ones(d)
+d = 10
+#LB = -5.12*ones(d)
+#UB = 5.12*ones(d)
+LB = @SVector [-5.12 for i in 1:d]
+UB = @SVector [5.12 for i in 1:d]
 
 prob = Problem(layeb_1, LB, UB)
-res = optimize!(
-    PSO(prob; numParticles = 1000),
-    Options(; display = true, useParallel = true, maxStallIters = 50)
-)
-#pso1 = PSO(prob; numParticles = 100)
-#pso2 = deepcopy(pso1)
+opts = Options(;display = false, maxStallIters = 25, useParallel = false)
+#res = optimize!(
+#    StaticPSO(prob; numParticles = 1000),
+#    Options(; display = true, useParallel = true, maxStallIters = 50)
+#)
+pso1 = StaticPSO(prob; numParticles = 100)
+pso2 = deepcopy(pso1)
 
 # optimize
-#opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
+opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
 #opts_threads = Options(;display = false, maxStallIters = 25, useParallel = true)
-#res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = PSO(prob; numParticles = 100))
-#res_threads = @benchmark optimize!(_pso, $opts_threads) setup=(_pso = PSO(prob; numParticles = 100))
-#display(res_serial)
+res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = StaticPSO(prob; numParticles = 100))
+#res_threads = @benchmark optimize!(_pso, $opts_threads) setup=(_pso = StaticPSO(prob; numParticles = 100))
+display(res_serial)
 #display(res_threads)
-#display(optimize!(PSO(prob; numParticles = 100), opts))
+#display(optimize!(StaticPSO(prob; numParticles = 100), opts))
 
 #res = GlobalOptimization.optimize!(pso1, opts)
 #optimize!(pso1, opts)

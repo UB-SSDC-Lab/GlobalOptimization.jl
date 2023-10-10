@@ -1,6 +1,8 @@
 module GlobalOptimization
 
 using Format
+using StaticArrays
+using StructArrays
 using ThreadsX
 using Random: shuffle!
 
@@ -20,7 +22,7 @@ include("PSO/PSO.jl")
 
 export Problem
 export Options
-export PSO
+export PSO, StaticPSO
 export optimize!
 
 end
