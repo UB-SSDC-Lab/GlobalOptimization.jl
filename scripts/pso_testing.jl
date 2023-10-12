@@ -36,6 +36,7 @@ UB = @SVector [5.12 for i in 1:d]
 prob = Problem(layeb_1, LB, UB)
 opts = Options(;display = false, maxStallIters = 25, useParallel = false)
 mbh  = MBH{Float64}(prob)
+optimize!(mbh, opts)
 
 #res = optimize!(
 #    StaticPSO(prob; numParticles = 1000),
