@@ -1,6 +1,6 @@
-using GlobalOptimization
-using Test
-
-@testset "GlobalOptimization.jl" begin
-    # Write your tests here.
+using GlobalOptimization, Test, SafeTestsets
+@time begin
+    @time @safetestset "Evaluator" begin
+        include("evaluator_test.jl")
+    end
 end

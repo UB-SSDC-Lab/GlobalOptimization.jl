@@ -10,24 +10,25 @@ using Random: shuffle!
 include("rng.jl")
 
 # Base
+include("SearchSpace.jl")
 include("Problem.jl")
-include("Options.jl")
+include("Population.jl")
+include("Evaluator.jl")
 include("Optimizers.jl")
 include("Results.jl")
 
 # PSO
-include("PSO/Particle.jl")
 include("PSO/Swarm.jl")
-include("PSO/PSO.jl")
+#include("PSO/PSO.jl")
 
 # MBH
-include("MBH/Hopper.jl")
-include("MBH/MBH.jl")
+#include("MBH/Hopper.jl")
+#include("MBH/MBH.jl")
 
-export Problem
-export Options
-export PSO, StaticPSO
-export MBH
-export optimize!
+#export Problem
+#export Options
+#export PSO, StaticPSO
+#export MBH
+#export optimize!
 
 end

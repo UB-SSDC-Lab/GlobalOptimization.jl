@@ -1,3 +1,18 @@
+struct NewPSO{E <: BatchEvaluator, T <: AbstractFloat}
+    # The PSO evaluator
+    eval::E
+
+    # The PSO swarm
+    swarm::NewSwarm{T}
+
+    # PSO specific parameters/options
+    inertia_range::Tuple{T,T}
+    minimum_neighborhood_fraction::T
+    minimum_neighborhood_size::Int
+    self_adjustment_weight::T
+    social_adjustment_weight::T
+end
+
 mutable struct PSO{T <: AbstractFloat, ST <: AbstractSwarm{T}, BT <: AbstractVector, F <: Function, N} <: Optimizer
     # Optimization problem
     prob::Problem{F,BT,N}
