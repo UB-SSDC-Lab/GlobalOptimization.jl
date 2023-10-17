@@ -10,6 +10,7 @@ using Random: shuffle!
 include("rng.jl")
 
 # Base
+include("Options.jl")
 include("SearchSpace.jl")
 include("Problem.jl")
 include("Population.jl")
@@ -19,7 +20,7 @@ include("Results.jl")
 
 # PSO
 include("PSO/Swarm.jl")
-#include("PSO/PSO.jl")
+include("PSO/PSO.jl")
 
 # MBH
 #include("MBH/Hopper.jl")

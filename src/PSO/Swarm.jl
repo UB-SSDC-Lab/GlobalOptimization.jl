@@ -26,3 +26,8 @@ struct Swarm{T <: AbstractFloat} <: AbstractPopulation
     end
 end
 
+Swarm(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles, num_dims)
+Swarm_F64(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles, num_dims)
+Swarm_F32(num_particles::Integer, num_dims::Integer) = Swarm{Float32}(num_particles, num_dims)
+
+

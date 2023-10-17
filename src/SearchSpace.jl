@@ -3,7 +3,7 @@
 
 The base abstract type for a `Problem` search space. 
 """
-abstract type SearchSpace end
+abstract type SearchSpace{T} end
 
 """
     FixedDimensionSearchSpace
@@ -11,21 +11,21 @@ abstract type SearchSpace end
 The base abstract type for a search space with a fixed finite number of dimensions.
 Applicable to the vast majority of optimization problems.
 """
-abstract type FixedDimensionSearchSpace <: SearchSpace end
+abstract type FixedDimensionSearchSpace{T} <: SearchSpace{T} end
 
 """
     RectangularSearchSpace
 
 A `FixedDimensionSearchSpace` with `N` dimensional rectangle as the set of feasible points.
 """
-abstract type RectangularSearchSpace <: FixedDimensionSearchSpace end
+abstract type RectangularSearchSpace{T} <: FixedDimensionSearchSpace{T} end
 
 """
     ContinuousRectangularSearchSpace
 
 A `RectangularSearchSpace` formed by a single continuous set.
 """
-struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearchSpace 
+struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearchSpace{T}
     dimmin::Vector{T}
     dimmax::Vector{T}
     dimdelta::Vector{T}

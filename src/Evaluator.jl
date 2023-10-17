@@ -11,26 +11,26 @@ abstract type AbstractEvaluator end
 
 Abstract type for an evaluator that evaluates the fitness of an entire population.
 """
-abstract type BatchEvaluator end 
+abstract type BatchEvaluator{T} end 
 
 """
     AsyncEvaluator
 
 Abstract type for an evaluator that evaluates the fitness of a single candidate asyncronously.
 """
-abstract type AsyncEvaluator end
+abstract type AsyncEvaluator{T} end
 
 """
     SerialBatchEvaluator
 
 An evaluator that evaluates the fitness of a population in serial.
 """
-struct SerialBatchEvaluator{P <: AbstractOptimizationProblem} <: BatchEvaluator
+struct SerialBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEvaluator{T}
     # The optimization problem
-    prob::P
+    prob::OptimizationProblem{SS,F}
 
-    function SerialBatchEvaluator(prob::P) where {P <: AbstractOptimizationProblem}
-        return new{P}(prob)
+    function SerialBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
+        return new{T,SS,F}(prob)
     end
 end
 
@@ -39,12 +39,12 @@ end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
-struct ThreadedBatchEvaluator{P <: AbstractOptimizationProblem} <: BatchEvaluator
+struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEvaluator{T}
     # The optimization problem
-    prob::P
+    prob::OptimizationProblem{SS,F}
 
-    function ThreadedBatchEvaluator(prob::P) where {P <: AbstractOptimizationProblem}
-        return new{P}(prob)
+    function ThreadedBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
+        return new{T,SS,F}(prob)
     end
 end
 
