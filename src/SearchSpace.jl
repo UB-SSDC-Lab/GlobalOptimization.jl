@@ -95,3 +95,31 @@ returns a vector of all ranges.
 """
 dimrange(ss::ContinuousRectangularSearchSpace) = tuple.(dimmin(ss), dimmax(ss))
 dimrange(ss::ContinuousRectangularSearchSpace, i::Integer) = (dimmin(ss, i), dimmax(ss, i))
+
+"""
+    intersection(ss1::ContinuousRectangularSearchSpace, ss2::ContinuousRectangularSearchSpace)
+
+Returns the intersection of the two search spaces `ss1` and `ss2` as a new search sapce
+"""
+function intersection(
+    ss1::ContinuousRectangularSearchSpace{T1}, 
+    ss2::ContinuousRectangularSearchSpace{T2},
+) where {T1 <: AbstractFloat, T2 <: AbstractFloat}
+    # Check inputs
+    numdims(ss1) == numdims(ss2) ||
+        throw(DimensionMismatch("ss1 and ss2 must have the same number of dimensions."))
+
+    # Handel types
+    T = promote_type(T1, T2)
+
+    # Instaitiate new min and max vectors
+    dimmin = zeros(T, numdims(ss1))
+    dimmax = zeros(T, numdims(ss1))
+
+    # Compute the intersection
+    @inbounds for i in eachindex(dimmin)
+        dimmin[i] = max(dimmin(ss1, i), dimmin(ss2, i))
+        dimmax[i] = min(dimmax(ss1, i), dimmax(ss2, i))
+    end
+    return ContinuousRectangularSearchSpace(dimmin, dimmax)
+end

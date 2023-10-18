@@ -1,117 +1,79 @@
 
 """
-    PSOOptions{T <: AbstractFloat, IBT <: InitialBounds} <: AbstractAlgorithmOptions
+    PSOOptions <: AbstractAlgorithmSpecificOptions
 
 Options for the PSO algorithm.
 """
-struct PSOOptions{T <: AbstractFloat, IBT <: Union{Tuple,Nothing}} <: AbstractAlgorithmOptions
+struct PSOOptions{IBSS <: Union{Nothing, ContinuousRectangularSearchSpace}} <: AbstractAlgorithmSpecificOptions
     # The general options
-    general::GeneralOptions{T}
+    general::GeneralOptions
 
     # ===== PSO specific options
-    # Initial bounds search space
-    initial_bounds::IBT
+    # Defines the search space that the initial particles are drawn from
+    initial_bounds::IBSS
 
     # Max iterations
     max_iterations::Int
 
     # Stall parameters
-    function_tolerence::T
-    max_stall_time::T
+    function_tolerence::Float64
+    max_stall_time::Float64
     max_stall_iterations::Int
 
     # Velocity update
-    inertia_range::Tuple{T,T}
-    minimum_neighborhood_fraction::T
+    inertia_range::Tuple{Float64,Float64}
+    minimum_neighborhood_fraction::Float64
     minimum_neighborhood_size::Int
-    self_adjustment_weight::T
-    social_adjustment_weight::T
+    self_adjustment_weight::Float64
+    social_adjustment_weight::Float64
+
+    function PSOOptions(
+        general, 
+        num_particles,
+        initial_bounds::IBSS, 
+        max_iterations, 
+        function_tolerence, 
+        max_stall_time, 
+        max_stall_iterations, 
+        inertia_range, 
+        minimum_neighborhood_fraction, 
+        self_adjustment_weight, 
+        social_adjustment_weight,
+    ) where IBSS
+        minimum_neighborhood_size = max(2, floor(Int, num_particles * minimum_neighborhood_fraction))
+        return new{IBSS}(
+            general, initial_bounds, max_iterations, function_tolerence, max_stall_time, 
+            max_stall_iterations, inertia_range, minimum_neighborhood_fraction, 
+            minimum_neighborhood_size, self_adjustment_weight, social_adjustment_weight,
+        )
+    end
 end
 
-# NOTE: THis constructor needs some work but is functional 
-function PSOOptions(
-    general::GeneralOptions{T}, 
-    initial_bounds, 
-    max_iterations, 
-    function_tolerence, 
-    max_stall_time, 
-    max_stall_iterations, 
-    inertia_range, 
-    minimum_neighborhood_fraction, 
-    minimum_neighborhood_size, 
-    self_adjustment_weight, 
-    social_adjustment_weight,
-) where {T <: AbstractFloat}
-    # Check initial bounds
-    if initial_bounds !== nothing
-        if length(initial_bounds) != 2
-            throw(ArgumentError("initial_bounds must be a tuple of length 2."))
-        end
-    end
-    return PSOOptions(general, initial_bounds, max_iterations, function_tolerence, max_stall_time, max_stall_iterations, inertia_range, minimum_neighborhood_fraction, minimum_neighborhood_size, self_adjustment_weight, social_adjustment_weight)
-end
 
 """
     PSO
 
 Particle Swarm Optimization (PSO) algorithm.
 """
-struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}} <: AbstractOptimizer
+struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}, IBSS} <: AbstractOptimizer
     # The PSO algorithm options
-    opts::PSOOptions{T}
+    opts::PSOOptions{IBSS}
 
     # The PSO evaluator
-    eval::E
+    evaluator::E
 
     # The PSO swarm
     swarm::Swarm{T}
-
-    function PSO(
-        evaluator::BatchEvaluator{T},
-        num_particles::Int,
-        initial_bounds::Union{Tuple,Nothing},
-        max_iterations::Int,
-        function_tolerence::Real,
-        max_stall_time::Real,
-        max_stall_iterations::Int,
-        inertia_range::Tuple{Real,Real},
-        minimum_neighborhood_fraction::Real,
-        self_adjustment_weight::Real,
-        social_adjustment_weight::Real,
-        general::GeneralOptions{T},
-    ) where {T <: AbstractFloat}
-        # Construct PSO options
-        minimum_neighborhood_size = max(2, floor(Int, num_particles * minimum_neighborhood_fraction))
-        options = PSOOptions(
-            general, 
-            initial_bounds, 
-            max_iterations, 
-            function_tolerence, 
-            max_stall_time, 
-            max_stall_iterations, 
-            inertia_range, 
-            minimum_neighborhood_fraction, 
-            minimum_neighborhood_size, 
-            self_adjustment_weight, 
-            social_adjustment_weight,
-        )
-
-        # Construct swarm
-        swarm = Swarm{T}(num_particles, numdims(evaluator.prob.ss))
-
-        # Instantiate PSO
-        return new{T, typeof(evaluator)}(options, evaluator, swarm)
-    end
 end
 
 """
-    PSO
+    SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
 
 Constructs a serial PSO algorithm with the given options.
 """
-function PSO(
+function SerialPSO(
     prob::AbstractOptimizationProblem{SS};
-    num_particles = 100,
+    num_particles::Int = 100,
     initial_bounds = nothing,
     max_iterations = 1000,
     function_tolerence = 1e-6,
@@ -126,16 +88,27 @@ function PSO(
     function_value_check = true,
     max_time = 60.0,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
-    # Construct the general options
-    general = GeneralOptions(display, display_interval, function_value_check, max_time)
-
-    # Construct evaluator (default to serial evaluator)
-    evaluator = SerialBatchEvaluator(prob)
+    # Construct the options
+    options = PSOOptions(
+        GeneralOptions(display, display_interval, function_value_check, max_time),
+        num_particles,
+        initial_bounds,
+        max_iterations,
+        function_tolerence,
+        max_stall_time,
+        max_stall_iterations,
+        inertia_range,
+        minimum_neighborhood_fraction,
+        self_adjustment_weight,
+        social_adjustment_weight,
+    )
 
     # Construct PSO
-    return PSO(evaluator, num_particles, initial_bounds, max_iterations, function_tolerence,
-        max_stall_time, max_stall_iterations, inertia_range, minimum_neighborhood_fraction,
-        self_adjustment_weight, social_adjustment_weight, general)
+    return PSO(
+        options, 
+        SerialBatchEvaluator(prob), 
+        Swarm{T}(num_particles, numdims(prob)),
+    )
 end
 
 """
@@ -145,7 +118,7 @@ Constructs a threaded PSO algorithm with the given options.
 """
 function ThreadedPSO(
     prob::AbstractOptimizationProblem{SS};
-    num_particles = 100,
+    num_particles::Int = 100,
     initial_bounds = nothing,
     max_iterations = 1000,
     function_tolerence = 1e-6,
@@ -160,89 +133,107 @@ function ThreadedPSO(
     function_value_check = true,
     max_time = 60.0,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
-    # Construct the general options
-    general = GeneralOptions(display, display_interval, function_value_check, max_time)
-
-    # Construct evaluator (default to serial evaluator)
-    evaluator = ThreadedBatchEvaluator(prob)
+    # Construct the options
+    options = PSOOptions(
+        GeneralOptions(display, display_interval, function_value_check, max_time),
+        num_particles,
+        initial_bounds,
+        max_iterations,
+        function_tolerence,
+        max_stall_time,
+        max_stall_iterations,
+        inertia_range,
+        minimum_neighborhood_fraction,
+        self_adjustment_weight,
+        social_adjustment_weight,
+    )
 
     # Construct PSO
-    return PSO(evaluator, num_particles, initial_bounds, max_iterations, function_tolerence,
-        max_stall_time, max_stall_iterations, inertia_range, minimum_neighborhood_fraction,
-        self_adjustment_weight, social_adjustment_weight, general)
+    return PSO(
+        options, 
+        ThreadedBatchEvaluator(prob), 
+        Swarm{T}(num_particles, numdims(prob)),
+    )
 end
 
-function PSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
+function SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
     throw(ArgumentError("PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace."))
 end
 function ThreadedPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
     throw(ArgumentError("PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace."))
 end
 
-# ===== Methods
+function optimize!(opt::PSO)
+    # Initialize PSO algorithm
+    initialize!(opt)
 
-# function _optimize!(pso::PSO, opts::Options)
-#     _initialize!(pso, opts)
-#     res = _iterate!(pso, opts)
-#     return res
-# end
+    # Perform iterations and return results
+    return iterate!(pso)
+end
 
-# function _initialize!(pso::PSO, opts::Options)
-#     # Set optimizer state 
-#     pso.state    = 1
+function initialize!(opt::PSO)
+    # Unpack PSO
+    @unpack options, evaluator, swarm = opt
 
-#     initialize_uniform!(pso.swarm, pso.prob, opts)
-#     eval_objective!(pso, opts; init = true)
-#     initialize_global_best!(pso) 
-#     initialize_neighborhood!(pso) 
-#     initialize_inertia!(pso) 
-#     initialize_update_weights!(pso) 
+    # Initialize swarm 
+    initialize_uniform!(swarm, evaluator.prob.ss, options.initial_bounds)
 
-#     # Call callback function
-#     eval_callback!(pso, opts) 
+    # Evaluate the objective for each candidate
+    initialize_fitness!(swarm, evaluator)
 
-#     # Print Status
-#     opts.display && print_status(pso.swarm, 0.0, 0, 0)
+    initialize_global_best!(pso) # Might need to store global best somewhere (probably in swarm)
+    initialize_neighborhood!(pso) 
+    initialize_inertia!(pso) 
+    initialize_update_weights!(pso) 
 
-#     return nothing
-# end
+    # Call callback function
+    eval_callback!(pso, opts) 
 
-# function _iterate!(pso::PSO, opts::Options)
-#     # Prepare PSO for iterations
-#     prepare_for_iteration!(pso)
+    # Print Status
+    opts.display && print_status(pso.swarm, 0.0, 0, 0)
 
-#     # Begin loop
-#     exitFlag = 0
-#     while exitFlag == 0
-#         # Update iteration counter 
-#         pso.iters += 1
+    return nothing
+end
 
-#         # Evolve particles
-#         update_velocity!(pso)
-#         step!(pso)
-#         enforce_bounds!(pso)
-#         eval_objective!(pso, opts)
-#         update_global_best!(pso)
-#         update_inertia!(pso) 
+function iterate!(opt::PSO)
+    # Define PSO iteration parameters
+    state = 1
 
-#         # Handle stall iterations
-#         check_stall!(pso, opts) 
+    # Prepare PSO for iterations
+    prepare_for_iteration!(pso)
 
-#         # Stopping criteria
-#         exitFlag = check_stop_criteria!(pso, opts) 
+    # Begin loop
+    exitFlag = 0
+    while exitFlag == 0
+        # Update iteration counter 
+        pso.iters += 1
 
-#         # Output Status
-#         if opts.display && pso.iters % opts.displayInterval == 0
-#             print_status(pso.swarm, time() - pso.t0, pso.iters, pso.stallIters)
-#         end
+        # Evolve particles
+        update_velocity!(pso)
+        step!(pso)
+        enforce_bounds!(pso)
+        eval_objective!(pso, opts)
+        update_global_best!(pso)
+        update_inertia!(pso) 
 
-#         # Call callback function
-#         eval_callback!(pso, opts)
-#     end
+        # Handle stall iterations
+        check_stall!(pso, opts) 
 
-#     # Return results
-#     return construct_results(pso, exitFlag)
-# end
+        # Stopping criteria
+        exitFlag = check_stop_criteria!(pso, opts) 
+
+        # Output Status
+        if opts.display && pso.iters % opts.displayInterval == 0
+            print_status(pso.swarm, time() - pso.t0, pso.iters, pso.stallIters)
+        end
+
+        # Call callback function
+        eval_callback!(pso, opts)
+    end
+
+    # Return results
+    return construct_results(pso, exitFlag)
+end
 
 # function construct_results(pso::PSO, exitFlag::Int)
 #     return Results(pso.swarm.b, copy(pso.swarm.d), pso.iters, time() - pso.t0, exitFlag)

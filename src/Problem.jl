@@ -34,6 +34,20 @@ function OptimizationProblem(
 end
 
 """
+    search_space(prob::OptimizationProblem)
+
+Returns the search space of the optimization problem `prob`.
+"""
+search_space(prob::OptimizationProblem) = prob.ss
+
+"""
+    numdims(prob::OptimizationProblem)
+
+Returns the number of dimensions of the decision vector of the optimization problem `prob`.
+"""
+numdims(prob::OptimizationProblem) = numdims(search_space(prob))
+
+"""
     evaluate(prob::OptimizationProblem, x::AbstractArray)
 
 Evaluates the objective function `f` of the optimization problem `prob` at `x`.

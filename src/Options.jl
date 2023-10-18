@@ -11,7 +11,7 @@ abstract type AbstractOptions end
 
 General options for all optimizers
 """
-struct GeneralOptions{T <: AbstractFloat} <: AbstractOptions
+struct GeneralOptions <: AbstractOptions
     # Display options
     display::Bool
     display_interval::Int
@@ -19,49 +19,49 @@ struct GeneralOptions{T <: AbstractFloat} <: AbstractOptions
     # Check function value for NaN and Inf
     function_value_check::Bool
 
-    # Maximum time
-    max_time::T
+    # Maximum time (seconds)
+    max_time::Float64
 end
 
 
 """
-    AbstractAlgorithmOptions
+    AbstractAlgorithmSpecificOptions
 
 Abstract type for algorithm specific options
 """
-abstract type AbstractAlgorithmOptions end
+abstract type AbstractAlgorithmSpecificOptions <: AbstractOptions end
 
 """
-    get_general(opts::AbstractAlgorithmOptions)
+    get_general(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the general options from an algorithm options type.
 """
-get_general(opts::AbstractAlgorithmOptions) = opts.general
+get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
 
 """
-    get_display(opts::AbstractAlgorithmOptions)
+    get_display(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the display option from an algorithm options type.
 """
-get_display(opts::AbstractAlgorithmOptions) = opts.general.display
+get_display(opts::AbstractAlgorithmSpecificOptions) = opts.general.display
 
 """
-    get_display_interval(opts::AbstractAlgorithmOptions)
+    get_display_interval(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the display interval from an algorithm options type.
 """
-get_display_interval(opts::AbstractAlgorithmOptions) = opts.general.display_interval
+get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.display_interval
 
 """
-    get_function_value_check(opts::AbstractAlgorithmOptions)
+    get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the function value check option from an algorithm options type.
 """
-get_function_value_check(opts::AbstractAlgorithmOptions) = opts.general.function_value_check
+get_function_value_check(opts::AbstractAlgorithmSpecificOptions) = opts.general.function_value_check
 
 """
-    get_max_time(opts::AbstractAlgorithmOptions)
+    get_max_time(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the max time option from an algorithm options type.
 """
-get_max_time(opts::AbstractAlgorithmOptions) = opts.general.max_time
+get_max_time(opts::AbstractAlgorithmSpecificOptions) = opts.general.max_time

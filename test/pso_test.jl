@@ -19,5 +19,10 @@ ss = GlobalOptimization.ContinuousRectangularSearchSpace(
 prob = GlobalOptimization.OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
-pso = GlobalOptimization.PSO(prob)
+spso = GlobalOptimization.SerialPSO(prob)
 tpso = GlobalOptimization.ThreadedPSO(prob)
+
+GlobalOptimization.initialize_uniform!(spso.swarm, ss)
+GlobalOptimization.initialize_uniform!(tpso.swarm, ss)
+GlobalOptimization.initialize_fitness!(spso.swarm, spso.evaluator)
+GlobalOptimization.initialize_fitness!(tpso.swarm, tpso.evaluator)
