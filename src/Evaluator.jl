@@ -55,12 +55,14 @@ Evaluates the fitness of a population using the given `evaluator`.
 """
 function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
     @inbounds for (idx, candidate) in enumerate(candidates(pop))
-        set_fitness(pop, evaluate(evaluator.prob, candidate), idx)
+        set_fitness!(pop, evaluate(evaluator.prob, candidate), idx)
     end
+    return nothing
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
     Threads.@threads for idx in eachindex(candidates(pop))
         candidate = candidates(pop, idx)
-        set_fitness(pop, evaluate(evaluator.prob, candidate), idx)
+        set_fitness!(pop, evaluate(evaluator.prob, candidate), idx)
     end
+    return nothing
 end

@@ -97,14 +97,14 @@ dimrange(ss::ContinuousRectangularSearchSpace) = tuple.(dimmin(ss), dimmax(ss))
 dimrange(ss::ContinuousRectangularSearchSpace, i::Integer) = (dimmin(ss, i), dimmax(ss, i))
 
 """
-    intersection(ss1::ContinuousRectangularSearchSpace, ss2::ContinuousRectangularSearchSpace)
+    intersection(ss1, ss2)
 
 Returns the intersection of the two search spaces `ss1` and `ss2` as a new search sapce
 """
 function intersection(
     ss1::ContinuousRectangularSearchSpace{T1}, 
     ss2::ContinuousRectangularSearchSpace{T2},
-) where {T1 <: AbstractFloat, T2 <: AbstractFloat}
+) where {T1, T2}
     # Check inputs
     numdims(ss1) == numdims(ss2) ||
         throw(DimensionMismatch("ss1 and ss2 must have the same number of dimensions."))
@@ -122,4 +122,24 @@ function intersection(
         dimmax[i] = min(dimmax(ss1, i), dimmax(ss2, i))
     end
     return ContinuousRectangularSearchSpace(dimmin, dimmax)
+end
+intersection(ss1::ContinuousRectangularSearchSpace{T1}, ss2::Nothing) where {T1} = ss1
+intersection(ss1::Nothing, ss2::ContinuousRectangularSearchSpace{T2}) where {T2} = ss2
+
+"""
+    feasible(x, ss::ContinuousRectangularSearchSpace)
+
+Returns `true` if the point `x` is feasible in the search space `ss`, otherwise returns `false`.
+"""
+function feasible(x::AbstractVector{T}, ss::ContinuousRectangularSearchSpace{T}) where {T}
+    length(x) == numdims(ss) ||
+        throw(DimensionMismatch("x must have the same number of dimensions as ss."))
+
+    # Check values
+    @inbounds for i in eachindex(x)
+        if x[i] < dimmin(ss, i) || x[i] > dimmax(ss, i)
+            return false
+        end
+    end
+    return true
 end

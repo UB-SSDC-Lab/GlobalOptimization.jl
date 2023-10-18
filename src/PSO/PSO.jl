@@ -4,13 +4,13 @@
 
 Options for the PSO algorithm.
 """
-struct PSOOptions{IBSS <: Union{Nothing, ContinuousRectangularSearchSpace}} <: AbstractAlgorithmSpecificOptions
+struct PSOOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <: GeneralOptions} <: AbstractAlgorithmSpecificOptions
     # The general options
-    general::GeneralOptions
+    general::GO
 
     # ===== PSO specific options
     # Defines the search space that the initial particles are drawn from
-    initial_bounds::IBSS
+    initial_space::ISS
 
     # Max iterations
     max_iterations::Int
@@ -28,9 +28,9 @@ struct PSOOptions{IBSS <: Union{Nothing, ContinuousRectangularSearchSpace}} <: A
     social_adjustment_weight::Float64
 
     function PSOOptions(
-        general, 
+        general::GO, 
         num_particles,
-        initial_bounds::IBSS, 
+        initial_space::ISS, 
         max_iterations, 
         function_tolerence, 
         max_stall_time, 
@@ -39,16 +39,29 @@ struct PSOOptions{IBSS <: Union{Nothing, ContinuousRectangularSearchSpace}} <: A
         minimum_neighborhood_fraction, 
         self_adjustment_weight, 
         social_adjustment_weight,
-    ) where IBSS
+    ) where {GO,ISS}
         minimum_neighborhood_size = max(2, floor(Int, num_particles * minimum_neighborhood_fraction))
-        return new{IBSS}(
-            general, initial_bounds, max_iterations, function_tolerence, max_stall_time, 
+        return new{ISS,GO}(
+            general, initial_space, max_iterations, function_tolerence, max_stall_time, 
             max_stall_iterations, inertia_range, minimum_neighborhood_fraction, 
             minimum_neighborhood_size, self_adjustment_weight, social_adjustment_weight,
         )
     end
 end
 
+"""
+    PSOCache
+
+Cache for PSO algorithm.
+"""
+mutable struct PSOCache{T}
+    global_best_candidate::Vector{T}
+    global_best_fitness::T
+    index_vector::Vector{UInt16}
+    function PSOCache{T}(num_particles::Integer, num_dims::Integer) where {T}
+        return new{T}(zeros(T, num_dims), T(Inf), collect(0x1:UInt16(num_particles)))
+    end
+end
 
 """
     PSO
@@ -57,13 +70,16 @@ Particle Swarm Optimization (PSO) algorithm.
 """
 struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}, IBSS} <: AbstractOptimizer
     # The PSO algorithm options
-    opts::PSOOptions{IBSS}
+    options::PSOOptions{IBSS}
 
     # The PSO evaluator
     evaluator::E
 
     # The PSO swarm
     swarm::Swarm{T}
+
+    # The PSO cache
+    cache::PSOCache{T}
 end
 
 """
@@ -74,25 +90,30 @@ Constructs a serial PSO algorithm with the given options.
 function SerialPSO(
     prob::AbstractOptimizationProblem{SS};
     num_particles::Int = 100,
-    initial_bounds = nothing,
-    max_iterations = 1000,
-    function_tolerence = 1e-6,
-    max_stall_time = Inf,
-    max_stall_iterations = 25,
-    inertia_range = (0.1, 1.0),
-    minimum_neighborhood_fraction = 0.25,
-    self_adjustment_weight = 1.49,
-    social_adjustment_weight = 1.49,
-    display = false,
-    display_interval = 1,
-    function_value_check = true,
-    max_time = 60.0,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
+    max_iterations::Int = 1000,
+    function_tolerence::AbstractFloat = 1e-6,
+    max_stall_time::Real = Inf,
+    max_stall_iterations::Int = 25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat = 0.25,
+    self_adjustment_weight::Real = 1.49,
+    social_adjustment_weight::Real = 1.49,
+    display::Bool = false,
+    display_interval::Int = 1,
+    function_value_check::Bool = true,
+    max_time::Real = 60.0,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = PSOOptions(
-        GeneralOptions(display, display_interval, function_value_check, max_time),
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+        ),
         num_particles,
-        initial_bounds,
+        intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerence,
         max_stall_time,
@@ -108,6 +129,7 @@ function SerialPSO(
         options, 
         SerialBatchEvaluator(prob), 
         Swarm{T}(num_particles, numdims(prob)),
+        PSOCache{T}(num_particles, numdims(prob))
     )
 end
 
@@ -119,25 +141,30 @@ Constructs a threaded PSO algorithm with the given options.
 function ThreadedPSO(
     prob::AbstractOptimizationProblem{SS};
     num_particles::Int = 100,
-    initial_bounds = nothing,
-    max_iterations = 1000,
-    function_tolerence = 1e-6,
-    max_stall_time = Inf,
-    max_stall_iterations = 25,
-    inertia_range = (0.1, 1.0),
-    minimum_neighborhood_fraction = 0.25,
-    self_adjustment_weight = 1.49,
-    social_adjustment_weight = 1.49,
-    display = false,
-    display_interval = 1,
-    function_value_check = true,
-    max_time = 60.0,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
+    max_iterations::Int = 1000,
+    function_tolerence::AbstractFloat = 1e-6,
+    max_stall_time::Real = Inf,
+    max_stall_iterations::Int = 25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat = 0.25,
+    self_adjustment_weight::Real = 1.49,
+    social_adjustment_weight::Real = 1.49,
+    display::Bool = false,
+    display_interval::Int = 1,
+    function_value_check::Bool = true,
+    max_time::Real = 60.0,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = PSOOptions(
-        GeneralOptions(display, display_interval, function_value_check, max_time),
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+        ),
         num_particles,
-        initial_bounds,
+        intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerence,
         max_stall_time,
@@ -153,6 +180,7 @@ function ThreadedPSO(
         options, 
         ThreadedBatchEvaluator(prob), 
         Swarm{T}(num_particles, numdims(prob)),
+        PSOCache{T}(num_particles, numdims(prob))
     )
 end
 
@@ -168,7 +196,7 @@ function optimize!(opt::PSO)
     initialize!(opt)
 
     # Perform iterations and return results
-    return iterate!(pso)
+    return iterate!(opt)
 end
 
 function initialize!(opt::PSO)
@@ -176,204 +204,170 @@ function initialize!(opt::PSO)
     @unpack options, evaluator, swarm = opt
 
     # Initialize swarm 
-    initialize_uniform!(swarm, evaluator.prob.ss, options.initial_bounds)
+    initialize_uniform!(swarm, options.initial_space)
 
-    # Evaluate the objective for each candidate
+    # Handel swarm fitness
     initialize_fitness!(swarm, evaluator)
-
-    initialize_global_best!(pso) # Might need to store global best somewhere (probably in swarm)
-    initialize_neighborhood!(pso) 
-    initialize_inertia!(pso) 
-    initialize_update_weights!(pso) 
-
-    # Call callback function
-    eval_callback!(pso, opts) 
-
-    # Print Status
-    opts.display && print_status(pso.swarm, 0.0, 0, 0)
+    check_fitness!(swarm, get_general(options))
+    update_global_best!(opt)
 
     return nothing
 end
 
 function iterate!(opt::PSO)
-    # Define PSO iteration parameters
-    state = 1
+    # Unpack PSO
+    @unpack options, evaluator, swarm, cache = opt
+    search_space = evaluator.prob.ss
 
-    # Prepare PSO for iterations
-    prepare_for_iteration!(pso)
+    # Initialize PSO algorithm parameters
+    ns = options.minimum_neighborhood_size  # Neighborhood size
+    sc = 0                                  # Stall counter
+    w  = options.inertia_range[2]           # Inertia weight
+    y1 = options.self_adjustment_weight     # Self adjustment weight
+    y2 = options.social_adjustment_weight   # Social adjustment weight
+
+    # Initialize algorithm stopping criteria requirements
+    iteration = 0
+    start_time = time()
+    current_time = start_time
+    stall_start_time = start_time
+    stall_value = Inf
 
     # Begin loop
-    exitFlag = 0
-    while exitFlag == 0
+    exit_flag = 0
+    while exit_flag == 0
         # Update iteration counter 
-        pso.iters += 1
+        iteration += 1
 
-        # Evolve particles
-        update_velocity!(pso)
-        step!(pso)
-        enforce_bounds!(pso)
-        eval_objective!(pso, opts)
-        update_global_best!(pso)
-        update_inertia!(pso) 
+        # Update swarm velocity and step (enforcing particles are feasible after step)
+        update_velocity!(swarm, cache, ns, w, y1, y2)
+        step!(swarm)
+        enforce_bounds!(swarm, search_space)
 
-        # Handle stall iterations
-        check_stall!(pso, opts) 
+        # Evaluate the objective function and check for bad values in fitness
+        evaluate_fitness!(swarm, evaluator)
+        check_fitness!(swarm, get_general(options))
 
-        # Stopping criteria
-        exitFlag = check_stop_criteria!(pso, opts) 
+        # Update global best (STOPPED HERE!)
+        update_global_best!(opt)
 
-        # Output Status
-        if opts.display && pso.iters % opts.displayInterval == 0
-            print_status(pso.swarm, time() - pso.t0, pso.iters, pso.stallIters)
+        # Update inertia
+        w = update_inertia(w, options.inertia_range, sc)
+
+        # Handle stall
+        if stalled(opt, stall_value)
+            sc += 1
+        else
+            stall_value = cache.global_best_fitness
+            sc = 0
+            stall_start_time = time()
         end
 
-        # Call callback function
-        eval_callback!(pso, opts)
+        # Stopping criteria
+        current_time = time()
+        if current_time - start_time >= options.general.max_time # Hit maximum time
+            exit_flag = 1
+        elseif iteration >= options.max_iterations # Hit maximum iterations
+            exit_flag = 2
+        elseif sc >= options.max_stall_iterations # Hit maximum stall iterations
+            exit_flag = 3
+        elseif current_time - stall_start_time >= options.max_stall_time # Hit maximum stall time
+            exit_flag = 4
+        end
+
+        # Output Status
+        display_status(
+            current_time - start_time, 
+            iteration, 
+            sc, 
+            cache.global_best_fitness,
+            get_general(options),
+        )
     end
 
     # Return results
-    return construct_results(pso, exitFlag)
+    return Results(
+        cache.global_best_fitness, 
+        cache.global_best_candidate, 
+        iteration, 
+        current_time - start_time, 
+        exit_flag,
+    )
 end
 
-# function construct_results(pso::PSO, exitFlag::Int)
-#     return Results(pso.swarm.b, copy(pso.swarm.d), pso.iters, time() - pso.t0, exitFlag)
-# end
+"""
+    update_global_best!(pso::PSO)
 
-# function eval_objective!(pso::PSO, opts; init = false)
-#     eval_objective!(pso.swarm, pso.prob.f, opts; init = init)
-#     return nothing
-# end
+Updates the global best candidate in the PSO algorithm `pso` if a better candidate is found.
+"""
+function update_global_best!(pso::PSO)
+    # Grab information
+    @unpack swarm, cache = pso
+    @unpack best_candidates, best_candidates_fitness = swarm
+    @unpack global_best_candidate = cache 
 
-# function eval_callback!(pso::PSO, opts::Options{T,U,CF}) where {T,U,CF <: Function}
-#     opts.callback(pso, opts)
-#     return nothing
-# end
+    # Find index and value of global best fitness if better than previous best
+    global_best_fitness = cache.global_best_fitness
+    global_best_idx = 0
+    @inbounds for (i, fitness) in enumerate(best_candidates_fitness)
+        if fitness < global_best_fitness
+            global_best_idx = i
+            global_best_fitness = fitness
+        end
+    end
 
-# function eval_callback!(pso::PSO, opts::Options{T,U,CF}) where {T,U,CF <: Nothing}
-#     # Do nothing if we don't have a callback function
-#     return nothing
-# end
+    # Check if we've found a better solution
+    updated = false
+    if global_best_idx > 0
+        updated = true
+        global_best_candidate .= best_candidates[global_best_idx]
+        cache.global_best_fitness = global_best_fitness
+    end
+    return updated
+end
 
-# function initialize_global_best!(pso::PSO)
-#     pso.swarm.b = Inf
-#     update_global_best!(pso.swarm)
-#     return nothing
-# end
+"""
+    stalled(pso::PSO, stall_value)
 
-# function initialize_neighborhood!(pso::PSO)
-#     pso.swarm.n = max(
-#         2, floor(length(pso.swarm) * pso.minNeighborFrac),
-#     )
-#     return nothing
-# end
+Returns true if the PSO algorithm `pso` is stalled, false otherwise.
+"""
+function stalled(pso::PSO, stall_value)
+    @unpack cache, options = pso
+    return stall_value - cache.global_best_fitness < options.function_tolerence
+end
 
-# function initialize_inertia!(pso::PSO)
-#     if pso.inertiaRange[2] > 0
-#         pso.swarm.w = pso.inertiaRange[2] > pso.inertiaRange[1] ? 
-#             pso.inertiaRange[2] : pso.inertiaRange[1]
-#     else
-#         pso.swarm.w = pso.inertiaRange[2] < pso.inertiaRange[1] ?
-#             pso.inertiaRange[2] : pso.inertiaRange[1]
-#     end
-#     return nothing
-# end
+"""
+    update_inertia(inertia, range, stall_count)
 
-# function initialize_update_weights!(pso::PSO)
-#     pso.swarm.y₁ = pso.selfAdjustWeight
-#     pso.swarm.y₂ = pso.socialAdjustWeight
-#     return nothing
-# end
+Returns new inertia weight based on the current 'inertia', the `range`, and `stall_count`.
+"""
+function update_inertia(inertia, range, stall_count)
+    w = inertia
+    if stall_count < 2
+        w *= 2.0
+    elseif stall_count > 5
+        w /= 2.0
+    end
+    return clamp(w, range[1], range[2])
+end
 
-# function prepare_for_iteration!(pso::PSO)
-#     pso.t0 = time()
-#     pso.stallT0 = pso.t0
-#     pso.fStall = Inf
-#     return nothing
-# end
+"""
+    display_status(time, iteration, stall_count, options)
 
-# function handle_update!(pso::PSO, update_found::Bool)
-#     if update_found 
-#         pso.swarm.c = max(0, pso.swarm.c - 1)
-#         pso.swarm.n = pso.minNeighborSize
-#     else
-#         pso.swarm.c += 1
-#         pso.swarm.n = min(
-#             pso.swarm.n + pso.minNeighborSize, 
-#             length(pso.swarm) - 1,
-#         )
-#     end
-#     return nothing
-# end
+Displays the status of the PSO algorithm.
+"""
+@inline function display_status(time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}) where {D, FVC} 
+    display_status(time, iteration, stall_count, global_fitness, get_display_interval(options), D)
+    return nothing
+end
+@inline display_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{false}) = nothing
+function display_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{true})
+    if iteration % display_interval == 0
+        fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
+        fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")
+        printfmtln(fspec1, time, iteration)
+        printfmtln(fspec2, stall_count, global_fitness)
+    end
+    return nothing
+end
 
-# function update_inertia!(pso::PSO)
-#     if pso.swarm.c < 2
-#         pso.swarm.w *= 2.0
-#     elseif pso.swarm.c > 5
-#         pso.swarm.w /= 2.0
-#     end
-
-#     # Ensure new inertia is in bounds
-#     if pso.swarm.w < pso.inertiaRange[1]
-#         pso.swarm.w = pso.inertiaRange[1]
-#     elseif pso.swarm.w > pso.inertiaRange[2]
-#         pso.swarm.w = pso.inertiaRange[2]
-#     end
-#     return nothing
-# end
-
-# function update_global_best!(pso::PSO)
-#     update_found = update_global_best!(pso.swarm)
-#     handle_update!(pso, update_found)
-#     return nothing
-# end
-
-# update_velocity!(pso::PSO) = update_velocity!(pso.swarm)
-
-# step!(pso::PSO) = step!(pso.swarm)
-
-# function enforce_bounds!(pso::PSO)
-#     need_check = false
-#     @inbounds for i in eachindex(pso.prob.LB)
-#         if !isinf(pso.prob.LB[i]) || !isinf(pso.prob.UB[i])
-#             need_check = true
-#             break
-#         end
-#     end
-#     if need_check
-#         enforce_bounds!(pso.swarm, pso.prob.LB, pso.prob.UB)
-#     end
-#     return nothing
-# end
-
-# function check_stall!(pso::PSO, opts::Options)
-#     if pso.fStall - pso.swarm.b > opts.funcTol
-#         pso.fStall = pso.swarm.b
-#         pso.stallIters = 0
-#         pso.stallT0 = time()
-#     else
-#         pso.stallIters += 1
-#     end
-#     return nothing
-# end
-
-# function check_stop_criteria!(pso::PSO, opts::Options)
-#     if pso.stallIters >= opts.maxStallIters
-#         pso.state = 3
-#         return 1
-#     elseif pso.iters >= opts.maxIters
-#         pso.state = 3
-#         return 2
-#     elseif pso.swarm.b <= opts.objLimit
-#         pso.state = 3
-#         return 3
-#     elseif time() - pso.stallT0 >= opts.maxStallTime 
-#         pso.state = 3
-#         return 4
-#     elseif time() - pso.t0 >= opts.maxTime 
-#         pso.state = 3
-#         return 5
-#     else
-#         pso.state = 2
-#         return 0
-#     end
-# end

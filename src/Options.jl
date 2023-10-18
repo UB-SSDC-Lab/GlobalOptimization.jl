@@ -1,28 +1,35 @@
 """
     AbstractOptions
 
-Abstract type for options
+Abstract type for multiple options
 """
 abstract type AbstractOptions end
 
-
 """
-    GeneralOptions
+    GeneralOptions{display, function_value_check}
 
 General options for all optimizers
 """
-struct GeneralOptions <: AbstractOptions
+struct GeneralOptions{display, funciton_value_check} <: AbstractOptions
     # Display options
-    display::Bool
     display_interval::Int
-
-    # Check function value for NaN and Inf
-    function_value_check::Bool
 
     # Maximum time (seconds)
     max_time::Float64
-end
 
+    function GeneralOptions(function_value_check::Val{true}, display::Val{true}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{true}, display::Val{false}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{false}, display::Val{true}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{false}, display::Val{false}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+end
 
 """
     AbstractAlgorithmSpecificOptions
@@ -39,17 +46,20 @@ Returns the general options from an algorithm options type.
 get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
 
 """
-    get_display(opts::AbstractAlgorithmSpecificOptions)
+    get_display(opts::AbstractOptions)
 
-Returns the display option from an algorithm options type.
+Returns the display option from an options type.
 """
-get_display(opts::AbstractAlgorithmSpecificOptions) = opts.general.display
+get_display(opts::GeneralOptions{Val{true}, fvc}) where fvc = true
+get_display(opts::GeneralOptions{Val{false}, fvc}) where fvc = false
+get_display(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
 
 """
     get_display_interval(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the display interval from an algorithm options type.
 """
+get_display_interval(opts::GeneralOptions) = opts.display_interval
 get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.display_interval
 
 """
