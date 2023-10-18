@@ -4,7 +4,7 @@ using BenchmarkTools
 using Random
 using StaticArrays
 using Profile
-#Random.seed!(1234)
+Random.seed!(1234)
 
 # Schwefel Function
 function schaffer(x)
@@ -27,16 +27,16 @@ end
 end
 
 # Setup Problem
-d = 10
-#LB = -5.12*ones(d)
-#UB = 5.12*ones(d)
-LB = @SVector [-5.12 for i in 1:d]
-UB = @SVector [5.12 for i in 1:d]
+N = 10
+ss = ContinuousRectangularSearchSpace(
+    [-5.12 for i in 1:N],
+    [5.12 for i in 1:N],
+)
+prob = OptimizationProblem(layeb_1, ss)
 
-prob = Problem(layeb_1, LB, UB)
-opts = Options(;display = false, maxStallIters = 25, useParallel = false)
-mbh  = MBH{Float64}(prob)
-optimize!(mbh, opts)
+# Instantiate PSO
+spso = SerialPSO(prob)
+tpso = ThreadedPSO(prob)
 
 #res = optimize!(
 #    StaticPSO(prob; numParticles = 1000),
@@ -45,18 +45,21 @@ optimize!(mbh, opts)
 #pso1 = StaticPSO(prob; numParticles = 100)
 #pso2 = deepcopy(pso1)
 
-# optimize
-#opts_serial  = Options(;display = false, maxStallIters = 25, useParallel = false)
-#opts_threads = Options(;display = false, maxStallIters = 25, useParallel = true)
-#res_serial = @benchmark optimize!(_pso, $opts_serial) setup=(_pso = StaticPSO(prob; numParticles = 100))
-#res_threads = @benchmark optimize!(_pso, $opts_threads) setup=(_pso = StaticPSO(prob; numParticles = 100))
-#display(res_serial)
-#display(res_threads)
-#display(optimize!(StaticPSO(prob; numParticles = 100), opts))
+# ======== BENCHMARKING
+sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
+#tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
+display(sres)
+#display(tres)
 
-#res = GlobalOptimization.optimize!(pso1, opts)
-#optimize!(pso1, opts)
-#Profile.clear_malloc_data()
-#optimize!(pso2, opts)
+# ======== ALLOCATION TRACKING
+# pso1 = SerialPSO(prob)
+# pso2 = SerialPSO(prob)
+# optimize!(pso1)
+# Profile.clear_malloc_data()
+# optimize!(pso2)
+
+# ======== TYPES
+#@code_warntype GlobalOptimization.initialize!(spso)
+#@code_warntype GlobalOptimization.iterate!(spso)
 
 

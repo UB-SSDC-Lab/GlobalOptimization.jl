@@ -27,10 +27,10 @@ include("PSO/PSO.jl")
 #include("MBH/Hopper.jl")
 #include("MBH/MBH.jl")
 
-#export Problem
-#export Options
-#export PSO, StaticPSO
+export ContinuousRectangularSearchSpace
+export OptimizationProblem
+export SerialPSO, ThreadedPSO
 #export MBH
-#export optimize!
+export optimize!
 
 end

@@ -68,9 +68,9 @@ end
 
 Particle Swarm Optimization (PSO) algorithm.
 """
-struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}, IBSS} <: AbstractOptimizer
+struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}, IBSS, GO} <: AbstractOptimizer
     # The PSO algorithm options
-    options::PSOOptions{IBSS}
+    options::PSOOptions{IBSS,GO}
 
     # The PSO evaluator
     evaluator::E
