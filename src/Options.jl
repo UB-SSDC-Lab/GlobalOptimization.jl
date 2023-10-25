@@ -1,64 +1,77 @@
+"""
+    AbstractOptions
 
-struct Options{T<:AbstractFloat, U<:AbstractVector, CF<:Union{Function,Nothing}}
-    # Display Options
-    display::Bool 
-    displayInterval::Int
+Abstract type for multiple options
+"""
+abstract type AbstractOptions end
 
-    # Function tolerance
-    funcTol::T
+"""
+    GeneralOptions{display, function_value_check}
 
-    # Check function val for NaN and Inf 
-    funValCheck::Bool
+General options for all optimizers
+"""
+struct GeneralOptions{display, funciton_value_check} <: AbstractOptions
+    # Display options
+    display_interval::Int
 
-    # Initial bounds
-    iUB::U
-    iLB::U
+    # Maximum time (seconds)
+    max_time::Float64
 
-    # Max Iterations
-    maxIters::Int
-
-    # Max Stall Iterations 
-    maxStallIters::Int
-
-    # Max Stall Time 
-    maxStallTime::T
-
-    # Max Time
-    maxTime::T
-
-    # Objective Limit 
-    objLimit::T
-
-    # Use parallel
-    useParallel::Bool 
-
-    # Callback function
-    callback::CF
-
-    #Reset Distance
-    resetDistance::Int
-
-    #Maximum Reset Iterations
-    maxResetIters::Int
+    function GeneralOptions(function_value_check::Val{true}, display::Val{true}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{true}, display::Val{false}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{false}, display::Val{true}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
+    function GeneralOptions(function_value_check::Val{false}, display::Val{false}, display_interval::Int, max_time)
+        return new{display, function_value_check}(display_interval, max_time)
+    end
 end
 
-function Options(;display=true, displayInterval=1, funcTol::T=1e-6,
-    funValCheck=true, iUB::Uu=nothing, iLB::Ul=nothing, maxIters=1000, maxStallIters=25,
-    maxStallTime=500, maxTime=1800, objLimit=-Inf, useParallel=false, callback::CF=nothing,
-    resetDistance=2, maxResetIters=40) where 
-    {T<:Number, Uu<:Union{Nothing, Vector}, Ul<:Union{Nothing, Vector}, CF<:Union{Nothing, Function}}
+"""
+    AbstractAlgorithmSpecificOptions
 
-    if iUB === nothing
-        iUB = Vector{T}([])
-        U   = Vector{T}
-    else
-        U   = Uu;
-    end
-    if iLB === nothing
-        iLB = Vector{T}([])
-    end
+Abstract type for algorithm specific options
+"""
+abstract type AbstractAlgorithmSpecificOptions <: AbstractOptions end
 
-    return Options{T,U,CF}(display, displayInterval, funcTol,
-        funValCheck, iUB, iLB, maxIters, maxStallIters, maxStallTime, 
-        maxTime, objLimit, useParallel, callback, resetDistance, maxResetIters)
-end
+"""
+    get_general(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the general options from an algorithm options type.
+"""
+get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
+
+"""
+    get_display(opts::AbstractOptions)
+
+Returns the display option from an options type.
+"""
+get_display(opts::GeneralOptions{Val{true}, fvc}) where fvc = true
+get_display(opts::GeneralOptions{Val{false}, fvc}) where fvc = false
+get_display(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
+
+"""
+    get_display_interval(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the display interval from an algorithm options type.
+"""
+get_display_interval(opts::GeneralOptions) = opts.display_interval
+get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.display_interval
+
+"""
+    get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the function value check option from an algorithm options type.
+"""
+get_function_value_check(opts::AbstractAlgorithmSpecificOptions) = opts.general.function_value_check
+
+"""
+    get_max_time(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the max time option from an algorithm options type.
+"""
+get_max_time(opts::AbstractAlgorithmSpecificOptions) = opts.general.max_time
