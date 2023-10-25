@@ -20,7 +20,6 @@ makedocs(;
 )
 
 deploydocs(;
-    #repo="github.com/UB-SSDC-Lab/GlobalOptimization.jl",
-    repo=Documenter.Remotes.GitHub("GrantHecht","https://github.com/UB-SSDC-Lab/GlobalOptimization.jl/blob/{commit}{path}#{line}"),
+    repo="github.com/UB-SSDC-Lab/GlobalOptimization.jl",
     devbranch="main",
 )
