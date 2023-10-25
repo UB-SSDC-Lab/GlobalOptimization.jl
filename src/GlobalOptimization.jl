@@ -5,24 +5,34 @@ using StaticArrays
 using StructArrays
 using ThreadsX
 using Random: shuffle!
+using UnPack
+using LoopVectorization
 
 # Utilities
 include("rng.jl")
 
 # Base
-include("Problem.jl")
 include("Options.jl")
+include("SearchSpace.jl")
+include("Problem.jl")
+include("Candidate.jl")
+include("Population.jl")
+include("Evaluator.jl")
 include("Optimizers.jl")
 include("Results.jl")
 
 # PSO
-include("PSO/Particle.jl")
 include("PSO/Swarm.jl")
 include("PSO/PSO.jl")
 
-export Problem
-export Options
-export PSO, StaticPSO
+# MBH
+#include("MBH/Hopper.jl")
+#include("MBH/MBH.jl")
+
+export ContinuousRectangularSearchSpace
+export OptimizationProblem
+export SerialPSO, ThreadedPSO
+#export MBH
 export optimize!
 
 end
