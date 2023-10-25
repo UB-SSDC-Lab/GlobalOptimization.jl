@@ -1,5 +1,5 @@
-using GlobalOptimization, Test, SafeTestsets
+using GlobalOptimization, Test
 @time begin
-    @safetestset "Evaluator" begin; include("evaluator_test.jl"); end
-    @safetestset "PSO" begin; include("pso_test.jl"); end
+    @testset showtiming=true "Evaluator" begin; include("evaluator_test.jl"); end
+    @testset showtiming=true "PSO" begin; include("pso_test.jl"); end
 end

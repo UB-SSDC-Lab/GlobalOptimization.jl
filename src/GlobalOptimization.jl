@@ -6,6 +6,7 @@ using StructArrays
 using ThreadsX
 using Random: shuffle!
 using UnPack
+using LoopVectorization
 
 # Utilities
 include("rng.jl")
@@ -14,6 +15,7 @@ include("rng.jl")
 include("Options.jl")
 include("SearchSpace.jl")
 include("Problem.jl")
+include("Candidate.jl")
 include("Population.jl")
 include("Evaluator.jl")
 include("Optimizers.jl")

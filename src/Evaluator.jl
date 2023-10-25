@@ -4,21 +4,45 @@
 Abstract type for an evaluator. An evaluator is responsible for evaluating the fitness
 of a population or candidate.
 """
-abstract type AbstractEvaluator end
+abstract type AbstractEvaluator{T} end
+
+
+"""
+    SingleEvaluator
+
+Abstract type for an evaluator that evaluates the fitness of a single candidate
+"""
+abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
+
+"""
+    BasicEvaluator
+
+A basic evaluator that computes the fitness of a single candidate. 
+"""
+struct BasicEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: SingleEvaluator{T} 
+    # The optimization problem
+    prob::OptimizationProblem{SS,F}
+
+    function BasicEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
+        return new{T,SS,F}(prob)
+    end
+end
 
 """
     BatchEvaluator
 
 Abstract type for an evaluator that evaluates the fitness of an entire population.
 """
-abstract type BatchEvaluator{T} end 
+abstract type BatchEvaluator{T} <: AbstractEvaluator{T} end 
+
 
 """
     AsyncEvaluator
 
 Abstract type for an evaluator that evaluates the fitness of a single candidate asyncronously.
 """
-abstract type AsyncEvaluator{T} end
+abstract type AsyncEvaluator{T} <: SingleEvaluator{T} end
+
 
 """
     SerialBatchEvaluator
@@ -33,6 +57,7 @@ struct SerialBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEval
         return new{T,SS,F}(prob)
     end
 end
+
 
 """
     ThreadedBatchEvaluator
@@ -49,11 +74,23 @@ struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEv
 end
 
 """
-    evaluate(pop::AbstractPopulation, evaluator::BatchEvaluator)
+    evaluate!(can::FitnessAwareCandidate, evaluator::BasicEvaluator)
+
+Evaluates the fitness of a candidat using the given evaluator
+"""
+function evaluate!(can::FitnessAwareCandidate, evaluator::BasicEvaluator{T,SS,F}) where {T,SS,F <: Function}
+    @unpack value, fitness = can
+    set_fitness!(can, evaluate(evaluator.prob, value)) 
+    return nothing
+end
+
+
+"""
+    evaluate!(pop::AbstractPopulation, evaluator::BatchEvaluator)
 
 Evaluates the fitness of a population using the given `evaluator`.
 """
-function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
+function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator{T,SS,F}) where {T,SS,F <: Function}
     @inbounds for (idx, candidate) in enumerate(candidates(pop))
         set_fitness!(pop, evaluate(evaluator.prob, candidate), idx)
     end

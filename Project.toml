@@ -5,6 +5,8 @@ version = "0.0.1-DEV"
 
 [deps]
 Format = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
+LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
+PaddedViews = "5432bcbf-9aad-5242-b902-cca2824c8663"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
@@ -15,8 +17,7 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 julia = "1.9"
 
 [extras]
-SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SafeTestsets"]
+test = ["Test"]

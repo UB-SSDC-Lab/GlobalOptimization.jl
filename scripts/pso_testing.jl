@@ -2,8 +2,11 @@
 using GlobalOptimization
 using BenchmarkTools
 using Random
-using StaticArrays
-using Profile
+using LoopVectorization
+using PaddedViews
+#using StaticArrays
+#using Profile
+#using JET
 Random.seed!(1234)
 
 # Schwefel Function
@@ -46,10 +49,17 @@ tpso = ThreadedPSO(prob)
 #pso2 = deepcopy(pso1)
 
 # ======== BENCHMARKING
-sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
+#sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
 #tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
-display(sres)
+#display(sres)
 #display(tres)
+GlobalOptimization.initialize!(spso)
+GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
+GlobalOptimization.step!(spso.swarm)
+GlobalOptimization.enforce_bounds!(spso.swarm, ss)
+
+go = @benchmark GlobalOptimization.evaluate_fitness!($spso.swarm, $spso.evaluator)
+display(go)
 
 # ======== ALLOCATION TRACKING
 # pso1 = SerialPSO(prob)
@@ -59,7 +69,6 @@ display(sres)
 # optimize!(pso2)
 
 # ======== TYPES
-#@code_warntype GlobalOptimization.initialize!(spso)
-#@code_warntype GlobalOptimization.iterate!(spso)
-
+#@report_call GlobalOptimization.optimize!(spso)
+#report_package(GlobalOptimization)
 

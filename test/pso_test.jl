@@ -44,11 +44,13 @@ sres = GlobalOptimization.optimize!(spso)
 Random.seed!(1234)
 tres = GlobalOptimization.optimize!(tpso)
 
-check_swarm_equality(spso,tpso) # THIS SHOULD NOT PASS TESTS!!! WTF?!?
-@test sres.fbest == tres.fbest
-@test sres.xbest == tres.xbest
-@test sres.iters == tres.iters
-@test sres.exitFlag == tres.exitFlag
+@static if VERSION >= v"1.10" # VERSION < v1.10 has bug that results different rng state when using Threads.@threads
+    check_swarm_equality(spso,tpso)
+    @test sres.exitFlag == tres.exitFlag
+    @test sres.iters == tres.iters
+end
+@test sres.fbest ≈ tres.fbest atol=1e-6
+@test sres.xbest ≈ tres.xbest atol=1e-6
 
 # Check for correct answer
 @test sres.fbest ≈ 0.0 atol=1e-6

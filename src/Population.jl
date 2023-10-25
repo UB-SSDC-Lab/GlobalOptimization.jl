@@ -32,7 +32,7 @@ function set_fitness!(pop::AbstractPopulation, fitness::Vector)
     fitness(pop) .= fitness
     return nothing
 end
-function set_fitness!(pop::AbstractPopulation, fitness::Real, i::Integer)
+@inline function set_fitness!(pop::AbstractPopulation, fitness::Real, i::Integer)
     pop.candidates_fitness[i] = fitness
     return nothing
 end
