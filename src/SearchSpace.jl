@@ -21,15 +21,41 @@ A `FixedDimensionSearchSpace` with `N` dimensional rectangle as the set of feasi
 abstract type RectangularSearchSpace{T} <: FixedDimensionSearchSpace{T} end
 
 """
-    ContinuousRectangularSearchSpace
+    ContinuousRectangularSearchSpace{T <: AbstractFloat}
 
 A `RectangularSearchSpace` formed by a single continuous set.
+
+# Fields
+- `dimmin::Vector{T}`: A vector of minimum values for each dimension.
+- `dimmax::Vector{T}`: A vector of maximum values for each dimension.
+- `dimdelta::Vector{T}`: A vector of the difference between the maximum and minimum values for each dimension.
 """
 struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearchSpace{T}
     dimmin::Vector{T}
     dimmax::Vector{T}
     dimdelta::Vector{T}
 
+    @doc """
+        ContinuousRectangularSearchSpace(dimmin::AbstractVector{T}, dimmax::AbstractVector{T})
+
+    Constructs a new `ContinuousRectangularSearchSpace` with minimum values `dimmin` and maximum values `dimmax`.
+
+    # Arguments
+    - `dimmin::AbstractVector{T}`: A vector of minimum values for each dimension.
+    - `dimmax::AbstractVector{T}`: A vector of maximum values for each dimension.
+
+    # Returns
+    - `ContinuousRectangularSearchSpace{T}`
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization;
+    julia> LB = [-1.0, 0.0];
+    julia> UB = [ 1.0, 2.0];
+    julia> ss = ContinuousRectangularSearchSpace(LB, UB)
+    ContinuousRectangularSearchSpace{Float64}([-1.0, 0.0], [1.0, 2.0], [2.0, 2.0])
+    ```
+    """
     function ContinuousRectangularSearchSpace(
         dimmin::AbstractVector{T1}, dimmax::AbstractVector{T2}
     ) where {T1 <: Real, T2 <: Real}
@@ -57,49 +83,96 @@ end
     numdims(ss::ContinuousRectangularSearchSpace)
 
 Returns the number of dimensions in the search space `ss`.
+
+# Arguments
+- `ss::ContinuousRectangularSearchSpace`
+
+# Returns
+- `Integer`
 """
 numdims(ss::ContinuousRectangularSearchSpace) = length(ss.dimmin)
 
 """
-    dimmin(ss::ContinuousRectangularSearchSpace, [i::Integer])
+    dimmin(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
 
 Returns the minimum value for the `i`-th dimension of `ss`. If `i` is not specified, 
 returns a vector of all minimum values.
+
+# Arguments
+- `ss::RontinuousRectangularSearchSpace{T}`
+- `i::Integer`: the dimension to return the minimum value for.
+
+# Returns
+- `T` or `Vector{T}`: the minimum value for the `i`-th dimension of `ss` or a vector of all minimum values if `i` not provided.
 """
 dimmin(ss::ContinuousRectangularSearchSpace) = ss.dimmin
 dimmin(ss::ContinuousRectangularSearchSpace, i::Integer) = ss.dimmin[i]
 
 """
-    dimmax(ss::ContinuousRectangularSearchSpace, [i::Integer])
+    dimmax(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
 
 Returns the maximum value for the `i`-th dimension of `ss`. If `i` is not specified,
 returns a vector of all maximum values.
+
+# Arguments
+- `ss::ContinuousRectangularSearchSpace{T}`
+- `i::Integer`: the dimension to return the maximum value for.
+
+# Returns
+- `T` or `Vector{T}`: the minimum value for the `i`-th dimension of `ss` or a vector of all minimum values if `i` not provided.
 """
 dimmax(ss::ContinuousRectangularSearchSpace) = ss.dimmax
 dimmax(ss::ContinuousRectangularSearchSpace, i::Integer) = ss.dimmax[i]
 
 """
-    dimdelta(ss::ContinuousRectangularSearchSpace, [i::Integer])
+    dimdelta(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
 
 Returns the difference between the maximum and minimum values for the `i`-th dimension of `ss`.
 If `i` is not specified, returns a vector of all differences.
+
+# Arguments
+- `ss::ContinuousRectangularSearchSpace{T}``
+- `i::Integer`: the dimension to return the difference between the maximum and minimum values for.
+
+# Returns
+- `T` or `Vector{T}` the difference between the maximum and minimum values for the `i`-th dimension of `ss` or a vector of all differences if `i` not provided.
 """
 dimdelta(ss::ContinuousRectangularSearchSpace) = ss.dimdelta
 dimdelta(ss::ContinuousRectangularSearchSpace, i::Integer) = ss.dimdelta[i]
 
 """
-    dimrange(ss::ContinuousRectangularSearchSpace, [i::Integer])
+    dimrange(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
 
 Returns the range of values for the `i`-th dimension of `ss`. If `i` is not specified,
 returns a vector of all ranges.
+
+# Arguments
+- `ss::ContinuousRectangularSearchSpace{T}`
+- `i::Integer`: the dimension to return the range of values for.
+
+# Returns
+- `Tuple{T, T}` or `Vector{Tuple{T, T}}`: the range of values for the `i`-th dimension of `ss` or a vector of all ranges if `i` not provided.
 """
 dimrange(ss::ContinuousRectangularSearchSpace) = tuple.(dimmin(ss), dimmax(ss))
 dimrange(ss::ContinuousRectangularSearchSpace, i::Integer) = (dimmin(ss, i), dimmax(ss, i))
 
 """
-    intersection(ss1, ss2)
+    intersection(
+        ss1::ContinuousRectangularSearchSpace{T1}, 
+        ss2::ContinuousRectangularSearchSpace{T2}
+    )
 
-Returns the intersection of the two search spaces `ss1` and `ss2` as a new search sapce
+Returns the intersection of the two search spaces `ss1` and `ss2` as a new search space.
+
+# Arguments
+- `ss1::ContinuousRectangularSearchSpace{T1}`
+- `ss2::ContinuousRectangularSearchSpace{T2}`
+
+# Returns
+- `ContinuousRectangularSearchSpace{promote_type(T1, T2)}
+
+# Throws
+- `DimensionMismatch`: if `ss1` and `ss2` do not have the same number of dimensions.
 """
 function intersection(
     ss1::ContinuousRectangularSearchSpace{T1}, 
@@ -130,6 +203,16 @@ intersection(ss1::Nothing, ss2::ContinuousRectangularSearchSpace{T2}) where {T2}
     feasible(x, ss::ContinuousRectangularSearchSpace)
 
 Returns `true` if the point `x` is feasible in the search space `ss`, otherwise returns `false`.
+
+# Arguments
+- `x::AbstractVector{T}`: the point to check for feasibility.
+- `ss::ContinuousRectangularSearchSpace{T}`: the search space to check for feasibility in.
+
+# Returns
+- `Bool`: `true` if `x` is in `ss`, otherwise `false`.
+
+# Throws
+- `DimensionMismatch`: if `x` does not have the same number of dimensions as `ss`.
 """
 function feasible(x::AbstractVector{T}, ss::ContinuousRectangularSearchSpace{T}) where {T}
     length(x) == numdims(ss) ||

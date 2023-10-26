@@ -16,6 +16,20 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Manual" => [
+            "PSO" => "man/pso.md",
+            "MBH" => "man/mbh.md",
+        ],
+        "Reference" => [
+            "Public API" => "lib/public.md",
+        ],
+        "Developers" => [
+            "Contributing" => "dev/contributing.md",
+            "Internals" => map(
+                s -> "lib/internal/$(s)",
+                sort(readdir(joinpath(@__DIR__, "src/lib/internal")))
+            )
+        ]
     ],
 )
 
