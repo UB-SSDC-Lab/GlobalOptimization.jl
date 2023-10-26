@@ -85,7 +85,29 @@ end
 """
     SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
 
-Constructs a serial PSO algorithm with the given options.
+Constructs a PSO algorithm with the given options that will employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractOptimizationProblem{SS}`: The optimization problem to solve.
+
+# Keyword Arguments
+- `num_particles::Int = 100`: The number of particles to use.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
+- `max_iterations::Int = 1000`: The maximum number of iterations to perform.
+- `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
+- `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
+- `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
+- `inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0)`: The range of allowable inertia weights.
+- `minimum_neighborhood_fraction::AbstractFloat = 0.25`: The minimum neighborhood fraction to use.
+- `self_adjustment_weight::Real = 1.49`: The self adjustment weight to use.
+- `social_adjustment_weight::Real = 1.49`: The social adjustment weight to use.
+- `display::Bool = false`: Whether or not to display the status of the algorithm.
+- `display_interval::Int = 1`: The display interval to use.
+- `function_value_check::Bool = true`: Whether or not to check for bad function values (Inf or NaN).
+- `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
+
+# Returns
+- `PSO`: The PSO algorithm.
 """
 function SerialPSO(
     prob::AbstractOptimizationProblem{SS};
@@ -134,9 +156,31 @@ function SerialPSO(
 end
 
 """
-    ThreadedPSO
+    ThreadedPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
 
-Constructs a threaded PSO algorithm with the given options.
+Constructs a PSO algorithm with the given options that will employ a `ThreadedBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractOptimizationProblem{SS}`: The optimization problem to solve.
+
+# Keyword Arguments
+- `num_particles::Int = 100`: The number of particles to use.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
+- `max_iterations::Int = 1000`: The maximum number of iterations to perform.
+- `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
+- `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
+- `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
+- `inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0)`: The range of allowable inertia weights.
+- `minimum_neighborhood_fraction::AbstractFloat = 0.25`: The minimum neighborhood fraction to use.
+- `self_adjustment_weight::Real = 1.49`: The self adjustment weight to use.
+- `social_adjustment_weight::Real = 1.49`: The social adjustment weight to use.
+- `display::Bool = false`: Whether or not to display the status of the algorithm.
+- `display_interval::Int = 1`: The display interval to use.
+- `function_value_check::Bool = true`: Whether or not to check for bad function values (Inf or NaN).
+- `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
+
+# Returns
+- `PSO`: The PSO algorithm.
 """
 function ThreadedPSO(
     prob::AbstractOptimizationProblem{SS};

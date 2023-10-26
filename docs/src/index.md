@@ -4,8 +4,6 @@ CurrentModule = GlobalOptimization
 
 # GlobalOptimization
 
-Note: This package is currently under active development and is therefore subject to change. 
-
 Currently, GlobalOptimization provides Particle Swarm Optimization (PSO) as the only global optimization algorithm supported. Monotonic Basin Hopping (MBH) will be added in the following weeks.
 
 ## Simple PSO Example
@@ -66,8 +64,4 @@ best_candidate_fitness = res.fbest
 
 ## Index
 ```@index
-```
-
-```@autodocs
-Modules = [GlobalOptimization]
 ```
