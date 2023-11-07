@@ -4,9 +4,9 @@ CurrentModule = GlobalOptimization
 
 # GlobalOptimization
 
-Currently, GlobalOptimization provides Particle Swarm Optimization (PSO) as the only global optimization algorithm supported. Monotonic Basin Hopping (MBH) will be added in the following weeks.
+Currently, GlobalOptimization.jl provides Particle Swarm Optimization (PSO) as the only global optimization algorithm supported. Monotonic Basin Hopping (MBH) will be added in the following weeks.
 
-## Simple PSO Example
+## A Simple PSO Example
 Let's use PSO to find the minimum to the non-convex Ackley function given by
 
 ``J(\mathbf{x}) = -a \exp\left(-b\sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2}\right) - \exp\left(\frac{1}{d}\sum_{i=1}^d \cos (cx_i)\right) + a + \exp(1)``
@@ -32,7 +32,28 @@ end
 nothing # hide
 ```
 
-Next, we'll define the `OptimizationProblem` by providing its constructor our new `ackley` function and an bounds that define the search space. Then, we'll instantiate a `StaticPSO` (an implementation of the PSO algorithm that does not use paralle computing to evaluate the cost function) to perform the optimization!
+To get an idea of just how non-convex the Ackley function it, let's create a contour plot for the 2-dimensional case as follows:
+```@example simple_ackley
+using CairoMakie
+
+# Define a two-argument version of our ackley function to simplify broadcasting
+ackley(x1,x2) = ackley((x1,x2))
+
+# Create x, y, and z values
+x = range(-5,5,length=1000)
+y = copy(x)
+z = @. ackley(x',y)
+
+# Create plot
+f = Figure()
+Axis(f[1,1])
+co = contourf!(x,y,z; levels = 10)
+Colorbar(f[1,2], co)
+f # hide
+```
+Clearly, the Ackley function is highly multi-modal! Gradient based optimization algorithms would, in general, fail to find the global minimum of this function unless an initial guess was provided that was very near the origin. Thankfully, many global optimization algorithms, like Particle Swarm Optimization for example, do not encounter these same difficulties and can often successfully find a solution that is at least near the globally optimal solution as we'll soon see... 
+
+Next, we'll define the `OptimizationProblem` by providing its constructor our original `ackley` function and an bounds that define the search space. Then, we'll instantiate a `StaticPSO` (an implementation of the PSO algorithm that does not use paralle computing to evaluate the cost function) to perform the optimization!
 
 ```@example simple_ackley
 using GlobalOptimization
