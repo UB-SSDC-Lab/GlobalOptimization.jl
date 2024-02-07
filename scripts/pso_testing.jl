@@ -1,6 +1,6 @@
 
 using GlobalOptimization
-#using BenchmarkTools
+using BenchmarkTools
 using Random
 #using LoopVectorization
 #using PaddedViews
@@ -39,20 +39,22 @@ ss = ContinuousRectangularSearchSpace(
 prob = OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
-spso = SerialPSO(prob; display = true)
-bmbh = GlobalOptimization.AdaptiveMBH(prob; display = true, display_interval = 10000)
+#spso = SerialPSO(prob)
+#bmbh = GlobalOptimization.AdaptiveMBH(prob; display = true, display_interval = 10000)
 #tpso = ThreadedPSO(prob)
 
 #res = optimize!(spso)
-res = optimize!(bmbh)
+#res = optimize!(bmbh)
 #pso1 = StaticPSO(prob; numParticles = 100)
 #pso2 = deepcopy(pso1)
 
 # ======== BENCHMARKING
-#sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
-#tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
-#display(sres)
-#display(tres)
+sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
+tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
+pres = @benchmark optimize!(_pso) setup=(_pso = PolyesterPSO(prob))
+display(sres)
+display(tres)
+display(pres)
 # GlobalOptimization.initialize!(spso)
 # GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
 # GlobalOptimization.step!(spso.swarm)

@@ -6,7 +6,6 @@ of a population or candidate.
 """
 abstract type AbstractEvaluator{T} end
 
-
 """
     SingleEvaluator
 
@@ -74,6 +73,33 @@ struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEv
 end
 
 """
+    PolyesterBatchEvaluator
+
+An evaluator that evaluates the fitness of a population in parallel using multi-threading using Polyester.jl.
+"""
+struct PolyesterBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEvaluator{T}
+    # The optimization problem
+    prob::OptimizationProblem{SS,F}
+
+    function PolyesterBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
+        # Check if cfunction closures are supported
+        cfunction_closure_unavailable = Sys.ARCH in (
+            :aarch64, :aarch64_be, :aarch64_32,  # isAArch64
+            :arm, :armeb,       # isARM
+            :ppc64, :ppc64le    # isPPC64
+        )
+        if cfunction_closure_unavailable
+            @warn(
+                "C function closures are not available on $(Sys.ARCH). PolyesterBatchEvaluator will likely throw an error " *
+                "the first time it is used due."
+            )
+        end
+
+        return new{T,SS,F}(prob)
+    end
+end
+
+"""
     evaluate!(can::AbstractCandidate, evaluator::BasicEvaluator)
 
 Evaluates the fitness of a candidat using the given evaluator
@@ -102,3 +128,17 @@ function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
     end
     return nothing
 end
+function evaluate!(pop::AbstractPopulation, evaluator::PolyesterBatchEvaluator)
+    # We need to get the candidates before we can use @batch
+    # as the @batch macro fails for eachindex(candiates(pop))
+    cs = candidates(pop); N = length(cs) 
+    @batch for idx in 1:N
+        #candidate = candidates(pop, idx)
+        candidate = cs[idx]
+        fitness   = evaluate(evaluator.prob, candidate)
+        set_fitness!(pop, fitness, idx)
+    end
+    return nothing
+end
+
+

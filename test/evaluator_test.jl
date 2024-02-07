@@ -17,11 +17,14 @@ prob = GlobalOptimization.OptimizationProblem(cost, [1.0, 1.0], [2.0, 2.0])
 N   = 1000
 spop = SimplePopulation([zeros(2) for _ in 1:N], zeros(N))
 tpop = deepcopy(spop)
+ppop = deepcopy(spop)
 seval = GlobalOptimization.SerialBatchEvaluator(prob)
 teval = GlobalOptimization.ThreadedBatchEvaluator(prob)
+peval = GlobalOptimization.PolyesterBatchEvaluator(prob)
 
 GlobalOptimization.evaluate!(spop, seval)
 GlobalOptimization.evaluate!(tpop, teval)
+GlobalOptimization.evaluate!(ppop, peval)
 
 # Check serial evaluator results
 all_one = true
