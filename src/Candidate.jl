@@ -6,39 +6,37 @@ Abstract type for a candidate
 """
 abstract type AbstractCandidate end
 
+"""
+    candidate(c::AbstractCandidate)
+
+Returns the candidate `c`.
+"""
+candidate(c::AbstractCandidate) = c.candidate
 
 """
-    FitnessAwareCandidate
+    fitness(c::AbstractCandidate)
 
-Abstract type for a candidate that knows (or at least has the ability to know)
-its fitness.
-
-Note: Name was selected to leave room for subtypes of AbstractCandidate that are not
-aware of their fitness (i.e., just a vector representing the candidate)
+Returns the fitness of the candidate `c`.
 """
-abstract type FitnessAwareCandidate <: AbstractCandidate end
+fitness(c::AbstractCandidate) = c.candidate_fitness
 
 """
-    set_fitness!(candidate,fitness)
-
-Sets the fitness of a candidate.
+    set_fitness!(c::AbstractCandidate, fitness)
 """
-@inline function set_fitness!(candidate::FitnessAwareCandidate, fitness)
-    candidate.fitness = fitness 
+@inline function set_fitness!(c::AbstractCandidate, fitness) 
+    c.candidate_fitness = fitness
     return nothing
 end
 
 """
-    BasicCandidate
+    check_fitness!(c::AbstractCandidate, options::Union{GeneralOptions,Val{true},Val{false}})
 
-A basic candidate that knows who it is and its fitness
+Checks the fitness of the candidate `c` to ensure that it is valid
+iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
-mutable struct BasicCandidate{T} <: FitnessAwareCandidate
-    value::Vector{T}
-    fitness::T
-    function BasicCandidate{T}(num_dims::Integer) where {T <: Number}
-        num_dims > 0 || throw(ArgumentError("num_dims must be greater than 0."))
-        return new{T}(Vector{T}(undef, num_dims), zero(T))
-    end
+@inline check_fitness!(c::AbstractCandidate, options::GeneralOptions{D,FVC}) where {D, FVC} = check_fitness!(c, FVC)
+@inline check_fitness!(c::AbstractCandidate, ::Val{false}) = nothing
+function check_fitness!(c::AbstractCandidate, ::Val{true})
+    isfinite(fitness(c)) || error("Candidate has an invalid fitness.")
+    return nothing
 end
-

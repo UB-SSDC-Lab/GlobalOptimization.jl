@@ -44,7 +44,7 @@ sres = GlobalOptimization.optimize!(spso)
 Random.seed!(1234)
 tres = GlobalOptimization.optimize!(tpso)
 
-@static if VERSION >= v"1.10" # VERSION < v1.10 has bug that results different rng state when using Threads.@threads
+if VERSION >= v"1.10" # VERSION < v1.10 has bug that results different rng state when using Threads.@threads
     check_swarm_equality(spso,tpso)
     @test sres.exitFlag == tres.exitFlag
     @test sres.iters == tres.iters

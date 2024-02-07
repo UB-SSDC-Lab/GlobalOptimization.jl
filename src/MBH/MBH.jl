@@ -1,103 +1,232 @@
 
-mutable struct MBH{T <: AbstractFloat, HT <: AbstractHopper{T}, BT <: AbstractVector, F <: Function, N} <: Optimizer
-    # Optimization problem
-    prob::Problem{F,BT,N}
+"""
+    MBHOptions <: AbstractAlgorithmSpecificOptions
 
-    # Hopper
-    hopper::HT
+Options for the Monotonic Basin Hopping (MBH) algorithm.
+"""
+struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <: GeneralOptions} <: AbstractAlgorithmSpecificOptions
+    # The general options
+    general::GO
+
+    # MBH specific options
+    # Defines the search space that the initial particles are drawn from
+    initial_space::ISS
+
+    function MBHOptions(
+        general::GO,
+        initial_space::ISS,
+    ) where {ISS,GO}
+        return new{ISS,GO}(
+            general,
+            initial_space,
+        )
+    end
 end
 
-function MBH{T}(prob::Problem{F,BT,N}) where {T <: AbstractFloat, F <: Function, BT, N}
-    # Instantiate Hopper
-    hopper = BasicHopper{T}(N)
+"""
+    MBH
 
-    return MBH{T,BasicHopper{T},BT,F,N}(prob, hopper)
+Monotonic Basin Hopping (MBH) algorithm.
+
+This implementation employs a single candidate rather than a population.
+"""
+struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}} <: AbstractOptimizer
+    # Monotonic Basin Hopping Options
+    options::MBHOptions
+
+    # The MBH evaluator
+    evaluator::E
+
+    # The hopper
+    hopper::H
+
+    # The MBH distribution
+    distribution::AbstractMBHDistribution{T}
+end
+
+"""
+    BasicMBH(prob::AbstractOptimizationProblem{SS})
+
+Constructs a basic MBH algorithm for the optimization problem `prob`.
+"""
+function BasicMBH(
+    prob::AbstractOptimizationProblem{SS};
+    function_value_check::Bool = true,
+    display::Bool = false,
+    display_interval::Int = 1,
+    max_time::Real = 60.0,
+    a = 0.93,
+    b = 0.05,
+    c = 1.0,
+    λ = 0.1,
+) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+        ),
+        search_space(prob),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        BasicEvaluator(prob),
+        BasicHopper{T}(numdims(prob)),
+        MBHStaticDistribution{T}(;
+            a = a,
+            b = b,
+            c = c,
+            λ = λ,
+        ),
+    )
+end
+
+"""
+    AdaptiveMBH(prob::AbstractOptimizationProblem{SS})
+
+Constructs an adaptive MBH algorithm for the optimization problem `prob`.
+"""
+function AdaptiveMBH(
+    prob::AbstractOptimizationProblem{SS};
+    function_value_check::Bool = true,
+    display::Bool = false,
+    display_interval::Int = 1,
+    max_time::Real = 60.0,
+    a  = 0.93,
+    b  = 0.05,
+    c  = 1.0,
+    λ  = 0.1,
+    memory_len = 10,
+) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+        ),
+        search_space(prob),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        BasicEvaluator(prob),
+        BasicHopper{T}(numdims(prob)),
+        MBHAdaptiveDistribution{T}(
+            numdims(prob),
+            memory_len;
+            a = a,
+            b = b,
+            c = c,
+            λhat0 = λ,
+        ),
+    )
 end
 
 # Methods
-function _optimize!(mbh::MBH, opts::Options)
-    _initialize!(mbh, opts)
-    res = _iterate!(mbh, opts)
-    return res
+function optimize!(opt::MBH)
+    # Initialize the MBH algorithm
+    initialize!(opt)
+
+    # Perform iterations and return results
+    return iterate!(opt)
 end
 
-function _initialize!(mbh::MBH{T,HT,BT,F,N}, opts::Options) where {T,HT,BT,F<:Function,N}
-    # Get Boundary Constraints
-    LB  = mbh.prob.LB
-    UB  = mbh.prob.UB
+function initialize!(opt::MBH)
+    # Unpack MBH
+    @unpack options, evaluator, hopper = opt
 
-    # Check if initial bounds on positions have been set
-    useInitBnds = false
-    if length(opts.iLB) == N && length(opts.iUB) == N
-        useInitBnds = true
-        iLB = opts.iLB            
-        iUB = opts.iUB
-    end
+    # Initialize the hopper
+    initialize!(hopper, options.initial_space)
 
-    # Initialize Hopper time steps
-    mbh.hopper.t = zero(Int)
+    # Handle fitness
+    initialize_fitness!(hopper, evaluator)
+    check_fitness!(hopper, get_general(options))
 
-    # Initialize Hopper solution
-    x = mbh.hopper.x
-    for i in eachindex(x)
-        lLB = useInitBnds ? (LB[i] < iLB[i] ? iLB[i] : LB[i]) : LB[i]
-        lUB = useInitBnds ? (UB[i] > iUB[i] ? iUB[i] : UB[i]) : UB[i]
-        x[i] = lLB + (lUB - lLB)*rand(T)
-    end
-
-    # Initialize Hopper objective function value
-    mbh.hopper.f = mbh.prob.f(x)
     return nothing
 end
 
-function _iterate!(mbh::MBH{T,HT,BT,F,N}, opts::Options) where {T,HT,BT,F<:Function,N}
-    # Some simple options
-    max_time = 5.0
-    t0 = time()
+function iterate!(opt::MBH)
+    # Unpack MBH
+    @unpack options, evaluator, hopper, distribution = opt
+    search_space = evaluator.prob.ss
 
+    # Initialize algorithm stopping criteria requrements
+    iteration = 0
+    start_time = time()
+    current_time = start_time
+    
     # Begin loop
-    exitFlag = 0
-    hopper = mbh.hopper
-    fun = mbh.prob.f
-    while exitFlag == 0
-        # Update MBH time step
-        hopper.t += 1
+    exit_flag = 0
+    draw_count = 0
+    while exit_flag == 0
+        # Update iteration counter
+        iteration += 1
 
-        # Draw from distribution until step is accepted
-        attempted = 0
-        accepted = false
-        pert = MVector{N,T}(undef)
-        while !accepted
-            attempted += 1
-            for i in eachindex(pert)
-                pert[i] = 0.99*laplace(0.0, 0.0001) + 0.01*laplace(0.0, 1.0)
-            end
-            hopper.xc .= hopper.x .+ pert 
-            hopper.fc = fun(hopper.xc)
-            if inbounds(hopper.xc, mbh.prob.LB, mbh.prob.UB) && hopper.fc < hopper.f
-                hopper.x .= hopper.xc
-                hopper.f = hopper.fc
-                accepted = true
-            elseif time() - t0 > max_time
-                exitFlag = 1 
-                break
+        # Begin search for feasible step
+        step_accepted = false
+        draw_count = 0
+        while !step_accepted
+            # Draw update 
+            draw_update!(hopper, distribution)
+
+            # Update counter
+            draw_count += 1
+
+            # Check if we're in feasable search space
+            if feasible(hopper.candidate, search_space)
+                step_accepted = true
             end
         end
 
-        if time() - t0 > max_time
-            exitFlag = 2
+        # Evaluate the candidate
+        evaluate_fitness!(hopper, distribution, evaluator)
+
+        # Stopping criteria
+        current_time = time()
+        if current_time - start_time >= options.general.max_time
+            exit_flag = 1
         end
+
+        # Output status
+        display_status_mbh(
+            current_time - start_time,
+            iteration,
+            draw_count,
+            hopper.best_candidate_fitness,
+            get_general(options),
+        )
     end
-    return hopper.x, hopper.f, exitFlag
+
+    # Return results
+    return Results(
+        hopper.best_candidate_fitness,
+        hopper.best_candidate,
+        iteration,
+        current_time - start_time,
+        exit_flag,
+    )
 end
 
-function inbounds(x, LB, UB)
-    flag = true
-    @inbounds for i in eachindex(x)
-        if x[i] < LB[i] || x[i] > UB[i]
-            flag = false
-            break
-        end
-    end
-    return flag
+function display_status_mbh(time, iteration, draw_count, fitness, options::GeneralOptions{D,FVC}) where {D,FVC}
+    display_status_mbh(time, iteration, draw_count, fitness, get_display_interval(options), D)
+    return nothing
 end
+@inline display_status_mbh(time, iteration, draw_count, fitness, display_interval, ::Val{false}) = nothing
+function display_status_mbh(time, iteration, draw_count, fitness, display_interval, ::Val{true})
+    if iteration % display_interval == 0
+        fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
+        fspec2 = FormatExpr("Draw Count: {1:d}, Best Fitness: {2:e}")
+        printfmtln(fspec1, time, iteration)
+        printfmtln(fspec2, draw_count, fitness)
+    end
+    return nothing
+end
+
+

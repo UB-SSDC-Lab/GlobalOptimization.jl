@@ -23,8 +23,9 @@ include("PSO/Swarm.jl")
 include("PSO/PSO.jl")
 
 # MBH
-#include("MBH/Hopper.jl")
-#include("MBH/MBH.jl")
+include("MBH/Distributions.jl")
+include("MBH/Hopper.jl")
+include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
 export OptimizationProblem

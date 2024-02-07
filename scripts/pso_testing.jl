@@ -1,12 +1,13 @@
 
 using GlobalOptimization
-using BenchmarkTools
+#using BenchmarkTools
 using Random
-using LoopVectorization
-using PaddedViews
+#using LoopVectorization
+#using PaddedViews
 #using StaticArrays
 #using Profile
 #using JET
+using Infiltrator
 Random.seed!(1234)
 
 # Schwefel Function
@@ -32,19 +33,18 @@ end
 # Setup Problem
 N = 10
 ss = ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N],
-    [5.12 for i in 1:N],
+    [-1.0 for i in 1:N],
+    [1.0 for i in 1:N],
 )
 prob = OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
-spso = SerialPSO(prob)
-tpso = ThreadedPSO(prob)
+spso = SerialPSO(prob; display = true)
+bmbh = GlobalOptimization.AdaptiveMBH(prob; display = true, display_interval = 10000)
+#tpso = ThreadedPSO(prob)
 
-#res = optimize!(
-#    StaticPSO(prob; numParticles = 1000),
-#    Options(; display = true, useParallel = true, maxStallIters = 50)
-#)
+#res = optimize!(spso)
+res = optimize!(bmbh)
 #pso1 = StaticPSO(prob; numParticles = 100)
 #pso2 = deepcopy(pso1)
 
@@ -53,13 +53,13 @@ tpso = ThreadedPSO(prob)
 #tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
 #display(sres)
 #display(tres)
-GlobalOptimization.initialize!(spso)
-GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
-GlobalOptimization.step!(spso.swarm)
-GlobalOptimization.enforce_bounds!(spso.swarm, ss)
+# GlobalOptimization.initialize!(spso)
+# GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
+# GlobalOptimization.step!(spso.swarm)
+# GlobalOptimization.enforce_bounds!(spso.swarm, ss)
 
-go = @benchmark GlobalOptimization.evaluate_fitness!($spso.swarm, $spso.evaluator)
-display(go)
+# go = @benchmark GlobalOptimization.evaluate_fitness!($spso.swarm, $spso.evaluator)
+# display(go)
 
 # ======== ALLOCATION TRACKING
 # pso1 = SerialPSO(prob)

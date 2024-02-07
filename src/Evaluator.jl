@@ -74,16 +74,15 @@ struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEv
 end
 
 """
-    evaluate!(can::FitnessAwareCandidate, evaluator::BasicEvaluator)
+    evaluate!(can::AbstractCandidate, evaluator::BasicEvaluator)
 
 Evaluates the fitness of a candidat using the given evaluator
 """
-function evaluate!(can::FitnessAwareCandidate, evaluator::BasicEvaluator{T,SS,F}) where {T,SS,F <: Function}
-    @unpack value, fitness = can
-    set_fitness!(can, evaluate(evaluator.prob, value)) 
+function evaluate!(c::AbstractCandidate, evaluator::BasicEvaluator{T,SS,F}) where {T,SS,F <: Function}
+    @unpack candidate, candidate_fitness = c
+    set_fitness!(c, evaluate(evaluator.prob, candidate)) 
     return nothing
 end
-
 
 """
     evaluate!(pop::AbstractPopulation, evaluator::BatchEvaluator)
