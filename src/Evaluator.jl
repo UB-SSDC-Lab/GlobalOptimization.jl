@@ -6,7 +6,6 @@ of a population or candidate.
 """
 abstract type AbstractEvaluator{T} end
 
-
 """
     SingleEvaluator
 
@@ -19,12 +18,14 @@ abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
 
 A basic evaluator that computes the fitness of a single candidate. 
 """
-struct BasicEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: SingleEvaluator{T} 
+struct BasicEvaluator{T, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: SingleEvaluator{T} 
     # The optimization problem
-    prob::OptimizationProblem{SS,F}
+    prob::OptimizationProblem{SS,F,G}
 
-    function BasicEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
-        return new{T,SS,F}(prob)
+    function BasicEvaluator(
+        prob::OptimizationProblem{SS,F,G},
+    ) where {T, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+        return new{T,SS,F,G}(prob)
     end
 end
 
@@ -58,7 +59,6 @@ struct SerialBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEval
     end
 end
 
-
 """
     ThreadedBatchEvaluator
 
@@ -71,6 +71,27 @@ struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEv
     function ThreadedBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
         return new{T,SS,F}(prob)
     end
+end
+
+"""
+    has_gradient(evaluator::BasicEvaluator)
+
+Returns `true` if the evaluator has a gradient, otherwise, `false`.
+"""
+function has_gradient(evaluator::BasicEvaluator{SS,F,G}) where {SS <: SearchSpace, F <: Function, G <: Function}
+    return true
+end
+function has_gradient(evaluator::BasicEvaluator{SS,F,G}) where {SS <: SearchSpace, F <: Function, G <: Nothing}
+    return false
+end
+
+"""
+    has_gradient(evaluator::AbstractEvaluator)
+
+Returns `true` if the evaluator has a gradient, otherwise, `false`.
+"""
+function has_gradient(evaluator::AbstractEvaluator)
+    return false
 end
 
 """

@@ -8,7 +8,7 @@ using Random
 #using Profile
 #using JET
 using Infiltrator
-Random.seed!(1234)
+#Random.seed!(1234)
 
 # Schwefel Function
 function schaffer(x)
@@ -30,21 +30,55 @@ end
     return obj
 end
 
+function rastrigin(x; A = 10)
+    obj = A*length(x)
+    for val in x
+        obj += val^2 - A*cos(2*pi*val)
+    end
+    return obj
+end
+
 # Setup Problem
-N = 10
+N = 5
 ss = ContinuousRectangularSearchSpace(
-    [-1.0 for i in 1:N],
-    [1.0 for i in 1:N],
+    [-5.0 for i in 1:N],
+    [5.0 for i in 1:N],
 )
-prob = OptimizationProblem(layeb_1, ss)
+prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate PSO
-spso = SerialPSO(prob; display = true)
-bmbh = GlobalOptimization.AdaptiveMBH(prob; display = true, display_interval = 10000)
+spso = SerialPSO(prob; max_time = 5.0)
+bmbh = GlobalOptimization.BasicMBH(
+    prob; 
+    display = true, 
+    display_interval = 1000000,
+    max_time = 1.0,
+    ls_b = 1e-5,
+    ls_iters = 10,
+    a = 0.97,
+    b = 0.1,
+    c = 1.0,
+    λ = 0.01,
+)
+ambh = GlobalOptimization.AdaptiveMBH(
+    prob; 
+    display = true, 
+    display_interval = 1000000,
+    max_time = 1.0,
+    memory_len = 10,
+    ls_b = 1e-5,
+    ls_iters = 5,
+    a = 0.97,
+    b = 0.1,
+    c = 1.0,
+    λ = 0.01,
+)
 #tpso = ThreadedPSO(prob)
 
 #res = optimize!(spso)
-res = optimize!(bmbh)
+res = optimize!(bmbh); display(res)
+res = optimize!(ambh); display(res)
+res = optimize!(spso); display(res)
 #pso1 = StaticPSO(prob; numParticles = 100)
 #pso2 = deepcopy(pso1)
 

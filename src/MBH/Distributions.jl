@@ -166,7 +166,7 @@ function push_accepted_step!(
 
         # Update scale parameter
         λhat[i] = (1.0 - a)*σ + a*λhat[i]
-        display(λhat[i])
+        #display(λhat[i])
     end
 
     return nothing
@@ -196,7 +196,7 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     # Draw step
     k = length(step) / 2.0
     @inbounds for i in eachindex(step)
-        step[i] = k*((1.0 - b)*laplace(0.0, c*λhat[i]) + b*laplace(0.0, 1.0)) 
+        step[i] = k*((1.0 - b)*laplace(c*λhat[i]) + b*laplace(1.0)) 
     end
 
     return nothing

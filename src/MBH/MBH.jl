@@ -9,7 +9,6 @@ struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
     general::GO
 
     # MBH specific options
-    # Defines the search space that the initial particles are drawn from
     initial_space::ISS
 
     function MBHOptions(
@@ -30,7 +29,7 @@ Monotonic Basin Hopping (MBH) algorithm.
 
 This implementation employs a single candidate rather than a population.
 """
-struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}} <: AbstractOptimizer
+struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: LocalSearch{T}} <: AbstractOptimizer
     # Monotonic Basin Hopping Options
     options::MBHOptions
 
@@ -42,6 +41,9 @@ struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}} <: Abst
 
     # The MBH distribution
     distribution::AbstractMBHDistribution{T}
+
+    # The local search algorithm
+    local_search::LS
 end
 
 """
@@ -59,6 +61,8 @@ function BasicMBH(
     b = 0.05,
     c = 1.0,
     λ = 0.1,
+    ls_b = 1e-6,
+    ls_iters = 16,
 ) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = MBHOptions(
@@ -82,6 +86,7 @@ function BasicMBH(
             c = c,
             λ = λ,
         ),
+        LocalStochasticSearch{T}(numdims(prob), ls_b, ls_iters),
     )
 end
 
@@ -101,6 +106,8 @@ function AdaptiveMBH(
     c  = 1.0,
     λ  = 0.1,
     memory_len = 10,
+    ls_b = 1e-6,
+    ls_iters = 16,
 ) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = MBHOptions(
@@ -126,6 +133,8 @@ function AdaptiveMBH(
             c = c,
             λhat0 = λ,
         ),
+        #LocalStochasticSearch{T}(numdims(prob), ls_b, ls_iters),
+        LocalGradientSearch{T}(ls_iters),
     )
 end
 
@@ -154,7 +163,7 @@ end
 
 function iterate!(opt::MBH)
     # Unpack MBH
-    @unpack options, evaluator, hopper, distribution = opt
+    @unpack options, evaluator, hopper, distribution, local_search = opt
     search_space = evaluator.prob.ss
 
     # Initialize algorithm stopping criteria requrements
@@ -185,8 +194,14 @@ function iterate!(opt::MBH)
             end
         end
 
-        # Evaluate the candidate
-        evaluate_fitness!(hopper, distribution, evaluator)
+       # Evaluate the candidate
+        evaluate_fitness!(hopper, evaluator)
+
+        # Perform local search (performing local search after checkng feasibility but before updating hopper fitness)
+        local_search!(hopper, evaluator, local_search) 
+
+        # Update fitness
+        update_fitness!(hopper, distribution, evaluator)
 
         # Stopping criteria
         current_time = time()

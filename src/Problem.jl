@@ -14,8 +14,9 @@ An optimization problem. Contains the objective function and search space.
 - `f::F`: The objective function.
 - `ss::SS`: The search space.
 """
-struct OptimizationProblem{SS <: SearchSpace, F <: Function} <: AbstractOptimizationProblem{SS}
+struct OptimizationProblem{SS <: SearchSpace, F <: Function, G <: Union{Nothing,Function}} <: AbstractOptimizationProblem{SS}
     f::F    # Objective function
+    g::G    # Gradient of the objective function
     ss::SS  # Search space
 
     @doc """
@@ -42,7 +43,10 @@ struct OptimizationProblem{SS <: SearchSpace, F <: Function} <: AbstractOptimiza
     ```
     """
     function OptimizationProblem(f::F, ss::SS) where {F <: Function, SS <: SearchSpace}
-        return new{SS,F}(f, ss)
+        return new{SS,F,Nothing}(f, nothing, ss)
+    end
+    function OptimizationProblem(f::F, g::G, ss::SS) where {F <: Function, G <: Function, SS <: SearchSpace}
+        return new{SS,F,G}(f, g, ss)
     end
 end
 

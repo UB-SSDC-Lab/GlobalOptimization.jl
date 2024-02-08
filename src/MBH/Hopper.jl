@@ -82,30 +82,36 @@ function initialize_fitness!(
 end
 
 """
-    evaluate_fitness!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T}, evaluator::BasicEvaluator{T})
+    evaluate_fitness!(hopper::BasicHopper{T}, evaluator::BasicEvaluator{T})
 
-Evaluates the fitness of the hopper `hopper` using the given `evaluator`. Also updates the distrubution if step is an improvement.
+Evaluates the fitness of the hopper `hopper` using the given `evaluator`. 
 """
 function evaluate_fitness!(
-    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T}, evaluator::BasicEvaluator{T},
+    hopper::BasicHopper{T}, evaluator::BasicEvaluator{T},
 ) where {T}
     # Evaluate the cost function for the hopper
     evaluate!(hopper, evaluator)
+    return nothing
+end
 
+"""
+    update_fitness!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T}, evaluator::BasicEvaluator{T})
+
+Updates the hopper fitness information after previously evaluating the fitness of the hopper.
+"""
+function update_fitness!(
+    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T}, evaluator::BasicEvaluator{T},
+) where {T}
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update hopper
         hopper.best_candidate .= hopper.candidate
         hopper.best_candidate_fitness = hopper.candidate_fitness
     end
-
     return nothing
 end
-function evaluate_fitness!(
+function update_fitness!(
     hopper::BasicHopper{T}, distribution::MBHAdaptiveDistribution{T}, evaluator::BasicEvaluator{T},
 ) where {T}
-    # Evaluate the cost function for the hopper
-    evaluate!(hopper, evaluator)
-
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update distribution
         push_accepted_step!(
@@ -119,9 +125,9 @@ function evaluate_fitness!(
         hopper.best_candidate .= hopper.candidate
         hopper.best_candidate_fitness = hopper.candidate_fitness
     end
-
     return nothing
 end
+
 
 """
     draw_update!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T})
