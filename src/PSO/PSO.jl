@@ -125,6 +125,7 @@ function SerialPSO(
     display_interval::Int = 1,
     function_value_check::Bool = true,
     max_time::Real = 60.0,
+    min_cost::Real = -Inf,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = PSOOptions(
@@ -133,6 +134,7 @@ function SerialPSO(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         num_particles,
         intersection(search_space(prob), initial_bounds),
@@ -206,6 +208,7 @@ function ThreadedPSO(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         num_particles,
         intersection(search_space(prob), initial_bounds),

@@ -1,8 +1,8 @@
+abstract type AbstractLocalSearch{T} end
+abstract type GradientBasedLocalSearch{T} <: AbstractLocalSearch{T} end
+abstract type OptimLocalSearch{T} <: GradientBasedLocalSearch{T} end
 
-
-abstract type LocalSearch{T} end
-
-struct LocalStochasticSearch{T} <: LocalSearch{T}
+struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     # The scale laplace distribution scale parameter
     b::T
 
@@ -17,11 +17,38 @@ struct LocalStochasticSearch{T} <: LocalSearch{T}
     end
 end
 
-struct LocalGradientSearch{T} <: LocalSearch{T}
-    iters::Int
+struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch{T}
+    # Tollerance on percent decrease of objective function for performing another local search
+    percent_decrease_tolerance::T
 
-    function LocalGradientSearch{T}(iters::Int) where {T <: AbstractFloat}
-        return new{T}(iters)
+    # The LBFGS algorithm
+    alg::AT
+
+    # The Optim.jl options
+    options::OT
+
+    function LBFGSLocalSearch{T}(;
+        iters_per_solve::Int = 5,     
+        percent_decrease_tol::Number = 50.0,
+        m::Int = 10,
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        manifold = Optim.Flat(),
+    ) where {T <: AbstractFloat}
+        alg = Optim.LBFGS(;
+            m = m,
+            alphaguess = alphaguess,
+            linesearch = linesearch,
+            manifold = manifold,
+        )
+        opts = Optim.Options(
+            iterations = iters_per_solve,
+        )
+        return new{T, typeof(alg), typeof(opts)}(
+            T(percent_decrease_tol), 
+            alg,
+            opts,
+        )
     end
 end
 
@@ -59,25 +86,40 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     return nothing
 end
 
-function local_search!(hopper, evaluator, ls::LocalGradientSearch)
+function local_search!(hopper, evaluator, ls::OptimLocalSearch)
+    @unpack candidate, candidate_fitness = hopper
     @unpack prob = evaluator
-    @unpack iters = ls
+    @unpack percent_decrease_tolerance, alg, options = ls
 
-    res = Optim.optimize(
-        prob.f, 
-        hopper.candidate, 
-        Optim.LBFGS(),
-        Optim.Options(
-            iterations = iters,
-        );
-        autodiff = :forward,
-    )
+    # Perform local search
+    current_fitness = candidate_fitness
+    done = false
+    while !done
+        # Perform optimization
+        res = Optim.optimize(
+            prob.f, 
+            candidate, 
+            alg,
+            options;
+        )
 
-    # Update candidate step if necessary
-    if Optim.minimum(res) < hopper.candidate_fitness
-        hopper.candidate .= Optim.minimizer(res)
-        hopper.candidate_fitness = Optim.minimum(res)
-        hopper.candidate_step .= hopper.candidate .- hopper.best_candidate
+        new_fitness = Optim.minimum(res)
+        if new_fitness < current_fitness
+            # Update hopper candidate since we've improved some
+            hopper.candidate        .= Optim.minimizer(res)
+            hopper.candidate_fitness = new_fitness
+            hopper.candidate_step   .= hopper.candidate .- hopper.best_candidate
+
+            # Check if we should continue local search
+            perc_decrease = 100.0*(current_fitness - new_fitness)/abs(current_fitness)
+            if perc_decrease < percent_decrease_tolerance
+                done = true
+            else
+                current_fitness = new_fitness
+            end
+        else
+            done = true
+        end
     end
     return nothing
 end

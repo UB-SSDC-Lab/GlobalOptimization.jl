@@ -11,6 +11,8 @@ struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
     # MBH specific options
     initial_space::ISS
 
+    # 
+
     function MBHOptions(
         general::GO,
         initial_space::ISS,
@@ -29,7 +31,7 @@ Monotonic Basin Hopping (MBH) algorithm.
 
 This implementation employs a single candidate rather than a population.
 """
-struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: LocalSearch{T}} <: AbstractOptimizer
+struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: AbstractLocalSearch{T}} <: AbstractOptimizer
     # Monotonic Basin Hopping Options
     options::MBHOptions
 
@@ -47,22 +49,17 @@ struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: L
 end
 
 """
-    BasicMBH(prob::AbstractOptimizationProblem{SS})
-
-Constructs a basic MBH algorithm for the optimization problem `prob`.
+    MBH(prob::AbstractOptimizationProblem{SS})
 """
-function BasicMBH(
-    prob::AbstractOptimizationProblem{SS};
+function MBH(
+    prob::AbstractOptimizationProblem{SS},
+    hop_distribution::AbstractMBHDistribution{T},
+    local_search::AbstractLocalSearch{T};
     function_value_check::Bool = true,
     display::Bool = false,
     display_interval::Int = 1,
     max_time::Real = 60.0,
-    a = 0.93,
-    b = 0.05,
-    c = 1.0,
-    λ = 0.1,
-    ls_b = 1e-6,
-    ls_iters = 16,
+    min_cost::Real = -Inf,
 ) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = MBHOptions(
@@ -71,6 +68,7 @@ function BasicMBH(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         search_space(prob),
     )
@@ -80,61 +78,8 @@ function BasicMBH(
         options,
         BasicEvaluator(prob),
         BasicHopper{T}(numdims(prob)),
-        MBHStaticDistribution{T}(;
-            a = a,
-            b = b,
-            c = c,
-            λ = λ,
-        ),
-        LocalStochasticSearch{T}(numdims(prob), ls_b, ls_iters),
-    )
-end
-
-"""
-    AdaptiveMBH(prob::AbstractOptimizationProblem{SS})
-
-Constructs an adaptive MBH algorithm for the optimization problem `prob`.
-"""
-function AdaptiveMBH(
-    prob::AbstractOptimizationProblem{SS};
-    function_value_check::Bool = true,
-    display::Bool = false,
-    display_interval::Int = 1,
-    max_time::Real = 60.0,
-    a  = 0.93,
-    b  = 0.05,
-    c  = 1.0,
-    λ  = 0.1,
-    memory_len = 10,
-    ls_b = 1e-6,
-    ls_iters = 16,
-) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
-    # Construct the options
-    options = MBHOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-        ),
-        search_space(prob),
-    )
-
-    # Construct MBH
-    return MBH(
-        options,
-        BasicEvaluator(prob),
-        BasicHopper{T}(numdims(prob)),
-        MBHAdaptiveDistribution{T}(
-            numdims(prob),
-            memory_len;
-            a = a,
-            b = b,
-            c = c,
-            λhat0 = λ,
-        ),
-        #LocalStochasticSearch{T}(numdims(prob), ls_b, ls_iters),
-        LocalGradientSearch{T}(ls_iters),
+        hop_distribution,
+        local_search,
     )
 end
 
@@ -207,6 +152,8 @@ function iterate!(opt::MBH)
         current_time = time()
         if current_time - start_time >= options.general.max_time
             exit_flag = 1
+        elseif hopper.best_candidate_fitness <= get_min_cost(options)
+            exit_flag = 2
         end
 
         # Output status

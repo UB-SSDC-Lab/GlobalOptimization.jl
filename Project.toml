@@ -6,6 +6,7 @@ version = "0.0.1-DEV"
 [deps]
 Format = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
+LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

@@ -21,9 +21,9 @@ function waveDrop(x)
     return obj
 end
 
-@inline function layeb_1(x)
-    obj = 0.0
-    @fastmath for val in x
+function layeb_1(x)
+    obj = zero(eltype(x))
+    for val in x
         xm1sq = (val - 1)^2
         obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
     end
@@ -39,48 +39,32 @@ function rastrigin(x; A = 10)
 end
 
 # Setup Problem
-N = 4
+N = 20
 ss = ContinuousRectangularSearchSpace(
     [-5.0 for i in 1:N],
     [5.0 for i in 1:N],
 )
-prob = OptimizationProblem(rastrigin, ss)
+prob = OptimizationProblem(waveDrop, ss)
 
-# Instantiate PSO
-spso = SerialPSO(prob; max_time = 20.0)
-bmbh = GlobalOptimization.BasicMBH(
-    prob; 
-    display = true, 
-    display_interval = 1000000,
-    max_time = 20.0,
-    ls_b = 1e-4,
-    ls_iters = 32,
-    a = 0.97,
-    b = 0.1,
-    c = 1.0,
-    λ = 0.01,
+# Instantiate MBH
+dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
+    N, 10, 5; 
+    a = 0.97, b = 0.1, c = 1.0, λhat0 = 0.01,
 )
-ambh = GlobalOptimization.AdaptiveMBH(
-    prob; 
-    display = true, 
-    display_interval = 1000000,
-    max_time = 20.0,
-    memory_len = 6,
-    ls_b = 1e-4,
-    ls_iters = 32,
-    a = 0.97,
-    b = 0.1,
-    c = 1.0,
-    λ = 0.01,
+ls = GlobalOptimization.LBFGSLocalSearch{Float64}(;
+    iters_per_solve      = 5,
+    percent_decrease_tol = 30.0,
+    m                    = 10,
 )
-#tpso = ThreadedPSO(prob)
+mbh = GlobalOptimization.MBH(
+    prob, dist, ls; 
+    display = true, 
+    display_interval = 1,
+    max_time = 20.0,
+    min_cost = -1.0 + 1e-14,
+)
 
-#res = optimize!(spso)
-res = optimize!(bmbh); display(res)
-res = optimize!(ambh); display(res)
-res = optimize!(spso); display(res)
-#pso1 = StaticPSO(prob; numParticles = 100)
-#pso2 = deepcopy(pso1)
+res = optimize!(mbh); display(res)
 
 # ======== BENCHMARKING
 #sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))

@@ -6,6 +6,7 @@ using Random: shuffle!
 using UnPack
 
 import Optim
+import LineSearches
 
 # Utilities
 include("rng.jl")
