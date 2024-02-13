@@ -13,12 +13,12 @@ using Infiltrator
 # Schwefel Function
 function schaffer(x)
     obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5)/(1 + 0.001*(x[1]^2+x[2]^2))^2
-    return obj 
+    return obj, 0.0 
 end
 
 function waveDrop(x)
     obj = -(1 + cos(12*sqrt(x[1]^2 + x[2]^2)))/(0.5*(x[1]^2 + x[2]^2) + 2.0)
-    return obj
+    return obj, 0.0
 end
 
 function layeb_1(x)
@@ -27,7 +27,7 @@ function layeb_1(x)
         xm1sq = (val - 1)^2
         obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
     end
-    return obj
+    return obj, 0.0
 end
 
 function rastrigin(x; A = 10)
@@ -35,7 +35,7 @@ function rastrigin(x; A = 10)
     for val in x
         obj += val^2 - A*cos(2*pi*val)
     end
-    return obj
+    return obj, 0.0
 end
 
 # Setup Problem

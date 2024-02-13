@@ -97,7 +97,7 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     while !done
         # Perform optimization
         res = Optim.optimize(
-            prob.f, 
+            get_local_search_function(prob), 
             candidate, 
             alg,
             options;

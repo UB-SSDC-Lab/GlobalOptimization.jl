@@ -200,6 +200,7 @@ function ThreadedPSO(
     display_interval::Int = 1,
     function_value_check::Bool = true,
     max_time::Real = 60.0,
+    min_cost::Real = -Inf,
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
     # Construct the options
     options = PSOOptions(

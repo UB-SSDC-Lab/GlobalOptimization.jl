@@ -1,9 +1,16 @@
 """
+    AbstractProblem
+
+Abstract type for all solvable problems.
+"""
+abstract type AbstractProblem{SS} end
+
+"""
     AbstractOptimizationProblem
 
 Abstract type for optimization problems.
 """
-abstract type AbstractOptimizationProblem{SS} end
+abstract type AbstractOptimizationProblem{SS} <: AbstractProblem{SS} end
 
 """
     OptimizationProblem{SS, F}
@@ -102,5 +109,17 @@ numdims(prob::OptimizationProblem) = numdims(search_space(prob))
 Evaluates the objective function `f` of the optimization problem `prob` at `x`.
 """
 function evaluate(prob::OptimizationProblem, x::AbstractArray)
-    return prob.f(x)
+    f, g = prob.f(x)
+    return f + g
+end
+
+"""
+    get_local_search_function(prob::OptimizationProblem)
+
+Returns a function that is used during for the local search process.
+For an OptimizationProblem, this is just the sum of the cost function + 
+the feasibility penalty itself.
+"""
+function get_local_search_function(prob::OptimizationProblem)
+    return x -> evaluate(prob, x)
 end
