@@ -110,7 +110,7 @@ Evaluates the objective function `f` of the optimization problem `prob` at `x`.
 """
 function evaluate(prob::OptimizationProblem, x::AbstractArray)
     f, g = prob.f(x)
-    return f + g*g
+    return f + 0.5*g*g
 end
 
 """
