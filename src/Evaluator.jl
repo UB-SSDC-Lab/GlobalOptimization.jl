@@ -91,7 +91,7 @@ end
 
 Evaluates the fitness of a population using the given `evaluator`.
 """
-function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator{T,SS,F}) where {T,SS,F <: Function}
+function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
     fun = get_scalar_function(evaluator.prob)
     @inbounds for (idx, candidate) in enumerate(candidates(pop))
         set_fitness!(pop, fun(candidate), idx)
@@ -106,7 +106,6 @@ function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
     end
     return nothing
 end
-
 
 """
     evaluate_with_penalty(evaluator::FeasibilityHandlingEvaluator, candidate::AbstractArray)

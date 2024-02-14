@@ -46,13 +46,13 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 3
+N = 2
 ss = ContinuousRectangularSearchSpace(
     [-5.0 for i in 1:N],
     [5.0 for i in 1:N],
 )
 #prob = OptimizationProblem(schaffer, ss)
-prob = GlobalOptimization.NonlinearLeastSquaresProblem(simple_nonlinear_equation, ss, 3)
+prob = GlobalOptimization.NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
 dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(

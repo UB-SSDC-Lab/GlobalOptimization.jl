@@ -69,12 +69,14 @@ struct OptimizationProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: U
     function OptimizationProblem{has_penalty}(
         f::F, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
     ) where {has_penalty, F <: Function}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ContinuousRectangularSearchSpace(LB, UB))
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+        return new{has_penalty,typeof(ss),F,Nothing}(f, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
     ) where {has_penalty, F <: Function, G <: Function}
-        return new{has_penalty,SS,F,G}(f, g, ContinuousRectangularSearchSpace(LB, UB))
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+        return new{has_penalty,typeof(ss),F,G}(f, g, ContinuousRectangularSearchSpace(LB, UB))
     end
 end
 
@@ -111,10 +113,11 @@ function OptimizationProblem(f::F, g::G, ss::SS) where {F <: Function, G <: Func
 end
 
 """
-    OptimizationProblem(f, LB, UB)
+    OptimizationProblem(f, [g], LB, UB)
 
-Constructs an optimization problem with objective function `f` and a 
-`ContinuousRectangularSearchSpace` defined by `LB` and `UB`.
+Constructs an optimization problem with objective function `f`,
+optional gradient `g`, and a `ContinuousRectangularSearchSpace` 
+defined by `LB` and `UB`.
 
 # Arguments
 - `f::F`: The objective function.
@@ -147,11 +150,47 @@ function OptimizationProblem(
     return OptimizationProblem{has_penalty}(f, g, LB, UB)
 end
 
+"""
+    NonlinearProblem{has_penalty, SS, F, G}
+
+A nonlinear problem. Contains the nonlinear equations and search space.
+
+# Fields
+- `f::F`: The nonlinear equations.
+- `g!::G`: The jacobian of the nonlinear equations.
+- `ss::SS`: The search space.
+"""
 struct NonlinearProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Union{Nothing,Function}} <: AbstractNonlinearEquationProblem{has_penalty,SS}
     f::F   # The nonlinear equations
     g!::G  # The jacobian of the nonlinear equations
     ss::SS # The search space
 
+    @doc """
+        NonlinearProblem{has_penalty}(f::F, [g::G], ss::SS)
+
+    Constructs a nonlinear problem with nonlinear functions `f`, optional jacobian `g`, and search space `ss`.
+    If has_penalty is specified as true, then the nonlinear function must return a Tuple{AbstractArray{T},T} 
+    for a given x of type AbstractArray{T}.
+
+    # Arguments
+    - `f::F`: The nonlinear function.
+    - `g::G`: The Jacobian of the nonlinear function.
+    - `ss::SS`: The search space.
+
+    # Returns
+    - `NonlinearProblem{has_penalty, SS, F, G}`
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization;
+    julia> f(x) = [x[1] - 2.0, x[2] - 2.0]
+    julia> LB = [-5.0, -5.0];
+    julia> UB = [ 5.0, 5.0];
+    julia> ss = ContinuousRectangularSearchSpace(LB, UB);
+    julia> prob = NonlinearProblem(f, ss)
+    NonlinearProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0], [5.0, 5.0], [10.0, 10.0]))
+    ```
+    """
     function NonlinearProblem{has_penalty}(f::F, ss::SS) where {has_penalty, F <: Function, SS <: SearchSpace}
         return new{has_penalty,SS,F,Nothing}(f, nothing, ss)
     end
@@ -170,6 +209,30 @@ struct NonlinearProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Unio
     end
 end
 
+"""
+    NonlinearProblem(f, [g], ss)
+
+Constructs a nonlinear problem with nonlinear function `f`, optional Jacobian `g`, and a search space.
+
+# Arguments
+- `f::F`: The nonlinear function.
+- `g::G`: The Jacobian of the nonlinear function.
+- `ss::SS`: The search space.
+
+# Returns
+- `NonlinearProblem{has_penalty, ContinuousRectangularSearchSpace, F, G}`
+
+# Examples
+```julia-repl
+julia> using GlobalOptimization;
+julia> f(x) = [x[1] - 2.0, x[2] - 2.0]
+julia> LB = [-5.0, -5.0];
+julia> UB = [ 5.0, 5.0];
+julia> ss = ContinuousRectangularSearchSpace(LB, UB);
+julia> prob = NonlinearProblem(f, ss)
+NonlinearProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0], [5.0, 5.0], [10.0, 10.0]))
+```
+"""
 function NonlinearProblem(f::F, ss::SS) where {F <: Function, SS <: SearchSpace}
     has_penalty = Base.return_types(f)[1] <: Tuple ? Val(true) : Val(false)
     return NonlinearProblem{has_penalty}(f, ss)
@@ -178,6 +241,32 @@ function NonlinearProblem(f::F, g::G, ss::SS) where {F <: Function, G <: Functio
     has_penalty = Base.return_types(f)[1] <: Tuple ? Val(true) : Val(false)
     return NonlinearProblem{has_penalty}(f, g, ss)
 end
+
+"""
+    NonlinearProblem(f, [g], LB, UB)
+
+Constructs a nonlinear problem with nonlinear function `f`, optional Jacobian `g`, and a 
+continuous rectangular search space defined by the bounds LB and UB.
+
+# Arguments
+- `f::F`: The nonlinear function.
+- `g::G`: The Jacobian of the nonlinear function.
+- `LB::AbstractVector{<:Real}`: The lower bounds of the search space.
+- `UB::AbstractVector{<:Real}`: The upper bounds of the search space.
+
+# Returns
+- `NonlinearProblem{has_penalty, ContinuousRectangularSearchSpace, F, G}`
+
+# Examples
+```julia-repl
+julia> using GlobalOptimization;
+julia> f(x) = [x[1] - 2.0, x[2] - 2.0]
+julia> LB = [-5.0, -5.0];
+julia> UB = [ 5.0, 5.0];
+julia> prob = NonlinearProblem(f, LB, UB)
+NonlinearProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0], [5.0, 5.0], [10.0, 10.0]))
+```
+"""
 function NonlinearProblem(
     f::F, LB::AbstractVector{<:Real}, UB::AbstractVector{<:Real},
 ) where F <: Function
@@ -191,6 +280,17 @@ function NonlinearProblem(
     return NonlinearProblem{has_penalty}(f, g, LB, UB)
 end
 
+"""
+    NonlinearLeastSquaresProblem{has_penalty, SS, F, G}
+
+A nonlinear least squares problem. Contains the nonlinear equations and search space.
+
+# Fields
+- `f::F`: The nonlinear equations.
+- `g!::G`: The jacobian of the nonlinear equations.
+- `ss::SS`: The search space.
+- `n::Int`: The number of residuals.
+"""
 struct NonlinearLeastSquaresProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Union{Nothing,Function}} <: AbstractNonlinearEquationProblem{has_penalty,SS}
     f::F   # The nonlinear equations
     g!::G  # The jacobian of the nonlinear equations
@@ -199,6 +299,33 @@ struct NonlinearLeastSquaresProblem{has_penalty, SS <: SearchSpace, F <: Functio
     # For nonlinear least squres, we also need to know the number of residuals
     n::Int # The number of residuals
 
+    @doc """
+        NonlinearLeastSquaresProblem{has_penalty}(f::F, [g::G], ss::SS, num_resid::Int)
+
+    Constructs a nonlinear least squares problem with nonlinear functions `f`, optional jacobian `g`, 
+    and search space `ss`. If has_penalty is specified as true, then the nonlinear function must return 
+    a Tuple{AbstractArray{T},T} for a given x of type AbstractArray{T}.
+
+    # Arguments
+    - `f::F`: The nonlinear function.
+    - `g::G`: The Jacobian of the nonlinear function.
+    - `ss::SS`: The search space.
+    - `num_resid::Int`: The number of residuals.
+
+    # Returns
+    - `NonlinearLeastSquaresProblem{has_penalty, SS, F, G}`
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization;
+    julia> f(x) = [x[1] - x[3], x[2] - x[3]]
+    julia> LB = [-5.0, -5.0, -5.0];
+    julia> UB = [ 5.0, 5.0, 5.0];
+    julia> ss = ContinuousRectangularSearchSpace(LB, UB);
+    julia> prob = NonlinearLeastSquaresProblem(f, ss, 2)
+    NonlinearLeastSquaresProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0, -5.0], [5.0, 5.0, 5.0], [10.0, 10.0, 10.0]), 2)
+    ```
+    """
     function NonlinearLeastSquaresProblem{has_penalty}(f::F, ss::SS, num_resid::Int) where {has_penalty, F <: Function, SS <: SearchSpace}
         return new{has_penalty,SS,F,Nothing}(f, nothing, ss, num_resid)
     end
@@ -217,6 +344,30 @@ struct NonlinearLeastSquaresProblem{has_penalty, SS <: SearchSpace, F <: Functio
     end
 end
 
+"""
+    NonlinearLeastSquaresProblem(f, [g], ss)
+
+Constructs a nonlinear least squares problem with nonlinear function `f`, optional Jacobian `g`, and a search space.
+
+# Arguments
+- `f::F`: The nonlinear function.
+- `g::G`: The Jacobian of the nonlinear function.
+- `ss::SS`: The search space.
+
+# Returns
+- `NonlinearLeastSquaresProblem{has_penalty, ContinuousRectangularSearchSpace, F, G}`
+
+# Examples
+```julia-repl
+julia> using GlobalOptimization;
+julia> f(x) = [x[1] - x[3], x[2] - x[3]]
+julia> LB = [-5.0, -5.0, -5.0];
+julia> UB = [ 5.0, 5.0, 5.0];
+julia> ss = ContinuousRectangularSearchSpace(LB, UB);
+julia> prob = NonlinearLeastSquaresProblem(f, ss, 2)
+NonlinearLeastSquaresProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0, -5.0], [5.0, 5.0, 5.0], [10.0, 10.0, 10.0]), 2)
+```
+"""
 function NonlinearLeastSquaresProblem(f::F, ss::SS, num_resid::Int) where {F <: Function, SS <: SearchSpace}
     has_penalty = Base.return_types(f)[1] <: Tuple ? Val(true) : Val(false)
     return NonlinearLeastSquaresProblem{has_penalty}(f, ss, num_resid)
@@ -225,6 +376,31 @@ function NonlinearLeastSquaresProblem(f::F, g::G, ss::SS, num_resid::Int) where 
     has_penalty = Base.return_types(f)[1] <: Tuple ? Val(true) : Val(false)
     return NonlinearLeastSquaresProblem{has_penalty}(f, g, ss, num_resid)
 end
+
+"""
+    NonlinearLeastSquaresProblem(f, [g], LB, UB)
+
+Constructs a nonlinear least squares problem with nonlinear function `f`, optional Jacobian `g`, and a search space.
+
+# Arguments
+- `f::F`: The nonlinear function.
+- `g::G`: The Jacobian of the nonlinear function.
+- `LB::AbstractVector{<:Real}`: The lower bounds of the search space.
+- `UB::AbstractVector{<:Real}`: The upper bounds of the search space.
+
+# Returns
+- `NonlinearLeastSquaresProblem{has_penalty, ContinuousRectangularSearchSpace, F, G}`
+
+# Examples
+```julia-repl
+julia> using GlobalOptimization;
+julia> f(x) = [x[1] - x[3], x[2] - x[3]]
+julia> LB = [-5.0, -5.0, -5.0];
+julia> UB = [ 5.0, 5.0, 5.0];
+julia> prob = NonlinearLeastSquaresProblem(f, ss, LB, UB, 2)
+NonlinearLeastSquaresProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0, -5.0], [5.0, 5.0, 5.0], [10.0, 10.0, 10.0]), 2)
+```
+"""
 function NonlinearLeastSquaresProblem(
     f::F, LB::AbstractVector{<:Real}, UB::AbstractVector{<:Real}, num_resid::Int,
 ) where F <: Function
