@@ -1,8 +1,22 @@
-abstract type AbstractLocalSearch{T} end
-abstract type GradientBasedLocalSearch{T} <: AbstractLocalSearch{T} end
-abstract type OptimLocalSearch{T} <: GradientBasedLocalSearch{T} end
+abstract type AbstractLocalSearch end
+abstract type GradientBasedLocalSearch <: AbstractLocalSearch end
+abstract type OptimLocalSearch <: GradientBasedLocalSearch end
 
-struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
+# Timeout function
+function timeout(f, arg, seconds, fail)
+    tsk = @task f(arg)
+    schedule(tsk)
+    Timer(seconds) do timer
+        istaskdone(tsk) || Base.throwto(tsk, InterruptException())
+    end
+    try 
+        return fetch(tsk)
+    catch _;
+        return fail
+    end
+end
+
+struct LocalStochasticSearch{T} <: AbstractLocalSearch
     # The scale laplace distribution scale parameter
     b::T
 
@@ -12,12 +26,31 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     # Candidate step and candidate storage
     step::Vector{T}
 
-    function LocalStochasticSearch{T}(ndim::Int, b::T, iters::Int) where {T <: AbstractFloat}
-        return new{T}(b, iters, Vector{T}(undef, ndim))
+    function LocalStochasticSearch{T}(ndim::Int, b::Real, iters::Int) where {T <: AbstractFloat}
+        return new{T}(T(b), iters, Vector{T}(undef, ndim))
     end
 end
 
-struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch{T}
+# A simple cache for storing the solution from optimization with Optim.jl
+mutable struct OptimSolutionCache{T}
+    initialized::Bool
+    x::Vector{T}
+    cost::T
+    function OptimSolutionCache{T}() where T
+        return new{T}(false, Vector{T}(undef, 0), zero(T))
+    end
+end
+
+# Initalize optim cache
+is_initialized(cache::OptimSolutionCache) = cache.initialized
+function initialize!(cache::OptimSolutionCache{T}, ndim) where T
+    cache.x = Vector{T}(undef, ndim)
+    cache.initialized = true
+    return nothing
+end
+
+
+struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -27,6 +60,12 @@ struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch{T}
     # The Optim.jl options
     options::OT
 
+    # Max time per solve
+    max_solve_time::Float64
+
+    # Solution cache
+    cache::OptimSolutionCache{T}
+
     function LBFGSLocalSearch{T}(;
         iters_per_solve::Int = 5,     
         percent_decrease_tol::Number = 50.0,
@@ -34,6 +73,7 @@ struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch{T}
         alphaguess = LineSearches.InitialStatic(),
         linesearch = LineSearches.HagerZhang(),
         manifold = Optim.Flat(),
+        max_solve_time = 0.1,
     ) where {T <: AbstractFloat}
         alg = Optim.LBFGS(;
             m = m,
@@ -48,6 +88,8 @@ struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch{T}
             T(percent_decrease_tol), 
             alg,
             opts,
+            max_solve_time,
+            OptimSolutionCache{T}(),
         )
     end
 end
@@ -85,38 +127,59 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     return nothing
 end
 
+function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
+    res = Optim.optimize(
+        get_scalar_function(prob), 
+        x0, 
+        alg,
+        options;
+    )
+    cache.x .= Optim.minimizer(res)
+    cache.cost = Optim.minimum(res)
+    return true
+end
+
 function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     @unpack candidate, candidate_fitness = hopper
     @unpack prob = evaluator
-    @unpack percent_decrease_tolerance, alg, options = ls
+    @unpack percent_decrease_tolerance, alg, options, max_solve_time, cache = ls
+
+    # Initialize cache if necessary
+    is_initialized(cache) || initialize!(cache, numdims(prob))
 
     # Perform local search
     current_fitness = candidate_fitness
     done = false
     while !done
-        # Perform optimization
-        res = Optim.optimize(
-            get_scalar_function(prob), 
-            candidate, 
-            alg,
-            options;
+        # Perform optimization with optim and terminate if we don't finish in max_solve_time seconds
+        solve_finished = timeout(
+            x -> optim_solve!(cache, prob, x, alg, options),
+            candidate,
+            max_solve_time,
+            false,
         )
 
-        new_fitness = Optim.minimum(res)
-        if new_fitness < current_fitness
-            # Update hopper candidate since we've improved some
-            hopper.candidate        .= Optim.minimizer(res)
-            hopper.candidate_fitness = new_fitness
-            hopper.candidate_step   .= hopper.candidate .- hopper.best_candidate
+        if solve_finished
+            # Solve finished in time, so check fitness
+            new_fitness = cache.cost
+            if new_fitness < current_fitness
+                # Update hopper candidate since we've improved some
+                hopper.candidate        .= cache.x
+                hopper.candidate_fitness = new_fitness
+                hopper.candidate_step   .= hopper.candidate .- hopper.best_candidate
 
-            # Check if we should continue local search
-            perc_decrease = 100.0*(current_fitness - new_fitness)/abs(current_fitness)
-            if perc_decrease < percent_decrease_tolerance
-                done = true
+                # Check if we should continue local search
+                perc_decrease = 100.0*(current_fitness - new_fitness)/abs(current_fitness)
+                if perc_decrease < percent_decrease_tolerance
+                    done = true
+                else
+                    current_fitness = new_fitness
+                end
             else
-                current_fitness = new_fitness
+                done = true
             end
         else
+            # Solve did not finish in time, so don't do anything
             done = true
         end
     end

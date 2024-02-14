@@ -29,7 +29,14 @@ Monotonic Basin Hopping (MBH) algorithm.
 
 This implementation employs a single candidate rather than a population.
 """
-struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: AbstractLocalSearch{T}} <: AbstractOptimizer
+struct MBH{
+    T <: Number, 
+    H <: AbstractHopper{T}, 
+    E <: SingleEvaluator{T}, 
+    D <: AbstractMBHDistribution, 
+    LS <: AbstractLocalSearch,
+} <: AbstractOptimizer
+
     # Monotonic Basin Hopping Options
     options::MBHOptions
 
@@ -40,7 +47,7 @@ struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}, LS <: A
     hopper::H
 
     # The MBH distribution
-    distribution::AbstractMBHDistribution{T}
+    distribution::D
 
     # The local search algorithm
     local_search::LS
@@ -52,7 +59,7 @@ end
 function MBH(
     prob::AbstractProblem{has_penalty,SS},
     hop_distribution::AbstractMBHDistribution{T},
-    local_search::AbstractLocalSearch{T};
+    local_search::AbstractLocalSearch;
     function_value_check::Bool = true,
     display::Bool = false,
     display_interval::Int = 1,

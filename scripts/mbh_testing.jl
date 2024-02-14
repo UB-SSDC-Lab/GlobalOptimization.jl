@@ -63,12 +63,13 @@ lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
     iters_per_solve      = 5,
     percent_decrease_tol = 30.0,
     m                    = 10,
+    max_solve_time       = 0.1,
 )
 lss = GlobalOptimization.LocalStochasticSearch{Float64}(2, 1e-8, 32)
 mbh = GlobalOptimization.MBH(
     prob, dist, lsgb; 
     display = true, 
-    display_interval = 10000,
+    display_interval = 1,
     max_time = 20.0,
     min_cost = 1e-8,
 )
