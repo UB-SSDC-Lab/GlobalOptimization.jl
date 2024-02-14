@@ -14,34 +14,18 @@ Abstract type for an evaluator that evaluates the fitness of a single candidate
 abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
 
 """
-    BasicEvaluator
-
-A basic evaluator that computes the fitness of a single candidate. 
-"""
-struct BasicEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: SingleEvaluator{T} 
-    # The optimization problem
-    prob::OptimizationProblem{has_penalty, SS,F,G}
-
-    function BasicEvaluator(
-        prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
-        return new{T,has_penalty,SS,F,G}(prob)
-    end
-end
-
-"""
     FeasibilityHandlingEvaluator
 
 An evaluator that handled a functions returned infeasibility penalty
 """
-struct FeasibilityHandlingEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: SingleEvaluator{T} 
+struct FeasibilityHandlingEvaluator{T, PT <: AbstractProblem} <: SingleEvaluator{T} 
     # The optimization problem
-    prob::OptimizationProblem{has_penalty,SS,F,G}
+    prob::PT
 
     function FeasibilityHandlingEvaluator(
-        prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
-        return new{T,has_penalty,SS,F,G}(prob)
+        prob::AbstractProblem{has_penalty, SS},
+    ) where {T, has_penalty, SS <: SearchSpace{T}}
+        return new{T,typeof(prob)}(prob)
     end
 end
 
@@ -94,37 +78,12 @@ struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Functio
 end
 
 """
-    has_gradient(evaluator::BasicEvaluator)
-
-Returns `true` if the evaluator has a gradient, otherwise, `false`.
-"""
-function has_gradient(evaluator::BasicEvaluator{SS,F,G}) where {SS <: SearchSpace, F <: Function, G <: Function}
-    return true
-end
-function has_gradient(evaluator::BasicEvaluator{SS,F,G}) where {SS <: SearchSpace, F <: Function, G <: Nothing}
-    return false
-end
-
-"""
     has_gradient(evaluator::AbstractEvaluator)
 
 Returns `true` if the evaluator has a gradient, otherwise, `false`.
 """
 function has_gradient(evaluator::AbstractEvaluator)
     return false
-end
-
-
-"""
-    evaluate!(can::AbstractCandidate, evaluator::BasicEvaluator)
-
-Evaluates the fitness of a candidat using the given evaluator
-"""
-function evaluate!(c::AbstractCandidate, evaluator::BasicEvaluator{T,SS,F}) where {T,SS,F <: Function}
-    @unpack candidate, candidate_fitness = c
-    fun = get_scalar_function(evaluator.prob)
-    set_fitness!(c, fun(candidate)) 
-    return nothing
 end
 
 """

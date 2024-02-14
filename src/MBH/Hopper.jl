@@ -83,19 +83,6 @@ function initialize!(
 end
 
 """
-    evaluate_fitness!(hopper::BasicHopper{T}, evaluator::BasicEvaluator{T})
-
-Evaluates the fitness of the hopper `hopper` using the given `evaluator`. 
-"""
-function evaluate_fitness!(
-    hopper::BasicHopper{T}, evaluator::BasicEvaluator{T},
-) where {T}
-    # Evaluate the cost function for the hopper
-    evaluate!(hopper, evaluator)
-    return nothing
-end
-
-"""
     update_fitness!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T})
 
 Updates the hopper fitness information after previously evaluating the fitness of the hopper.

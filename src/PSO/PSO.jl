@@ -110,7 +110,7 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 - `PSO`: The PSO algorithm.
 """
 function SerialPSO(
-    prob::AbstractOptimizationProblem{SS};
+    prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
@@ -126,7 +126,7 @@ function SerialPSO(
     function_value_check::Bool = true,
     max_time::Real = 60.0,
     min_cost::Real = -Inf,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -185,7 +185,7 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 - `PSO`: The PSO algorithm.
 """
 function ThreadedPSO(
-    prob::AbstractOptimizationProblem{SS};
+    prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
@@ -201,7 +201,7 @@ function ThreadedPSO(
     function_value_check::Bool = true,
     max_time::Real = 60.0,
     min_cost::Real = -Inf,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(

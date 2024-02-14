@@ -50,7 +50,7 @@ end
     MBH(prob::AbstractOptimizationProblem{SS})
 """
 function MBH(
-    prob::AbstractOptimizationProblem{SS},
+    prob::AbstractProblem{has_penalty,SS},
     hop_distribution::AbstractMBHDistribution{T},
     local_search::AbstractLocalSearch{T};
     function_value_check::Bool = true,
@@ -58,7 +58,7 @@ function MBH(
     display_interval::Int = 1,
     max_time::Real = 60.0,
     min_cost::Real = -Inf,
-) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
+) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
