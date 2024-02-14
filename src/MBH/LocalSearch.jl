@@ -61,7 +61,6 @@ function draw_step!(step::AbstractVector{T}, ls::LocalStochasticSearch{T}) where
 end
 
 function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
-    @unpack prob = evaluator
     @unpack b, iters, step = ls
     better_candidate_found = false
     for _ in 1:iters
@@ -70,9 +69,9 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
         step .+= hopper.candidate 
 
         # Evaluate step
-        if feasible(step, prob.ss)
-            fitness = evaluate(prob, step)
-            if fitness < hopper.candidate_fitness
+        if feasible(step, evaluator.prob.ss)
+            fitness, penalty = evaluate_with_penalty(evaluator, step)
+            if abs(penalty) - eps() <= 0.0 && fitness < hopper.candidate_fitness
                 better_candidate_found = true
                 hopper.candidate .= step
                 hopper.candidate_fitness = fitness
@@ -97,7 +96,7 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     while !done
         # Perform optimization
         res = Optim.optimize(
-            get_local_search_function(prob), 
+            get_scalar_function(prob), 
             candidate, 
             alg,
             options;

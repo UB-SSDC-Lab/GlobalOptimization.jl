@@ -46,37 +46,38 @@ Initializes the hopper `hopper` with a uniform distribution in the search space.
 function initialize!(
     hopper::BasicHopper{T},
     search_space::ContinuousRectangularSearchSpace{T},
+    evaluator::FeasibilityHandlingEvaluator{T},
 ) where {T}
     # Unpack hopper
     @unpack candidate, candidate_step, best_candidate = hopper
 
-    # Initialize the hopper position
-    @inbounds for i in eachindex(candidate)
-        dmin = dimmin(search_space, i)
-        dΔ = dimdelta(search_space, i)
+    # Itteratively initialize the hopper position
+    # until we find one that is feasible
+    # That is, we need the penalty term to be zero
+    feasible = false
+    while !feasible
+        # Initialize the hopper position in search space
+        @inbounds for i in eachindex(candidate)
+            dmin    = dimmin(search_space, i)
+            dΔ      = dimdelta(search_space, i)
+            candidate[i] = dmin + dΔ*rand(T)
+        end
 
-        # Set position
-        candidate[i] = dmin + dΔ*rand(T)
-        candidate_step[i] = zero(T)
-        best_candidate[i] = candidate[i]
+        fitness, penalty = evaluate_with_penalty(evaluator, candidate)  
+        if abs(penalty) - eps() <= 0.0
+            feasible = true
+
+            # Set fitness
+            hopper.candidate_fitness = fitness
+            hopper.best_candidate_fitness = hopper.candidate_fitness
+
+            # Set best candidate and initialize step to zero
+            @inbounds for i in eachindex(candidate_step)
+                candidate_step[i] = zero(T)
+                best_candidate[i] = candidate[i]
+            end
+        end
     end
-    return nothing
-end
-
-"""
-    initialize_fitness!(hopper::BasicHopper{T}, evaluator::BasicEvaluator{T})
-
-Initializes the hopper's fitness using the given `evaluator`.
-"""
-function initialize_fitness!(
-    hopper::BasicHopper{T},
-    evaluator::BasicEvaluator{T},
-) where {T}
-    # Evaluate the cost function for the candidate
-    evaluate!(hopper, evaluator)
-
-    # Initialize the best candidate fitness
-    hopper.best_candidate_fitness = hopper.candidate_fitness
 
     return nothing
 end
@@ -95,12 +96,12 @@ function evaluate_fitness!(
 end
 
 """
-    update_fitness!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T}, evaluator::BasicEvaluator{T})
+    update_fitness!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T})
 
 Updates the hopper fitness information after previously evaluating the fitness of the hopper.
 """
 function update_fitness!(
-    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T}, evaluator::BasicEvaluator{T},
+    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T},
 ) where {T}
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update hopper
@@ -110,7 +111,7 @@ function update_fitness!(
     return nothing
 end
 function update_fitness!(
-    hopper::BasicHopper{T}, distribution::MBHAdaptiveDistribution{T}, evaluator::BasicEvaluator{T},
+    hopper::BasicHopper{T}, distribution::MBHAdaptiveDistribution{T},
 ) where {T}
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update distribution

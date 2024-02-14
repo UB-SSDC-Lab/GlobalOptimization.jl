@@ -11,9 +11,9 @@ using Infiltrator
 #Random.seed!(1234)
 
 # Schwefel Function
-function schaffer(x)
+function schaffer(x::AbstractArray{T})::Tuple{T,T} where {T}
     obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5)/(1 + 0.001*(x[1]^2+x[2]^2))^2
-    return obj, 0.0 
+    return obj, zero(T)
 end
 
 function waveDrop(x)
@@ -39,12 +39,12 @@ function rastrigin(x; A = 10)
 end
 
 # Setup Problem
-N = 20
+N = 50
 ss = ContinuousRectangularSearchSpace(
     [-5.0 for i in 1:N],
     [5.0 for i in 1:N],
 )
-prob = OptimizationProblem(waveDrop, ss)
+prob = OptimizationProblem(schaffer, ss)
 
 # Instantiate MBH
 dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
@@ -61,7 +61,7 @@ mbh = GlobalOptimization.MBH(
     display = true, 
     display_interval = 1,
     max_time = 20.0,
-    min_cost = -1.0 + 1e-14,
+    min_cost = 0.0 + 1e-14,
 )
 
 res = optimize!(mbh); display(res)

@@ -11,8 +11,6 @@ struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
     # MBH specific options
     initial_space::ISS
 
-    # 
-
     function MBHOptions(
         general::GO,
         initial_space::ISS,
@@ -76,7 +74,7 @@ function MBH(
     # Construct MBH
     return MBH(
         options,
-        BasicEvaluator(prob),
+        FeasibilityHandlingEvaluator(prob),
         BasicHopper{T}(numdims(prob)),
         hop_distribution,
         local_search,
@@ -97,10 +95,9 @@ function initialize!(opt::MBH)
     @unpack options, evaluator, hopper = opt
 
     # Initialize the hopper
-    initialize!(hopper, options.initial_space)
+    initialize!(hopper, options.initial_space, evaluator)
 
     # Handle fitness
-    initialize_fitness!(hopper, evaluator)
     check_fitness!(hopper, get_general(options))
 
     return nothing
@@ -135,18 +132,26 @@ function iterate!(opt::MBH)
 
             # Check if we're in feasable search space
             if feasible(hopper.candidate, search_space)
-                step_accepted = true
+                # We're in the search space, so we're about to accept the step, 
+                # but we need to check if we're also 
+                # in the feasible reagion defined by the penalty parameter
+                fitness, penalty = evaluate_with_penalty(evaluator, hopper.candidate)
+
+                if abs(penalty) - eps() <= 0.0
+                    # We're in the feasible region, so we can accept the step
+                    step_accepted = true
+
+                    # Set fitness of candidate
+                    hopper.candidate_fitness = fitness
+                end
             end
         end
-
-       # Evaluate the candidate
-        evaluate_fitness!(hopper, evaluator)
 
         # Perform local search (performing local search after checkng feasibility but before updating hopper fitness)
         local_search!(hopper, evaluator, local_search) 
 
         # Update fitness
-        update_fitness!(hopper, distribution, evaluator)
+        update_fitness!(hopper, distribution)
 
         # Stopping criteria
         current_time = time()
