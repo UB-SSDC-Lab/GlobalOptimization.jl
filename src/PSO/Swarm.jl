@@ -152,7 +152,7 @@ function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where T
     wT  = T(w)
     y1T = T(y1)
     y2T = T(y2)
-    @inbounds for (i, vel) in enumerate(candidates_velocity)
+    for (i, vel) in enumerate(candidates_velocity)
         # Shuffle vector containing integers 1:num_particles
         shuffle!(index_vector)
 
