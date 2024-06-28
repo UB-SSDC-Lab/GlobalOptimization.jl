@@ -9,7 +9,6 @@ struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
     general::GO
 
     # MBH specific options
-    # Defines the search space that the initial particles are drawn from
     initial_space::ISS
 
     function MBHOptions(
@@ -30,7 +29,14 @@ Monotonic Basin Hopping (MBH) algorithm.
 
 This implementation employs a single candidate rather than a population.
 """
-struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}} <: AbstractOptimizer
+struct MBH{
+    T <: Number, 
+    H <: AbstractHopper{T}, 
+    E <: SingleEvaluator{T}, 
+    D <: AbstractMBHDistribution, 
+    LS <: AbstractLocalSearch,
+} <: AbstractOptimizer
+
     # Monotonic Basin Hopping Options
     options::MBHOptions
 
@@ -41,25 +47,25 @@ struct MBH{T <: Number, H <: AbstractHopper{T}, E <: SingleEvaluator{T}} <: Abst
     hopper::H
 
     # The MBH distribution
-    distribution::AbstractMBHDistribution{T}
+    distribution::D
+
+    # The local search algorithm
+    local_search::LS
 end
 
 """
-    BasicMBH(prob::AbstractOptimizationProblem{SS})
-
-Constructs a basic MBH algorithm for the optimization problem `prob`.
+    MBH(prob::AbstractOptimizationProblem{SS})
 """
-function BasicMBH(
-    prob::AbstractOptimizationProblem{SS};
+function MBH(
+    prob::AbstractProblem{has_penalty,SS},
+    hop_distribution::AbstractMBHDistribution{T},
+    local_search::AbstractLocalSearch;
     function_value_check::Bool = true,
     display::Bool = false,
     display_interval::Int = 1,
     max_time::Real = 60.0,
-    a = 0.93,
-    b = 0.05,
-    c = 1.0,
-    λ = 0.1,
-) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
+    min_cost::Real = -Inf,
+) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
@@ -67,6 +73,7 @@ function BasicMBH(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         search_space(prob),
     )
@@ -74,58 +81,10 @@ function BasicMBH(
     # Construct MBH
     return MBH(
         options,
-        BasicEvaluator(prob),
+        FeasibilityHandlingEvaluator(prob),
         BasicHopper{T}(numdims(prob)),
-        MBHStaticDistribution{T}(;
-            a = a,
-            b = b,
-            c = c,
-            λ = λ,
-        ),
-    )
-end
-
-"""
-    AdaptiveMBH(prob::AbstractOptimizationProblem{SS})
-
-Constructs an adaptive MBH algorithm for the optimization problem `prob`.
-"""
-function AdaptiveMBH(
-    prob::AbstractOptimizationProblem{SS};
-    function_value_check::Bool = true,
-    display::Bool = false,
-    display_interval::Int = 1,
-    max_time::Real = 60.0,
-    a  = 0.93,
-    b  = 0.05,
-    c  = 1.0,
-    λ  = 0.1,
-    memory_len = 10,
-) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}}
-    # Construct the options
-    options = MBHOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-        ),
-        search_space(prob),
-    )
-
-    # Construct MBH
-    return MBH(
-        options,
-        BasicEvaluator(prob),
-        BasicHopper{T}(numdims(prob)),
-        MBHAdaptiveDistribution{T}(
-            numdims(prob),
-            memory_len;
-            a = a,
-            b = b,
-            c = c,
-            λhat0 = λ,
-        ),
+        hop_distribution,
+        local_search,
     )
 end
 
@@ -143,10 +102,9 @@ function initialize!(opt::MBH)
     @unpack options, evaluator, hopper = opt
 
     # Initialize the hopper
-    initialize!(hopper, options.initial_space)
+    initialize!(hopper, options.initial_space, evaluator)
 
     # Handle fitness
-    initialize_fitness!(hopper, evaluator)
     check_fitness!(hopper, get_general(options))
 
     return nothing
@@ -154,7 +112,7 @@ end
 
 function iterate!(opt::MBH)
     # Unpack MBH
-    @unpack options, evaluator, hopper, distribution = opt
+    @unpack options, evaluator, hopper, distribution, local_search = opt
     search_space = evaluator.prob.ss
 
     # Initialize algorithm stopping criteria requrements
@@ -181,17 +139,33 @@ function iterate!(opt::MBH)
 
             # Check if we're in feasable search space
             if feasible(hopper.candidate, search_space)
-                step_accepted = true
+                # We're in the search space, so we're about to accept the step, 
+                # but we need to check if we're also 
+                # in the feasible reagion defined by the penalty parameter
+                fitness, penalty = evaluate_with_penalty(evaluator, hopper.candidate)
+
+                if abs(penalty) - eps() <= 0.0
+                    # We're in the feasible region, so we can accept the step
+                    step_accepted = true
+
+                    # Set fitness of candidate
+                    hopper.candidate_fitness = fitness
+                end
             end
         end
 
-        # Evaluate the candidate
-        evaluate_fitness!(hopper, distribution, evaluator)
+        # Perform local search (performing local search after checkng feasibility but before updating hopper fitness)
+        local_search!(hopper, evaluator, local_search) 
+
+        # Update fitness
+        update_fitness!(hopper, distribution)
 
         # Stopping criteria
         current_time = time()
         if current_time - start_time >= options.general.max_time
             exit_flag = 1
+        elseif hopper.best_candidate_fitness <= get_min_cost(options)
+            exit_flag = 2
         end
 
         # Output status

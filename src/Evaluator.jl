@@ -6,7 +6,6 @@ of a population or candidate.
 """
 abstract type AbstractEvaluator{T} end
 
-
 """
     SingleEvaluator
 
@@ -15,16 +14,18 @@ Abstract type for an evaluator that evaluates the fitness of a single candidate
 abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
 
 """
-    BasicEvaluator
+    FeasibilityHandlingEvaluator
 
-A basic evaluator that computes the fitness of a single candidate. 
+An evaluator that handled a functions returned infeasibility penalty
 """
-struct BasicEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: SingleEvaluator{T} 
+struct FeasibilityHandlingEvaluator{T, PT <: AbstractProblem} <: SingleEvaluator{T} 
     # The optimization problem
-    prob::OptimizationProblem{SS,F}
+    prob::PT
 
-    function BasicEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
-        return new{T,SS,F}(prob)
+    function FeasibilityHandlingEvaluator(
+        prob::AbstractProblem{has_penalty, SS},
+    ) where {T, has_penalty, SS <: SearchSpace{T}}
+        return new{T,typeof(prob)}(prob)
     end
 end
 
@@ -33,7 +34,7 @@ end
 
 Abstract type for an evaluator that evaluates the fitness of an entire population.
 """
-abstract type BatchEvaluator{T} <: AbstractEvaluator{T} end 
+abstract type BatchEvaluator{T} <: AbstractEvaluator{T} end
 
 
 """
@@ -49,39 +50,40 @@ abstract type AsyncEvaluator{T} <: SingleEvaluator{T} end
 
 An evaluator that evaluates the fitness of a population in serial.
 """
-struct SerialBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEvaluator{T}
+struct SerialBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
     # The optimization problem
-    prob::OptimizationProblem{SS,F}
+    prob::OptimizationProblem{has_penalty,SS,F,G}
 
-    function SerialBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
-        return new{T,SS,F}(prob)
+    function SerialBatchEvaluator(
+        prob::OptimizationProblem{has_penalty,SS,F,G},
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+        return new{T,has_penalty,SS,F,G}(prob)
     end
 end
-
 
 """
     ThreadedBatchEvaluator
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
-struct ThreadedBatchEvaluator{T, SS <: SearchSpace{T}, F <: Function} <: BatchEvaluator{T}
+struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
     # The optimization problem
-    prob::OptimizationProblem{SS,F}
+    prob::OptimizationProblem{has_penalty,SS,F,G}
 
-    function ThreadedBatchEvaluator(prob::OptimizationProblem{SS,F}) where {T, SS <: SearchSpace{T}, F <: Function}
-        return new{T,SS,F}(prob)
+    function ThreadedBatchEvaluator(
+        prob::OptimizationProblem{has_penalty,SS,F,G},
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+        return new{T,has_penalty,SS,F,G}(prob)
     end
 end
 
 """
-    evaluate!(can::AbstractCandidate, evaluator::BasicEvaluator)
+    has_gradient(evaluator::AbstractEvaluator)
 
-Evaluates the fitness of a candidat using the given evaluator
+Returns `true` if the evaluator has a gradient, otherwise, `false`.
 """
-function evaluate!(c::AbstractCandidate, evaluator::BasicEvaluator{T,SS,F}) where {T,SS,F <: Function}
-    @unpack candidate, candidate_fitness = c
-    set_fitness!(c, evaluate(evaluator.prob, candidate)) 
-    return nothing
+function has_gradient(evaluator::AbstractEvaluator)
+    return false
 end
 
 """
@@ -89,16 +91,26 @@ end
 
 Evaluates the fitness of a population using the given `evaluator`.
 """
-function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator{T,SS,F}) where {T,SS,F <: Function}
+function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
+    fun = get_scalar_function(evaluator.prob)
     @inbounds for (idx, candidate) in enumerate(candidates(pop))
-        set_fitness!(pop, evaluate(evaluator.prob, candidate), idx)
+        set_fitness!(pop, fun(candidate), idx)
     end
     return nothing
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
+    fun = get_scalar_function(evaluator.prob)
     Threads.@threads for idx in eachindex(candidates(pop))
         candidate = candidates(pop, idx)
-        set_fitness!(pop, evaluate(evaluator.prob, candidate), idx)
+        set_fitness!(pop, fun(candidate), idx)
     end
     return nothing
+end
+
+"""
+    evaluate_with_penalty(evaluator::FeasibilityHandlingEvaluator, candidate::AbstractArray)
+"""
+function evaluate_with_penalty(evaluator::FeasibilityHandlingEvaluator, candidate::AbstractArray)
+    fun = get_scalar_function_with_penalty(evaluator.prob)
+    return fun(candidate)
 end

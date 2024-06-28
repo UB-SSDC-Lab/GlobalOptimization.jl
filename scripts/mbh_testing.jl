@@ -4,16 +4,16 @@ using GlobalOptimization
 using Random
 #using LoopVectorization
 #using PaddedViews
-#using StaticArrays
+using StaticArrays
 #using Profile
 #using JET
 using Infiltrator
 #Random.seed!(1234)
 
 # Schwefel Function
-function schaffer(x)
+function schaffer(x::AbstractArray{T})::Tuple{T,T} where {T}
     obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5)/(1 + 0.001*(x[1]^2+x[2]^2))^2
-    return obj, 0.0
+    return obj, zero(T)
 end
 
 function waveDrop(x)
@@ -21,9 +21,9 @@ function waveDrop(x)
     return obj, 0.0
 end
 
-@inline function layeb_1(x)
-    obj = 0.0
-    @fastmath for val in x
+function layeb_1(x)
+    obj = zero(eltype(x))
+    for val in x
         xm1sq = (val - 1)^2
         obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
     end
@@ -38,21 +38,43 @@ function rastrigin(x; A = 10)
     return obj, 0.0
 end
 
+function simple_nonlinear_equation(x)
+    return SA[x[1]*x[1] - 2.0, x[2]*x[2] - 2.0]
+end
+function simple_nonlinearleastsquares_equation(x)
+    return SA[x[1]*x[1] - x[3], x[2]*x[2] - x[3]]
+end
+
 # Setup Problem
-N = 4
+N = 2
 ss = ContinuousRectangularSearchSpace(
     [-5.0 for i in 1:N],
     [5.0 for i in 1:N],
 )
-prob = OptimizationProblem(rastrigin, ss)
+#prob = OptimizationProblem(schaffer, ss)
+prob = GlobalOptimization.NonlinearProblem(simple_nonlinear_equation, ss)
 
-# Instantiate PSO
-spso = SerialPSO(prob; max_time = 20.0)
-tpso = ThreadedPSO(prob; max_time = 20.0)
+# Instantiate MBH
+dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
+    N, 1000, 5; 
+    a = 0.97, b = 0.1, c = 1.0, λhat0 = 0.01,
+)
+lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
+    iters_per_solve      = 5,
+    percent_decrease_tol = 30.0,
+    m                    = 10,
+    max_solve_time       = 0.1,
+)
+lss = GlobalOptimization.LocalStochasticSearch{Float64}(2, 1e-8, 32)
+mbh = GlobalOptimization.MBH(
+    prob, dist, lsgb; 
+    display = true, 
+    display_interval = 1,
+    max_time = 20.0,
+    min_cost = 1e-8,
+)
 
-#res = optimize!(spso)
-res = optimize!(spso); display(res)
-res = optimize!(tpso); display(res)
+res = optimize!(mbh); display(res)
 
 # ======== BENCHMARKING
 #sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
