@@ -29,7 +29,7 @@ An optimization problem. Contains the objective function and search space.
 - `g!::G`: The gradient of the objective function.
 - `ss::SS`: The search space.
 """
-struct OptimizationProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Union{Nothing,Function}} <: AbstractOptimizationProblem{has_penalty,SS}
+struct OptimizationProblem{has_penalty, SS <: SearchSpace, F, G} <: AbstractOptimizationProblem{has_penalty,SS}
     f::F    # Objective function
     g!::G    # Gradient of the objective function
     ss::SS  # Search space
@@ -60,23 +60,53 @@ struct OptimizationProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: U
     OptimizationProblem{ContinuousRectangularSearchSpace{Float64}, typeof(f)}(f, ContinuousRectangularSearchSpace{Float64}([-1.0, 0.0], [1.0, 2.0], [2.0, 2.0]))
     ```
     """
-    function OptimizationProblem{has_penalty}(f::F, ss::SS) where {has_penalty, F <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ss)
-    end
-    function OptimizationProblem{has_penalty}(f::F, g::G, ss::SS) where {has_penalty, F <: Function, G <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,G}(f, g, ss)
-    end
-    function OptimizationProblem{has_penalty}(
-        f::F, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
-    ) where {has_penalty, F <: Function}
-        ss = ContinuousRectangularSearchSpace(LB, UB)
-        return new{has_penalty,typeof(ss),F,Nothing}(f, nothing, ss)
+    function OptimizationProblem{has_penalty}(f::F, ss::SearchSpace{T}) where {T, has_penalty, F <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
-        f::F, g::G, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
-    ) where {has_penalty, F <: Function, G <: Function}
+        f::F, g::G, ss::SearchSpace{T},
+    ) where {T, has_penalty, F <: Function, G <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Vector{T},Vector{T}},)
+        grettypes = (Nothing)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            fwrap, gwrap, ss,
+        )
+    end
+    function OptimizationProblem{has_penalty}(
+        f::F, LB::AbstractArray{T}, UB::AbstractArray{T},
+    ) where {has_penalty, F <: Function, T <: Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-        return new{has_penalty,typeof(ss),F,G}(f, g, ContinuousRectangularSearchSpace(LB, UB))
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+    end
+    function OptimizationProblem{has_penalty}(
+        f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T},
+    ) where {has_penalty, F <: Function, G <: Function, T <: Real}
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Vector{T},Vector{T}},)
+        grettypes = (Nothing)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            fwrap, gwrap, ContinuousRectangularSearchSpace(LB, UB),
+        )
     end
 end
 
