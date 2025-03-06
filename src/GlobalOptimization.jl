@@ -6,6 +6,8 @@ using StaticArrays
 using Random: shuffle!
 using UnPack
 
+import Base
+
 # Utilities
 include("rng.jl")
 

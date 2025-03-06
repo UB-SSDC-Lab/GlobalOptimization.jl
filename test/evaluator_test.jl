@@ -2,7 +2,7 @@
 using GlobalOptimization, Test
 
 # Define a concrete simple population type
-struct SimplePopulation <: GlobalOptimization.AbstractPopulation
+struct SimplePopulation <: GlobalOptimization.AbstractPopulation{Float64}
     candidates::Vector{Vector{Float64}}
     candidates_fitness::Vector{Float64}
 end
@@ -39,6 +39,16 @@ end
 threads_used = [false for _ in 1:Threads.nthreads()]
 for i in eachindex(tpop.candidates_fitness)
     thread_id = Int(tpop.candidates_fitness[i])
+    threads_used[thread_id] = true
+    if all(threads_used)
+        break
+    end
+end
+@test all(threads_used)
+
+threads_used = [false for _ in 1:Threads.nthreads()]
+for i in eachindex(ppop.candidates_fitness)
+    thread_id = Int(ppop.candidates_fitness[i])
     threads_used[thread_id] = true
     if all(threads_used)
         break

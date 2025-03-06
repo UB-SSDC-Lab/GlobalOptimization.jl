@@ -3,7 +3,28 @@
 
 Abstract type for a population of candidates.
 """
-abstract type AbstractPopulation end
+abstract type AbstractPopulation{T} end
+
+"""
+    eachindex(pop::AbstractPopulation)
+
+Returns an iterator for the indices of the population.
+"""
+Base.eachindex(pop::AbstractPopulation) = Base.eachindex(pop.candidates)
+
+"""
+    length(pop::AbstractPopulation)
+
+Returns the number of candidates in the population.
+"""
+Base.length(pop::AbstractPopulation) = length(pop.candidates)
+
+"""
+    size(pop::AbstractPopulation)
+
+Returns the size of the population.
+"""
+Base.size(pop::AbstractPopulation) = size(pop.candidates)
 
 """
     candidates(pop::AbstractPopulation, [i::Integer])

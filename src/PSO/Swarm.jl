@@ -3,7 +3,7 @@
 
 A population of particles for the PSO algorithm.
 """
-struct Swarm{T <: AbstractFloat} <: AbstractPopulation
+struct Swarm{T <: AbstractFloat} <: AbstractPopulation{T}
     # Population information (requried for all AbstractPopulations)
     candidates::Vector{Vector{T}}
     candidates_fitness::Vector{T}
@@ -14,7 +14,7 @@ struct Swarm{T <: AbstractFloat} <: AbstractPopulation
     best_candidates_fitness::Vector{T}
 
     function Swarm{T}(num_particles::Integer, num_dims::Integer) where {T}
-        num_dims > 0 || throw(ArgumentError("num_dims must be greater than 0.")) 
+        num_dims > 0 || throw(ArgumentError("num_dims must be greater than 0."))
         num_particles > 0 || throw(ArgumentError("num_particles must be greater than 0."))
         return new{T}(
             [zeros(T, num_dims) for _ in 1:num_particles],
@@ -50,14 +50,14 @@ Swarm_F32(num_particles::Integer, num_dims::Integer) = Swarm{Float32}(num_partic
 """
     initialize_uniform!(swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T})
 
-Initializes the swarm `swarm` with a uniform particle distribution in the search space. 
+Initializes the swarm `swarm` with a uniform particle distribution in the search space.
 """
 function initialize_uniform!(
-    swarm::Swarm{T}, 
+    swarm::Swarm{T},
     search_space::ContinuousRectangularSearchSpace{T},
 ) where T
     # Unpack swarm
-    @unpack candidates, candidates_fitness, candidates_velocity, 
+    @unpack candidates, candidates_fitness, candidates_velocity,
         best_candidates, best_candidates_fitness = swarm
 
     # Initialize each candidate
@@ -71,7 +71,7 @@ function initialize_uniform!(
             dmin = dimmin(search_space, j)
             dΔ = dimdelta(search_space, j)
 
-            # Set position and velocity 
+            # Set position and velocity
             pos[j] = dmin + dΔ*rand(T)
             vel[j] = -dΔ + 2.0*dΔ*rand(T)
         end
@@ -144,7 +144,7 @@ Updates the velocity of each candidate in the swarm `swarm`,
 """
 function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where T
     # Unpack data
-    @unpack candidates, candidates_velocity, best_candidates, 
+    @unpack candidates, candidates_velocity, best_candidates,
         best_candidates_fitness = swarm
     @unpack index_vector = cache
 
@@ -171,7 +171,7 @@ function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where T
 
         # Update velocity
         for j in eachindex(vel)
-            vel[j] = wT*vel[j] + 
+            vel[j] = wT*vel[j] +
                 y1T*rand(T)*(best_candidates[i][j] - candidates[i][j]) +
                 y2T*rand(T)*(best_candidates[bestidx][j] - candidates[i][j])
         end
