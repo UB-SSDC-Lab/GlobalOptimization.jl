@@ -46,17 +46,17 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 2
+N = 3
 ss = ContinuousRectangularSearchSpace(
     [-5.0 for i in 1:N],
     [5.0 for i in 1:N],
 )
-#prob = OptimizationProblem(schaffer, ss)
-prob = GlobalOptimization.NonlinearProblem(simple_nonlinear_equation, ss)
+prob = OptimizationProblem(schaffer, ss)
+#prob = GlobalOptimization.NonlinearLeastSquaresProblem(simple_nonlinearleastsquares_equation, ss, 2)
 
 # Instantiate MBH
 dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
-    N, 1000, 5; 
+    N, 1000, 5;
     a = 0.97, b = 0.1, c = 1.0, λhat0 = 0.01,
 )
 lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
@@ -67,8 +67,8 @@ lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
 )
 lss = GlobalOptimization.LocalStochasticSearch{Float64}(2, 1e-8, 32)
 mbh = GlobalOptimization.MBH(
-    prob, dist, lsgb; 
-    display = true, 
+    prob, dist, lsgb;
+    display = true,
     display_interval = 1,
     max_time = 20.0,
     min_cost = 1e-8,
@@ -99,4 +99,3 @@ res = optimize!(mbh); display(res)
 # ======== TYPES
 #@report_call GlobalOptimization.optimize!(spso)
 #report_package(GlobalOptimization)
-
