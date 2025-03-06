@@ -1,10 +1,12 @@
 module GlobalOptimization
 
 using Format
+using Polyester: @batch
 using StaticArrays
 using Random: shuffle!
 using UnPack
 
+import Base
 import Optim
 import LineSearches
 
@@ -33,7 +35,7 @@ include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
 export OptimizationProblem
-export SerialPSO, ThreadedPSO
+export SerialPSO, ThreadedPSO, PolyesterPSO
 #export MBH
 export optimize!
 

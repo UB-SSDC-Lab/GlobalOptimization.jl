@@ -18,7 +18,7 @@ abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
 
 An evaluator that handled a functions returned infeasibility penalty
 """
-struct FeasibilityHandlingEvaluator{T, PT <: AbstractProblem} <: SingleEvaluator{T} 
+struct FeasibilityHandlingEvaluator{T, PT <: AbstractProblem} <: SingleEvaluator{T}
     # The optimization problem
     prob::PT
 
@@ -78,6 +78,22 @@ struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Functio
 end
 
 """
+    PolyesterBatchEvaluator
+
+An evaluator that evaluates the fitness of a population in parallel using multi-threading using Polyester.jl.
+"""
+struct PolyesterBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
+    # The optimization problem
+    prob::OptimizationProblem{has_penalty,SS,F,G}
+
+    function PolyesterBatchEvaluator(
+        prob::OptimizationProblem{has_penalty,SS,F,G},
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+        return new{T,has_penalty,SS,F,G}(prob)
+    end
+end
+
+"""
     has_gradient(evaluator::AbstractEvaluator)
 
 Returns `true` if the evaluator has a gradient, otherwise, `false`.
@@ -92,17 +108,35 @@ end
 Evaluates the fitness of a population using the given `evaluator`.
 """
 function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
-    fun = get_scalar_function(evaluator.prob)
     @inbounds for (idx, candidate) in enumerate(candidates(pop))
-        set_fitness!(pop, fun(candidate), idx)
+        fitness = scalar_function(evaluator.prob, candidate)
+        set_fitness!(pop, fitness, idx)
     end
     return nothing
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
-    fun = get_scalar_function(evaluator.prob)
-    Threads.@threads for idx in eachindex(candidates(pop))
-        candidate = candidates(pop, idx)
-        set_fitness!(pop, fun(candidate), idx)
+    cs = candidates(pop)
+    Threads.@threads for idx in eachindex(pop)
+        candidate = cs[idx]
+        fitness = scalar_function(evaluator.prob, candidate)
+        set_fitness!(pop, fitness, idx)
+    end
+    return nothing
+end
+function evaluate!(pop::AbstractPopulation, evaluator::PolyesterBatchEvaluator)
+    # Define fitness evaluation function for Polyester
+    # NOTE: This is necessary for the @batch macro to work properly
+    # on Arm.
+    eval_fitness = let cs=candidates(pop), pop=pop, prob=evaluator.prob
+        (idx) -> begin
+            candidate = cs[idx]
+            fitness = scalar_function(prob, candidate)
+            set_fitness!(pop, fitness, idx)
+        end
+    end
+
+    @batch for idx in eachindex(pop)
+        eval_fitness(idx)
     end
     return nothing
 end
