@@ -1,5 +1,6 @@
 module GlobalOptimization
 
+using LinearAlgebra
 using Format
 using Polyester: @batch
 using FunctionWrappersWrappers

@@ -190,7 +190,7 @@ A nonlinear problem. Contains the nonlinear equations and search space.
 - `g!::G`: The jacobian of the nonlinear equations.
 - `ss::SS`: The search space.
 """
-struct NonlinearProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Union{Nothing,Function}} <: AbstractNonlinearEquationProblem{has_penalty,SS}
+struct NonlinearProblem{has_penalty, SS <: SearchSpace, F, G} <: AbstractNonlinearEquationProblem{has_penalty,SS}
     f::F   # The nonlinear equations
     g!::G  # The jacobian of the nonlinear equations
     ss::SS # The search space
@@ -221,21 +221,59 @@ struct NonlinearProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Unio
     NonlinearProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0], [5.0, 5.0], [10.0, 10.0]))
     ```
     """
-    function NonlinearProblem{has_penalty}(f::F, ss::SS) where {has_penalty, F <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ss)
-    end
-    function NonlinearProblem{has_penalty}(f::F, g::G, ss::SS) where {has_penalty, F <: Function, G <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,G}(f, g, ss)
+    function NonlinearProblem{has_penalty}(
+        f::F, ss::SearchSpace{T},
+    ) where {T, has_penalty, F <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
     end
     function NonlinearProblem{has_penalty}(
-        f::F, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
-    ) where {has_penalty, F <: Function}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ContinuousRectangularSearchSpace(LB, UB))
+        f::F, g::G, ss::SearchSpace{T},
+    ) where {T, has_penalty, F <: Function, G <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Matrix{T}, Vector{T}},)
+        grettypes = (Nothing,)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            fwrap, gwrap, ss,
+        )
     end
     function NonlinearProblem{has_penalty}(
-        f::F, g::G, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real},
-    ) where {has_penalty, F <: Function, G <: Function}
-        return new{has_penalty,SS,F,G}(f, g, ContinuousRectangularSearchSpace(LB, UB))
+        f::F, LB::AbstractArray{T}, UB::AbstractArray{T},
+    ) where {has_penalty, F <: Function, T <: Real}
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
+            fwrap, nothing, ss,
+        )
+    end
+    function NonlinearProblem{has_penalty}(
+        f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T},
+    ) where {has_penalty, F <: Function, G <: Function, T <: Real}
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Matrix{T}, Vector{T}},)
+        grettypes = (Nothing,)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            fwrap, gwrap, ss,
+        )
     end
 end
 
@@ -356,21 +394,59 @@ struct NonlinearLeastSquaresProblem{has_penalty, SS <: SearchSpace, F <: Functio
     NonlinearLeastSquaresProblem{Val{false}(), ContinuousRectangularSearchSpace{Float64}, typeof(f), Nothing}(f, nothing, ContinuousRectangularSearchSpace{Float64}([-5.0, -5.0, -5.0], [5.0, 5.0, 5.0], [10.0, 10.0, 10.0]), 2)
     ```
     """
-    function NonlinearLeastSquaresProblem{has_penalty}(f::F, ss::SS, num_resid::Int) where {has_penalty, F <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ss, num_resid)
-    end
-    function NonlinearLeastSquaresProblem{has_penalty}(f::F, g::G, ss::SS, num_resid::Int) where {has_penalty, F <: Function, G <: Function, SS <: SearchSpace}
-        return new{has_penalty,SS,F,G}(f, g, ss, num_resid)
+    function NonlinearLeastSquaresProblem{has_penalty}(
+        f::F, ss::SearchSpace{T}, num_resid::Int,
+    ) where {T, has_penalty, F <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss, num_resid)
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
-        f::F, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real}, num_resid::Int,
-    ) where {has_penalty, F <: Function}
-        return new{has_penalty,SS,F,Nothing}(f, nothing, ContinuousRectangularSearchSpace(LB, UB), num_resid)
+        f::F, g::G, ss::SearchSpace{T}, num_resid::Int,
+    ) where {T, has_penalty, F <: Function, G <: Function}
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Matrix{T}, Vector{T}},)
+        grettypes = (Nothing,)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            fwrap, gwrap, ss, num_resid,
+        )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
-        f::F, g::G, LB::AbstractArray{<:Real}, UB::AbstractArray{<:Real}, num_resid::Int,
-    ) where {has_penalty, F <: Function, G <: Function}
-        return new{has_penalty,SS,F,G}(f, g, ContinuousRectangularSearchSpace(LB, UB), num_resid)
+        f::F, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int,
+    ) where {T, has_penalty, F <: Function}
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
+            fwrap, nothing, ss, num_resid,
+        )
+    end
+    function NonlinearLeastSquaresProblem{has_penalty}(
+        f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int,
+    ) where {T, has_penalty, F <: Function, G <: Function}
+        ss = ContinuousRectangularSearchSpace(LB, UB)
+
+        fargtypes = (Tuple{Vector{T}},)
+        frettypes = has_penalty isa Val{false} ? (Tuple{Vector{T}},) : (Tuple{Vector{T},T},)
+        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
+
+        gargtypes = (Tuple{Matrix{T}, Vector{T}},)
+        grettypes = (Nothing,)
+        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
+
+        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
+            f, g, ss, num_resid,
+        )
     end
 end
 
@@ -492,11 +568,11 @@ plus half the infeasibility squared.
 end
 @inline function scalar_function(prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{true})
     f, g = prob.f(x)
-    return 0.5*(f'*f + g*g)
+    return 0.5*(dot(f,f) + g*g)
 end
 @inline function scalar_function(prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{false})
     f = prob.f(x)
-    return 0.5*f'*f
+    return 0.5*dot(f,f)
 end
 
 """
@@ -535,12 +611,12 @@ and the infeasibility penalty term as a tuple.
 end
 @inline function scalar_function_with_penalty(prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{true})
     f, g = prob.f(x)
-    cost = 0.5*f'*f
+    cost = 0.5*dot(f,f)
     return cost, g
 end
 @inline function scalar_function_with_penalty(prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{false})
     f = prob.f(x)
-    cost = 0.5*f'*f
+    cost = 0.5*dot(f,f)
     penalty = zero(typeof(cost))
     return cost, penalty
 end
