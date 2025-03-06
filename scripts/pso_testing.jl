@@ -5,10 +5,10 @@ using Random
 #using LoopVectorization
 #using PaddedViews
 #using StaticArrays
-using Profile
+#using Profile
 #using JET
 using Infiltrator
-Random.seed!(1234)
+#Random.seed!(1234)
 
 # Schwefel Function
 function schaffer(x)
@@ -18,7 +18,7 @@ end
 
 function waveDrop(x)
     obj = -(1 + cos(12*sqrt(x[1]^2 + x[2]^2)))/(0.5*(x[1]^2 + x[2]^2) + 2.0)
-    return obj
+    return obj, 0.0
 end
 
 @inline function layeb_1(x)
@@ -27,26 +27,34 @@ end
         xm1sq = (val - 1)^2
         obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
     end
-    return obj
+    return obj, 0.0
+end
+
+function rastrigin(x; A = 10)
+    obj = A*length(x)
+    for val in x
+        obj += val^2 - A*cos(2*pi*val)
+    end
+    return obj, 0.0
 end
 
 # Setup Problem
-N = 10
+N = 4
 ss = ContinuousRectangularSearchSpace(
-    [-1.0 for i in 1:N],
-    [1.0 for i in 1:N],
+    [-5.0 for i in 1:N],
+    [5.0 for i in 1:N],
 )
-prob = OptimizationProblem(layeb_1, ss)
+prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate PSO
-#spso = SerialPSO(prob)
-#bmbh = GlobalOptimization.AdaptiveMBH(prob; display = true, display_interval = 10000)
-#tpso = ThreadedPSO(prob)
+spso = SerialPSO(prob; max_time = 20.0)
+tpso = ThreadedPSO(prob; max_time = 20.0)
+ppso = PolyesterPSO(prob; max_time = 20.0)
 
 #res = optimize!(spso)
-#res = optimize!(bmbh)
-#pso1 = StaticPSO(prob; numParticles = 100)
-#pso2 = deepcopy(pso1)
+res = optimize!(spso); display(res)
+res = optimize!(tpso); display(res)
+res = optimize!(ppso); display(res)
 
 # ======== BENCHMARKING
 # sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
@@ -64,11 +72,11 @@ prob = OptimizationProblem(layeb_1, ss)
 # display(go)
 
 # ======== ALLOCATION TRACKING
-pso1 = PolyesterPSO(prob)
-pso2 = PolyesterPSO(prob)
-optimize!(pso1)
-Profile.clear_malloc_data()
-optimize!(pso2)
+# pso1 = PolyesterPSO(prob)
+# pso2 = PolyesterPSO(prob)
+# optimize!(pso1)
+# Profile.clear_malloc_data()
+# optimize!(pso2)
 
 # ======== TYPES
 #@report_call GlobalOptimization.optimize!(spso)

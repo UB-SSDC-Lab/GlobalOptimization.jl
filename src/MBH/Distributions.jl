@@ -115,6 +115,9 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # Hopper accepted step memory
     step_memory::MBHStepMemory{T}
 
+    # THe minimum number of steps in memory before updating the scale parameter
+    min_memory_update::Int
+
     # Parameters (Set in options but also here for convenience)
     a::T
     b::T
@@ -125,7 +128,7 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
 
     # Constructor
     function MBHAdaptiveDistribution{T}(
-        num_dims::Integer, memory_len::Integer;
+        num_dims::Integer, memory_len::Integer, min_memory_update::Int;
         a = 0.93,
         b = 0.05,
         c = 1.0, 
@@ -133,6 +136,7 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     ) where {T}
         return new{T}(
             MBHStepMemory{T}(num_dims, memory_len), 
+            min_memory_update,
             T(a), T(b), T(c),
             fill(T(λhat0), num_dims),
         )
@@ -159,14 +163,17 @@ function push_accepted_step!(
     # Push step into memory
     push!(step_memory, step, pre_step_fitness, post_step_fitness)
 
-    # Update scale parameter vector
-    @inbounds for i in eachindex(λhat)
-        # Compute standard deviation of steps for var index i
-        σ = step_std(step_memory, i)
+    # Update scale parameter vector if enough steps are contained in memory
+    if step_memory.steps_in_memory >= 20
+        @inbounds for i in eachindex(λhat)
+            # Compute standard deviation of steps for var index i
+            σ = step_std(step_memory, i)
+            display(σ)
 
-        # Update scale parameter
-        λhat[i] = (1.0 - a)*σ + a*λhat[i]
-        display(λhat[i])
+            # Update scale parameter
+            λhat[i] = (1.0 - a)*σ + a*λhat[i]
+            display(λhat[i])
+        end
     end
 
     return nothing
@@ -182,7 +189,8 @@ function draw_step!(step::AbstractVector{T}, dist::MBHStaticDistribution{T}) whe
     @unpack a, b, c, λ = dist
 
     # Draw step
-    k = length(step) / 2.0
+    #k = length(step) / 2.0
+    k = 1.0
     @inbounds for i in eachindex(step)
         step[i] = k*((1.0 - b)*laplace(0.0, c*λ) + b*laplace(0.0, 1.0)) 
     end
@@ -194,9 +202,10 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     @unpack a, b, c, λhat = dist
 
     # Draw step
-    k = length(step) / 2.0
+    #k = length(step) / 2.0
+    k = 1.0
     @inbounds for i in eachindex(step)
-        step[i] = k*((1.0 - b)*laplace(0.0, c*λhat[i]) + b*laplace(0.0, 1.0)) 
+        step[i] = k*((1.0 - b)*laplace(c*λhat[i]) + b*laplace(1.0)) 
     end
 
     return nothing

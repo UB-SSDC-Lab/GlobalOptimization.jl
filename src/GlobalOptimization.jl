@@ -7,6 +7,8 @@ using Random: shuffle!
 using UnPack
 
 import Base
+import Optim
+import LineSearches
 
 # Utilities
 include("rng.jl")
@@ -28,6 +30,7 @@ include("PSO/PSO.jl")
 # MBH
 include("MBH/Distributions.jl")
 include("MBH/Hopper.jl")
+include("MBH/LocalSearch.jl")
 include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace

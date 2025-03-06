@@ -28,22 +28,22 @@ struct PSOOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
     social_adjustment_weight::Float64
 
     function PSOOptions(
-        general::GO, 
+        general::GO,
         num_particles,
-        initial_space::ISS, 
-        max_iterations, 
-        function_tolerence, 
-        max_stall_time, 
-        max_stall_iterations, 
-        inertia_range, 
-        minimum_neighborhood_fraction, 
-        self_adjustment_weight, 
+        initial_space::ISS,
+        max_iterations,
+        function_tolerence,
+        max_stall_time,
+        max_stall_iterations,
+        inertia_range,
+        minimum_neighborhood_fraction,
+        self_adjustment_weight,
         social_adjustment_weight,
     ) where {GO,ISS}
         minimum_neighborhood_size = max(2, floor(Int, num_particles * minimum_neighborhood_fraction))
         return new{ISS,GO}(
-            general, initial_space, max_iterations, function_tolerence, max_stall_time, 
-            max_stall_iterations, inertia_range, minimum_neighborhood_fraction, 
+            general, initial_space, max_iterations, function_tolerence, max_stall_time,
+            max_stall_iterations, inertia_range, minimum_neighborhood_fraction,
             minimum_neighborhood_size, self_adjustment_weight, social_adjustment_weight,
         )
     end
@@ -110,7 +110,7 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 - `PSO`: The PSO algorithm.
 """
 function SerialPSO(
-    prob::AbstractOptimizationProblem{SS};
+    prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
@@ -125,7 +125,8 @@ function SerialPSO(
     display_interval::Int = 1,
     function_value_check::Bool = true,
     max_time::Real = 60.0,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
+    min_cost::Real = -Inf,
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -133,6 +134,7 @@ function SerialPSO(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         num_particles,
         intersection(search_space(prob), initial_bounds),
@@ -148,8 +150,8 @@ function SerialPSO(
 
     # Construct PSO
     return PSO(
-        options, 
-        SerialBatchEvaluator(prob), 
+        options,
+        SerialBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
         PSOCache{T}(num_particles, numdims(prob))
     )
@@ -183,7 +185,7 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 - `PSO`: The PSO algorithm.
 """
 function ThreadedPSO(
-    prob::AbstractOptimizationProblem{SS};
+    prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
@@ -198,7 +200,8 @@ function ThreadedPSO(
     display_interval::Int = 1,
     function_value_check::Bool = true,
     max_time::Real = 60.0,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
+    min_cost::Real = -Inf,
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -206,6 +209,7 @@ function ThreadedPSO(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         num_particles,
         intersection(search_space(prob), initial_bounds),
@@ -221,8 +225,8 @@ function ThreadedPSO(
 
     # Construct PSO
     return PSO(
-        options, 
-        ThreadedBatchEvaluator(prob), 
+        options,
+        ThreadedBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
         PSOCache{T}(num_particles, numdims(prob))
     )
@@ -256,7 +260,7 @@ Constructs a PSO algorithm with the given options that will employ a `PolyesterB
 - `PSO`: The PSO algorithm.
 """
 function PolyesterPSO(
-    prob::AbstractOptimizationProblem{SS};
+    prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
@@ -271,7 +275,8 @@ function PolyesterPSO(
     display_interval::Int = 1,
     function_value_check::Bool = true,
     max_time::Real = 60.0,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}}
+    min_cost::Real = -Inf,
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -279,6 +284,7 @@ function PolyesterPSO(
             display ? Val(true) : Val(false),
             display_interval,
             max_time,
+            min_cost,
         ),
         num_particles,
         intersection(search_space(prob), initial_bounds),
@@ -294,8 +300,8 @@ function PolyesterPSO(
 
     # Construct PSO
     return PSO(
-        options, 
-        PolyesterBatchEvaluator(prob), 
+        options,
+        PolyesterBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
         PSOCache{T}(num_particles, numdims(prob))
     )
@@ -323,7 +329,7 @@ function initialize!(opt::PSO)
     # Unpack PSO
     @unpack options, evaluator, swarm = opt
 
-    # Initialize swarm 
+    # Initialize swarm
     initialize_uniform!(swarm, options.initial_space)
 
     # Handel swarm fitness
@@ -356,7 +362,7 @@ function iterate!(opt::PSO)
     # Begin loop
     exit_flag = 0
     while exit_flag == 0
-        # Update iteration counter 
+        # Update iteration counter
         iteration += 1
 
         # Update swarm velocity and step (enforcing particles are feasible after step)
@@ -397,9 +403,9 @@ function iterate!(opt::PSO)
 
         # Output Status
         display_status(
-            current_time - start_time, 
-            iteration, 
-            sc, 
+            current_time - start_time,
+            iteration,
+            sc,
             cache.global_best_fitness,
             get_general(options),
         )
@@ -407,10 +413,10 @@ function iterate!(opt::PSO)
 
     # Return results
     return Results(
-        cache.global_best_fitness, 
-        cache.global_best_candidate, 
-        iteration, 
-        current_time - start_time, 
+        cache.global_best_fitness,
+        cache.global_best_candidate,
+        iteration,
+        current_time - start_time,
         exit_flag,
     )
 end
@@ -424,7 +430,7 @@ function update_global_best!(pso::PSO)
     # Grab information
     @unpack swarm, cache = pso
     @unpack best_candidates, best_candidates_fitness = swarm
-    @unpack global_best_candidate = cache 
+    @unpack global_best_candidate = cache
 
     # Find index and value of global best fitness if better than previous best
     global_best_fitness = cache.global_best_fitness
@@ -476,7 +482,7 @@ end
 
 Displays the status of the PSO algorithm.
 """
-@inline function display_status(time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}) where {D, FVC} 
+@inline function display_status(time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}) where {D, FVC}
     display_status(time, iteration, stall_count, global_fitness, get_display_interval(options), D)
     return nothing
 end
@@ -490,4 +496,3 @@ function display_status(time, iteration, stall_count, global_fitness, display_in
     end
     return nothing
 end
-
