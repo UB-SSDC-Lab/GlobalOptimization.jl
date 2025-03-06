@@ -116,7 +116,7 @@ end
     OptimizationProblem(f, [g], LB, UB)
 
 Constructs an optimization problem with objective function `f`,
-optional gradient `g`, and a `ContinuousRectangularSearchSpace` 
+optional gradient `g`, and a `ContinuousRectangularSearchSpace`
 defined by `LB` and `UB`.
 
 # Arguments
@@ -169,7 +169,7 @@ struct NonlinearProblem{has_penalty, SS <: SearchSpace, F <: Function, G <: Unio
         NonlinearProblem{has_penalty}(f::F, [g::G], ss::SS)
 
     Constructs a nonlinear problem with nonlinear functions `f`, optional jacobian `g`, and search space `ss`.
-    If has_penalty is specified as true, then the nonlinear function must return a Tuple{AbstractArray{T},T} 
+    If has_penalty is specified as true, then the nonlinear function must return a Tuple{AbstractArray{T},T}
     for a given x of type AbstractArray{T}.
 
     # Arguments
@@ -245,7 +245,7 @@ end
 """
     NonlinearProblem(f, [g], LB, UB)
 
-Constructs a nonlinear problem with nonlinear function `f`, optional Jacobian `g`, and a 
+Constructs a nonlinear problem with nonlinear function `f`, optional Jacobian `g`, and a
 continuous rectangular search space defined by the bounds LB and UB.
 
 # Arguments
@@ -302,8 +302,8 @@ struct NonlinearLeastSquaresProblem{has_penalty, SS <: SearchSpace, F <: Functio
     @doc """
         NonlinearLeastSquaresProblem{has_penalty}(f::F, [g::G], ss::SS, num_resid::Int)
 
-    Constructs a nonlinear least squares problem with nonlinear functions `f`, optional jacobian `g`, 
-    and search space `ss`. If has_penalty is specified as true, then the nonlinear function must return 
+    Constructs a nonlinear least squares problem with nonlinear functions `f`, optional jacobian `g`,
+    and search space `ss`. If has_penalty is specified as true, then the nonlinear function must return
     a Tuple{AbstractArray{T},T} for a given x of type AbstractArray{T}.
 
     # Arguments
@@ -435,7 +435,7 @@ Evaluates the objective function `f` of the optimization problem `prob` at `x`
 and returns the cost function plus half the infeasibility squared.
 """
 @inline function scalar_function(
-    prob::OptimizationProblem{has_penalty,SS,F,G}, 
+    prob::OptimizationProblem{has_penalty,SS,F,G},
     x::AbstractArray,
 ) where {has_penalty, SS, F, G}
     return scalar_function(prob, x, has_penalty)
@@ -451,7 +451,7 @@ end
 """
     scalar_function(prob::AbstractNonlinearEquationProblem, x::AbstractArray)
 
-Evaluates the set of nonlinear equations `f` and returns the nonlinear least squares cost 
+Evaluates the set of nonlinear equations `f` and returns the nonlinear least squares cost
 plus half the infeasibility squared.
 """
 @inline function scalar_function(
@@ -482,19 +482,19 @@ i.e., for an OptimizationProblem, this is simply the original function.
 ) where {has_penalty, SS, F, G}
     return scalar_function_with_penalty(prob, x, has_penalty)
 end
-@inline function scalar_function_with_penalty(prob::OptimizationProblem, x::AbstractArray, ::Val{true}) 
+@inline function scalar_function_with_penalty(prob::OptimizationProblem, x::AbstractArray, ::Val{true})
     return prob.f(x)
 end
 @inline function scalar_function_with_penalty(prob::OptimizationProblem, x::AbstractArray, ::Val{false})
     val = prob.f(x)
-    penalty = zero(eltype(val)) 
+    penalty = zero(eltype(val))
     return val, penalty
 end
 
 """
     scalar_function_with_penalty(prob::AbstractNonlinearEquationProblem, x::AbstractArray)
 
-Evaluates the set of nonlinear equations `f` and returns the nonlinear least squares cost 
+Evaluates the set of nonlinear equations `f` and returns the nonlinear least squares cost
 and the infeasibility penalty term as a tuple.
 """
 @inline function scalar_function_with_penalty(
@@ -522,7 +522,11 @@ end
     This is used for PSO (GA, Differential Evolution, etc. if we ever get around to adding those)
 """
 @inline function get_scalar_function(prob::AbstractProblem)
-    return x -> scalar_function(prob, x)
+    #return x -> scalar_function(prob, x)
+    fun = let prob=prob
+        x -> scalar_function(prob, x)
+    end
+    return fun
 end
 
 """
