@@ -9,7 +9,7 @@ function timeout(f, arg, seconds, fail)
     Timer(seconds) do timer
         istaskdone(tsk) || Base.throwto(tsk, InterruptException())
     end
-    try 
+    try
         return fetch(tsk)
     catch _;
         return fail
@@ -67,7 +67,7 @@ struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch
     cache::OptimSolutionCache{T}
 
     function LBFGSLocalSearch{T}(;
-        iters_per_solve::Int = 5,     
+        iters_per_solve::Int = 5,
         percent_decrease_tol::Number = 50.0,
         m::Int = 10,
         alphaguess = LineSearches.InitialStatic(),
@@ -75,17 +75,19 @@ struct LBFGSLocalSearch{T, AT, OT} <: OptimLocalSearch
         manifold = Optim.Flat(),
         max_solve_time = 0.1,
     ) where {T <: AbstractFloat}
-        alg = Optim.LBFGS(;
-            m = m,
-            alphaguess = alphaguess,
-            linesearch = linesearch,
-            manifold = manifold,
+        alg = Optim.Fminbox(
+            Optim.LBFGS(;
+                m = m,
+                alphaguess = alphaguess,
+                linesearch = linesearch,
+                manifold = manifold,
+            )
         )
         opts = Optim.Options(
             iterations = iters_per_solve,
         )
         return new{T, typeof(alg), typeof(opts)}(
-            T(percent_decrease_tol), 
+            T(percent_decrease_tol),
             alg,
             opts,
             max_solve_time,
@@ -108,7 +110,7 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     for _ in 1:iters
         # Draw step
         draw_step!(step, ls)
-        step .+= hopper.candidate 
+        step .+= hopper.candidate
 
         # Evaluate step
         if feasible(step, evaluator.prob.ss)
@@ -129,8 +131,10 @@ end
 
 function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
     res = Optim.optimize(
-        get_scalar_function(prob), 
-        x0, 
+        get_scalar_function(prob),
+        prob.ss.dimmin,
+        prob.ss.dimmax,
+        x0,
         alg,
         options;
     )
@@ -147,13 +151,18 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     # Initialize cache if necessary
     is_initialized(cache) || initialize!(cache, numdims(prob))
 
+    # Create solve call
+    solve! = let cache=cache, prob=prob, alg=alg, options=options
+        x -> optim_solve!(cache, prob, x, alg, options)
+    end
+
     # Perform local search
     current_fitness = candidate_fitness
     done = false
     while !done
         # Perform optimization with optim and terminate if we don't finish in max_solve_time seconds
         solve_finished = timeout(
-            x -> optim_solve!(cache, prob, x, alg, options),
+            solve!,
             candidate,
             max_solve_time,
             false,

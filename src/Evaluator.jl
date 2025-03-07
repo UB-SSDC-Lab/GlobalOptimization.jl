@@ -50,13 +50,13 @@ abstract type AsyncEvaluator{T} <: SingleEvaluator{T} end
 
 An evaluator that evaluates the fitness of a population in serial.
 """
-struct SerialBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
+struct SerialBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F, G} <: BatchEvaluator{T}
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
     function SerialBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G}
         return new{T,has_penalty,SS,F,G}(prob)
     end
 end
@@ -66,13 +66,13 @@ end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
-struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
+struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F, G} <: BatchEvaluator{T}
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
     function ThreadedBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G}
         return new{T,has_penalty,SS,F,G}(prob)
     end
 end
@@ -82,13 +82,13 @@ end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading using Polyester.jl.
 """
-struct PolyesterBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}} <: BatchEvaluator{T}
+struct PolyesterBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F, G} <: BatchEvaluator{T}
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
     function PolyesterBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F <: Function, G <: Union{Nothing, Function}}
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G}
         return new{T,has_penalty,SS,F,G}(prob)
     end
 end

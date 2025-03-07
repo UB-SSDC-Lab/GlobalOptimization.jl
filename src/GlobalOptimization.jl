@@ -1,7 +1,9 @@
 module GlobalOptimization
 
+using LinearAlgebra
 using Format
 using Polyester: @batch
+using FunctionWrappersWrappers
 using StaticArrays
 using Random: shuffle!
 using UnPack
