@@ -1,9 +1,16 @@
 module GlobalOptimization
 
+using LinearAlgebra
 using Format
+using Polyester: @batch
+using FunctionWrappersWrappers
 using StaticArrays
 using Random: shuffle!
 using UnPack
+
+import Base
+import Optim
+import LineSearches
 
 # Utilities
 include("rng.jl")
@@ -23,12 +30,14 @@ include("PSO/Swarm.jl")
 include("PSO/PSO.jl")
 
 # MBH
-#include("MBH/Hopper.jl")
-#include("MBH/MBH.jl")
+include("MBH/Distributions.jl")
+include("MBH/Hopper.jl")
+include("MBH/LocalSearch.jl")
+include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
 export OptimizationProblem
-export SerialPSO, ThreadedPSO
+export SerialPSO, ThreadedPSO, PolyesterPSO
 #export MBH
 export optimize!
 

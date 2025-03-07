@@ -17,17 +17,20 @@ struct GeneralOptions{display, funciton_value_check} <: AbstractOptions
     # Maximum time (seconds)
     max_time::Float64
 
-    function GeneralOptions(function_value_check::Val{true}, display::Val{true}, display_interval::Int, max_time)
-        return new{display, function_value_check}(display_interval, max_time)
+    # Minimum cost value
+    min_cost::Float64
+
+    function GeneralOptions(function_value_check::Val{true}, display::Val{true}, display_interval::Int, max_time, min_cost)
+        return new{display, function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{true}, display::Val{false}, display_interval::Int, max_time)
-        return new{display, function_value_check}(display_interval, max_time)
+    function GeneralOptions(function_value_check::Val{true}, display::Val{false}, display_interval::Int, max_time, min_cost)
+        return new{display, function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{false}, display::Val{true}, display_interval::Int, max_time)
-        return new{display, function_value_check}(display_interval, max_time)
+    function GeneralOptions(function_value_check::Val{false}, display::Val{true}, display_interval::Int, max_time, min_cost)
+        return new{display, function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{false}, display::Val{false}, display_interval::Int, max_time)
-        return new{display, function_value_check}(display_interval, max_time)
+    function GeneralOptions(function_value_check::Val{false}, display::Val{false}, display_interval::Int, max_time, min_cost)
+        return new{display, function_value_check}(display_interval, max_time, min_cost)
     end
 end
 
@@ -75,3 +78,11 @@ get_function_value_check(opts::AbstractAlgorithmSpecificOptions) = opts.general.
 Returns the max time option from an algorithm options type.
 """
 get_max_time(opts::AbstractAlgorithmSpecificOptions) = opts.general.max_time
+
+"""
+    get_min_cost(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the min cost option from an algorithm options type.
+"""
+get_min_cost(opts::AbstractAlgorithmSpecificOptions) = opts.general.min_cost
+
