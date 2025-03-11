@@ -117,6 +117,109 @@ function SerialDE(
     SS <: ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
+    evaluator = SerialBatchEvaluator(prob)
+    BuildDE(
+        prob, evaluator, num_candidates,
+        mutation_params, crossover_params,
+        initial_bounds, max_iterations,
+        max_time, function_tolerance,
+        max_stall_time, max_stall_iterations,
+        min_cost, function_value_check,
+        display, display_interval,
+    )
+end
+
+function ThreadedDE(
+    prob::AbstractProblem{has_penalty,SS};
+    num_candidates::Integer = 100,
+    mutation_params::MP = SelfMutationParameters(Rand1()),
+    crossover_params::CP = BinomialCrossoverParameters(0.6),
+    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace} = nothing,
+    max_iterations::Integer = 1000,
+    max_time::Real = 60.0,
+    function_tolerance::Real = 1e-6,
+    max_stall_time::Real = 60.0,
+    max_stall_iterations::Integer = 100,
+    min_cost::Real = -Inf,
+    function_value_check::Bool = true,
+    display::Bool = true,
+    display_interval::Integer = 1,
+) where {
+    MP <: AbstractMutationParameters,
+    CP <: AbstractCrossoverParameters,
+    T <: AbstractFloat,
+    SS <: ContinuousRectangularSearchSpace{T},
+    has_penalty,
+}
+    evaluator = ThreadedBatchEvaluator(prob)
+    BuildDE(
+        prob, evaluator, num_candidates,
+        mutation_params, crossover_params,
+        initial_bounds, max_iterations,
+        max_time, function_tolerance,
+        max_stall_time, max_stall_iterations,
+        min_cost, function_value_check,
+        display, display_interval,
+    )
+end
+
+function PolyesterDE(
+    prob::AbstractProblem{has_penalty,SS};
+    num_candidates::Integer = 100,
+    mutation_params::MP = SelfMutationParameters(Rand1()),
+    crossover_params::CP = BinomialCrossoverParameters(0.6),
+    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace} = nothing,
+    max_iterations::Integer = 1000,
+    max_time::Real = 60.0,
+    function_tolerance::Real = 1e-6,
+    max_stall_time::Real = 60.0,
+    max_stall_iterations::Integer = 100,
+    min_cost::Real = -Inf,
+    function_value_check::Bool = true,
+    display::Bool = true,
+    display_interval::Integer = 1,
+) where {
+    MP <: AbstractMutationParameters,
+    CP <: AbstractCrossoverParameters,
+    T <: AbstractFloat,
+    SS <: ContinuousRectangularSearchSpace{T},
+    has_penalty,
+}
+    evaluator = ThreadedBatchEvaluator(prob)
+    BuildDE(
+        prob, evaluator, num_candidates,
+        mutation_params, crossover_params,
+        initial_bounds, max_iterations,
+        max_time, function_tolerance,
+        max_stall_time, max_stall_iterations,
+        min_cost, function_value_check,
+        display, display_interval,
+    )
+end
+
+function BuildDE(
+    prob::AbstractProblem{has_penalty,SS},
+    evaluator::BatchEvaluator,
+    num_candidates::Integer,
+    mutation_params::MP,
+    crossover_params::CP,
+    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace},
+    max_iterations::Integer,
+    max_time::Real,
+    function_tolerance::Real,
+    max_stall_time::Real,
+    max_stall_iterations::Integer,
+    min_cost::Real,
+    function_value_check::Bool,
+    display::Bool,
+    display_interval::Integer,
+) where {
+    MP <: AbstractMutationParameters,
+    CP <: AbstractCrossoverParameters,
+    T <: AbstractFloat,
+    SS <: ContinuousRectangularSearchSpace{T},
+    has_penalty,
+}
     # Construct options
     options = DEOptions(
         GeneralOptions(
@@ -137,7 +240,7 @@ function SerialDE(
     # Construct evaluator
     return DE(
         options,
-        SerialBatchEvaluator(prob),
+        evaluator,
         DEPopulation{T}(num_candidates, numdims(prob)),
         DECache{T}(numdims(prob)),
     )
@@ -155,7 +258,7 @@ function initialize!(opt::DE)
     # Initialize mutation and crossover parameters
     N = length(population)
     initialize!(options.mutation_params, N)
-    initialize!(options.crossover_params, N)
+    initialize!(options.crossover_params, numdims(evaluator.prob), N)
 
     # Initialize population
     initialize_uniform!(population, options.initial_space)

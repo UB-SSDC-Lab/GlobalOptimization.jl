@@ -3,6 +3,7 @@ using GlobalOptimization
 using BenchmarkTools
 using Random
 using Distributions
+using BlackBoxOptim
 #using LoopVectorization
 #using PaddedViews
 #using StaticArrays
@@ -40,17 +41,25 @@ function rastrigin(x; A = 10)
 end
 
 # Setup Problem
-N = 20
+N = 2
 ss = ContinuousRectangularSearchSpace(
-    [-5.0 for i in 1:N],
-    [5.0 for i in 1:N],
+    [-100.0 for i in 1:N],
+    [100.0 for i in 1:N],
 )
-prob = OptimizationProblem(rastrigin, ss)
+prob = GlobalOptimization.OptimizationProblem(rastrigin, ss)
 
 # Instantiate DE
-mutation_strategy = SelfMutationParameters(Rand1(); dist=Uniform(0.0,1.0))
-crossover_strategy = SelfBinomialCrossoverParameters(; dist=Uniform(0.0,1.0))
-de = SerialDE(
+mutation_strategy = SelfMutationParameters(
+    Rand1();
+    #dist=Uniform(0.0,1.0),
+    sel=GlobalOptimization.RadiusLimitedSelector(8)
+)
+crossover_strategy = SelfBinomialCrossoverParameters(;
+    dist=Uniform(0.0,1.0),
+    #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N),
+)
+
+de = PolyesterDE(
     prob;
     num_candidates = 100,
     display = true,
@@ -62,6 +71,18 @@ de = SerialDE(
 )
 
 res = optimize!(de)
+#iters_per_solve = map(i->optimize!(deepcopy(de)).iters, 1:100);
+
+# bb_res = bboptimize(
+#     rastrigin;
+#     Method = :adaptive_de_rand_1_bin_radiuslimited,
+#     PopulationSize = 100,
+#     SearchRange = (-5.0, 5.0),
+#     NumDimensions = N,
+#     TraceMode = :compact,
+#     TraceInterval = 0.001,
+#     #MaxSteps = 1000,
+# )
 
 # Instantiate PSO
 # spso = SerialPSO(prob; max_time = 20.0)
