@@ -17,7 +17,7 @@ Base.eachindex(pop::AbstractPopulation) = Base.eachindex(pop.candidates)
 
 Returns the number of candidates in the population.
 """
-Base.length(pop::AbstractPopulation) = length(pop.candidates)
+Base.length(pop::AbstractPopulation) = Base.length(pop.candidates)
 
 """
     size(pop::AbstractPopulation)
