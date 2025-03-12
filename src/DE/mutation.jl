@@ -180,7 +180,10 @@ Mutates the population `population` using the DE mutation strategy.
 This is an implementation of the unified mutation strategy proposed by Ji Qiang and
 Chad Mitchell in "A Unified Differential Evolution Algorithm for Global Optimization".
 """
-function mutate!(population::DEPopulation, F::MP, best_candidate) where {MP <: AbstractMutationParameters}
+function mutate!(
+    population::DEPopulation, F::MP, best_candidate,
+    rand_index::RI = rand
+) where {MP <: AbstractMutationParameters, RI <: Function}
     @unpack current_generation, mutants = population
     N = length(current_generation)
 
@@ -204,39 +207,39 @@ function mutate!(population::DEPopulation, F::MP, best_candidate) where {MP <: A
         end
         if F2 > 0.0
             # Generate unique r1 (just need to ensure r1 != i)
-            r1 = rand(idxs)
+            r1 = rand_index(idxs)
             while r1 == i
-                r1 = rand(idxs)
+                r1 = rand_index(idxs)
             end
 
             @. mutants.candidates[i] += F2*(current_generation.candidates[r1] - current_generation.candidates[i])
         end
         if F3 > 0.0
             # Generate unique r2 (need to ensure r2 != i and r2 != r1)
-            r2 = rand(idxs)
+            r2 = rand_index(idxs)
             while r2 in (i, r1)
-                r2 = rand(idxs)
+                r2 = rand_index(idxs)
             end
 
             # Generate unique r3 (need to ensure r3 != i, r1, and r2)
-            r3 = rand(idxs)
+            r3 = rand_index(idxs)
             while r3 in (i, r1, r2)
-                r3 = rand(idxs)
+                r3 = rand_index(idxs)
             end
 
             @. mutants.candidates[i] += F3*(current_generation.candidates[r2] - current_generation.candidates[r3])
         end
         if F4 > 0.0
             # Generate unique r4 (need to ensure r4 != i, r1, r2, and r3)
-            r4 = rand(idxs)
+            r4 = rand_index(idxs)
             while r4 in (i, r1, r2, r3)
-                r4 = rand(idxs)
+                r4 = rand_index(idxs)
             end
 
             # Generate unique r5 (need to ensure r5 != i, r1, r2, r3, and r4)
-            r5 = rand(idxs)
+            r5 = rand_index(idxs)
             while r5 in (i, r1, r2, r3, r4)
-                r5 = rand(idxs)
+                r5 = rand_index(idxs)
             end
 
             @. mutants.candidates[i] += F4*(current_generation.candidates[r4] - current_generation.candidates[r5])
