@@ -201,6 +201,8 @@ function ThreadedPSO(
     function_value_check::Bool = true,
     max_time::Real = 60.0,
     min_cost::Real = -Inf,
+    batch_n::Int = Threads.nthreads(),
+    batch_split = ChunkSplitters.RoundRobin(),
 ) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
@@ -226,7 +228,7 @@ function ThreadedPSO(
     # Construct PSO
     return PSO(
         options,
-        ThreadedBatchEvaluator(prob),
+        ThreadedBatchEvaluator(prob, batch_n, batch_split),
         Swarm{T}(num_particles, numdims(prob)),
         PSOCache{T}(num_particles, numdims(prob))
     )

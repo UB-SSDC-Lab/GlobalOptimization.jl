@@ -66,14 +66,23 @@ end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
-struct ThreadedBatchEvaluator{T, has_penalty, SS <: SearchSpace{T}, F, G} <: BatchEvaluator{T}
+struct ThreadedBatchEvaluator{
+    T, has_penalty, SS <: SearchSpace{T}, F, G,
+    S <: ChunkSplitters.Split
+} <: BatchEvaluator{T}
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
+    # Chunk splitting args
+    n::Int
+    split::S
+
     function ThreadedBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G},
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G}
-        return new{T,has_penalty,SS,F,G}(prob)
+        n::Int = Threads.nthreads(),
+        split::S = ChunkSplitters.RoundRobin(),
+    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G, S <: ChunkSplitters.Split}
+        return new{T,has_penalty,SS,F,G,S}(prob, n, split)
     end
 end
 
@@ -115,11 +124,21 @@ function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
     return nothing
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
+    citer = ChunkSplitters.chunks(
+        eachindex(pop);
+        n = evaluator.n,
+        split = evaluator.split,
+    )
+
     cs = candidates(pop)
-    Threads.@threads for idx in eachindex(pop)
-        candidate = cs[idx]
-        fitness = scalar_function(evaluator.prob, candidate)
-        set_fitness!(pop, fitness, idx)
+    @sync for idxs in citer
+        Threads.@spawn begin
+            for idx in idxs
+                candidate = cs[idx]
+                fitness = scalar_function(evaluator.prob, candidate)
+                set_fitness!(pop, fitness, idx)
+            end
+        end
     end
     return nothing
 end
