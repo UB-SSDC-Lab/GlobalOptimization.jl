@@ -260,4 +260,32 @@ function main()
     return data
 end
 
-data = main()
+function analyze_data()
+    prob_set = get_problem_sets()["all"]
+
+    df = load("benchmark_data.jld2")["df"]
+
+    # Plot results for all problem sets
+    for i in eachindex(prob_set)
+        # Get problem data
+        prob_data = @subset(df,
+            :ProblemName    .== prob_set[i][1],
+            :NumDims        .== prob_set[i][2],
+            :PopSize        .== prob_set[i][3],
+        )
+
+        fig = Figure(;size=(1920, 1080));
+        ax = Axis(
+            fig[1,1];
+            xticks = (axes(prob_data,1), prob_data.AlgorithmName),
+            xticklabelrotation = 45,
+            yscale = log10,
+            title = prob_set[i][1] * " " * string(prob_set[i][2]) * " dims"
+        )
+        barplot!(ax, axes(prob_data, 1), prob_data.AvgFitness)
+        save("./figs/$(prob_set[i][1])_$(prob_set[i][2])dims.png", fig)
+    end
+end
+
+#data = main()
+analyze_data()
