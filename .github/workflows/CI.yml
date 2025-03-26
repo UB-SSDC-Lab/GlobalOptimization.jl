@@ -15,6 +15,10 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+        actions: write
+        contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -27,46 +31,51 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
             test_args: '--threads auto'
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     permissions:
+      actions: write # needed to allow julia-actions/cache to proactively delete old caches that it has created
       contents: write
       statuses: write
     steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
+      - uses: julia-actions/cache@v2
       - name: Configure doc environment
+        shell: julia --project=docs --color=yes {0}
         run: |
-          julia --project=docs/ -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-      - run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta, doctest
-            using GlobalOptimization
-            DocMeta.setdocmeta!(GlobalOptimization, :DocTestSetup, :(using GlobalOptimization); recursive=true)
-            doctest(GlobalOptimization)'
+      - name: Run doctests
+        shell: julia --project=docs --color=yes {0}
+        run: |
+          using Documenter: DocMeta, doctest
+          using GlobalOptimization
+          DocMeta.setdocmeta!(GlobalOptimization, :DocTestSetup, :(using GlobalOptimization); recursive=true)
+          doctest(GlobalOptimization)
+
