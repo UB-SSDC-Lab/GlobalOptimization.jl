@@ -11,11 +11,9 @@
 # const default_binomial_crossover_dist = BimodalCauchy(
 #     0.1, 0.1, 0.95, 0.1, clampBelow0 = false
 # )
-const default_mutation_dist = MixtureModel(
-   Cauchy, [(0.65, 0.1), (1.0, 0.1)], [0.5, 0.5]
-)
+const default_mutation_dist = MixtureModel(Cauchy, [(0.65, 0.1), (1.0, 0.1)], [0.5, 0.5])
 const default_binomial_crossover_dist = MixtureModel(
-   Cauchy, [(0.1, 0.1), (0.95, 0.1)], [0.5, 0.5]
+    Cauchy, [(0.1, 0.1), (0.95, 0.1)], [0.5, 0.5]
 )
 
 # Types used to indicate adaptivity (modify to support new adaptation methods as necessary)
@@ -31,7 +29,7 @@ struct RadiusLimitedSelector <: AbstractSelector
     idxs::Vector{UInt16}
 
     function RadiusLimitedSelector(radius::Int)
-        idxs = Vector{UInt16}(undef, 2*radius + 1)
+        idxs = Vector{UInt16}(undef, 2 * radius + 1)
         return new(radius, idxs)
     end
 end
@@ -43,9 +41,7 @@ function select(s::RadiusLimitedSelector, target, pop_size)
 
     # Set indices
     for i in eachindex(s.idxs)
-        s.idxs[i] = UInt16(
-            mod1(target + i - s.radius - 1, pop_size)
-        )
+        s.idxs[i] = UInt16(mod1(target + i - s.radius - 1, pop_size))
     end
 
     return s.idxs
@@ -62,10 +58,12 @@ function one_clamped_rand(dist)
             return value
         end
         if iters > 1000
-            throw(ArgumentError(
-                "one_clamped_rand failed to generate a valid value in 1000 attempts. " *
-                "Consider using a different distribution."
-            ))
+            throw(
+                ArgumentError(
+                    "one_clamped_rand failed to generate a valid value in 1000 attempts. " *
+                    "Consider using a different distribution.",
+                ),
+            )
         end
     end
 end

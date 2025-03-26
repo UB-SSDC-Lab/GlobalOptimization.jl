@@ -14,10 +14,10 @@ mutable struct BasicHopper{T} <: AbstractHopper{T}
         candidate = zeros(T, nDims)
         candidate_fitness = T(Inf)
         return new{T}(
-            candidate, 
+            candidate,
             copy(candidate),
-            candidate_fitness, 
-            copy(candidate), 
+            candidate_fitness,
+            copy(candidate),
             candidate_fitness,
         )
     end
@@ -25,10 +25,10 @@ mutable struct BasicHopper{T} <: AbstractHopper{T}
         candidate = Vector{T}(undef, 0)
         candidate_fitness = T(Inf)
         return new{T}(
-            candidate, 
+            candidate,
             copy(candidate),
-            candidate_fitness, 
-            copy(candidate), 
+            candidate_fitness,
+            copy(candidate),
             candidate_fitness,
         )
     end
@@ -58,12 +58,12 @@ function initialize!(
     while !feasible
         # Initialize the hopper position in search space
         @inbounds for i in eachindex(candidate)
-            dmin    = dimmin(search_space, i)
-            dΔ      = dimdelta(search_space, i)
-            candidate[i] = dmin + dΔ*rand(T)
+            dmin = dimmin(search_space, i)
+            dΔ = dimdelta(search_space, i)
+            candidate[i] = dmin + dΔ * rand(T)
         end
 
-        fitness, penalty = evaluate_with_penalty(evaluator, candidate)  
+        fitness, penalty = evaluate_with_penalty(evaluator, candidate)
         if abs(penalty) - eps() <= 0.0
             feasible = true
 
@@ -88,7 +88,7 @@ end
 Updates the hopper fitness information after previously evaluating the fitness of the hopper.
 """
 function update_fitness!(
-    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T},
+    hopper::BasicHopper{T}, distribution::MBHStaticDistribution{T}
 ) where {T}
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update hopper
@@ -98,7 +98,7 @@ function update_fitness!(
     return nothing
 end
 function update_fitness!(
-    hopper::BasicHopper{T}, distribution::MBHAdaptiveDistribution{T},
+    hopper::BasicHopper{T}, distribution::MBHAdaptiveDistribution{T}
 ) where {T}
     if hopper.candidate_fitness < hopper.best_candidate_fitness
         # Update distribution
@@ -116,13 +116,14 @@ function update_fitness!(
     return nothing
 end
 
-
 """
     draw_update!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T})
 
 Draws a perterbation from distribution and updates candidate for the hopper `hopper`.
 """
-function draw_update!(hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T}) where {T}
+function draw_update!(
+    hopper::BasicHopper{T}, distribution::AbstractMBHDistribution{T}
+) where {T}
     # Unpack hopper
     @unpack candidate, candidate_step, best_candidate = hopper
 

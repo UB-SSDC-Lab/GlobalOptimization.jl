@@ -10,7 +10,7 @@ A simple struct for returning results.
 - `time::Float64`: The time taken to perform the optimization in seconds.
 - `exitFlag::Int`: The exit flag of the optimization.
 """
-struct Results{T <: AbstractFloat}
+struct Results{T<:AbstractFloat}
     fbest::T
     xbest::Vector{T}
 
@@ -33,7 +33,7 @@ struct Results{T <: AbstractFloat}
     # Returns
     - `Results{T}`
     """
-    function Results(fbest::T, xbest::AbstractVector{T}, iters, time, exitFlag) where T
+    function Results(fbest::T, xbest::AbstractVector{T}, iters, time, exitFlag) where {T}
         return new{T}(fbest, copy(xbest), iters, time, exitFlag)
     end
 end

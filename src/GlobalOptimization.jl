@@ -11,9 +11,9 @@ using Random: shuffle!
 using UnPack
 
 import Random: rand, rand!, shuffle!
-import Base
-import Optim
-import LineSearches
+using Base: Base
+using Optim: Optim
+using LineSearches: LineSearches
 
 # Utilities
 include("rng.jl")

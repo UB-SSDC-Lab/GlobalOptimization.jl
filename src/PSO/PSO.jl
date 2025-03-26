@@ -4,7 +4,9 @@
 
 Options for the PSO algorithm.
 """
-struct PSOOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <: GeneralOptions} <: AbstractAlgorithmSpecificOptions
+struct PSOOptions{
+    ISS<:Union{Nothing,ContinuousRectangularSearchSpace},GO<:GeneralOptions
+} <: AbstractAlgorithmSpecificOptions
     # The general options
     general::GO
 
@@ -40,11 +42,21 @@ struct PSOOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <:
         self_adjustment_weight,
         social_adjustment_weight,
     ) where {GO,ISS}
-        minimum_neighborhood_size = max(2, floor(Int, num_particles * minimum_neighborhood_fraction))
+        minimum_neighborhood_size = max(
+            2, floor(Int, num_particles * minimum_neighborhood_fraction)
+        )
         return new{ISS,GO}(
-            general, initial_space, max_iterations, function_tolerence, max_stall_time,
-            max_stall_iterations, inertia_range, minimum_neighborhood_fraction,
-            minimum_neighborhood_size, self_adjustment_weight, social_adjustment_weight,
+            general,
+            initial_space,
+            max_iterations,
+            function_tolerence,
+            max_stall_time,
+            max_stall_iterations,
+            inertia_range,
+            minimum_neighborhood_fraction,
+            minimum_neighborhood_size,
+            self_adjustment_weight,
+            social_adjustment_weight,
         )
     end
 end
@@ -68,7 +80,7 @@ end
 
 Particle Swarm Optimization (PSO) algorithm.
 """
-struct PSO{T <: AbstractFloat, E <: BatchEvaluator{T}, IBSS, GO} <: AbstractOptimizer
+struct PSO{T<:AbstractFloat,E<:BatchEvaluator{T},IBSS,GO} <: AbstractOptimizer
     # The PSO algorithm options
     options::PSOOptions{IBSS,GO}
 
@@ -111,22 +123,22 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 """
 function SerialPSO(
     prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int = 100,
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Int = 1000,
-    function_tolerence::AbstractFloat = 1e-6,
-    max_stall_time::Real = Inf,
-    max_stall_iterations::Int = 25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat = 0.25,
-    self_adjustment_weight::Real = 1.49,
-    social_adjustment_weight::Real = 1.49,
-    display::Bool = false,
-    display_interval::Int = 1,
-    function_value_check::Bool = true,
-    max_time::Real = 60.0,
-    min_cost::Real = -Inf,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
+    num_particles::Int=100,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Int=1000,
+    function_tolerence::AbstractFloat=1e-6,
+    max_stall_time::Real=Inf,
+    max_stall_iterations::Int=25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat=0.25,
+    self_adjustment_weight::Real=1.49,
+    social_adjustment_weight::Real=1.49,
+    display::Bool=false,
+    display_interval::Int=1,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=-Inf,
+) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -153,7 +165,7 @@ function SerialPSO(
         options,
         SerialBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob))
+        PSOCache{T}(num_particles, numdims(prob)),
     )
 end
 
@@ -186,22 +198,22 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 """
 function ThreadedPSO(
     prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int = 100,
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Int = 1000,
-    function_tolerence::AbstractFloat = 1e-6,
-    max_stall_time::Real = Inf,
-    max_stall_iterations::Int = 25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat = 0.25,
-    self_adjustment_weight::Real = 1.49,
-    social_adjustment_weight::Real = 1.49,
-    display::Bool = false,
-    display_interval::Int = 1,
-    function_value_check::Bool = true,
-    max_time::Real = 60.0,
-    min_cost::Real = -Inf,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
+    num_particles::Int=100,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Int=1000,
+    function_tolerence::AbstractFloat=1e-6,
+    max_stall_time::Real=Inf,
+    max_stall_iterations::Int=25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat=0.25,
+    self_adjustment_weight::Real=1.49,
+    social_adjustment_weight::Real=1.49,
+    display::Bool=false,
+    display_interval::Int=1,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=-Inf,
+) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -228,7 +240,7 @@ function ThreadedPSO(
         options,
         ThreadedBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob))
+        PSOCache{T}(num_particles, numdims(prob)),
     )
 end
 
@@ -261,22 +273,22 @@ Constructs a PSO algorithm with the given options that will employ a `PolyesterB
 """
 function PolyesterPSO(
     prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int = 100,
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Int = 1000,
-    function_tolerence::AbstractFloat = 1e-6,
-    max_stall_time::Real = Inf,
-    max_stall_iterations::Int = 25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat = 0.25,
-    self_adjustment_weight::Real = 1.49,
-    social_adjustment_weight::Real = 1.49,
-    display::Bool = false,
-    display_interval::Int = 1,
-    function_value_check::Bool = true,
-    max_time::Real = 60.0,
-    min_cost::Real = -Inf,
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
+    num_particles::Int=100,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Int=1000,
+    function_tolerence::AbstractFloat=1e-6,
+    max_stall_time::Real=Inf,
+    max_stall_iterations::Int=25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat=0.25,
+    self_adjustment_weight::Real=1.49,
+    social_adjustment_weight::Real=1.49,
+    display::Bool=false,
+    display_interval::Int=1,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=-Inf,
+) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -303,18 +315,34 @@ function PolyesterPSO(
         options,
         PolyesterBatchEvaluator(prob),
         Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob))
+        PSOCache{T}(num_particles, numdims(prob)),
     )
 end
 
-function SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
-    throw(ArgumentError("PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace."))
+function SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS<:SearchSpace}
+    throw(
+        ArgumentError(
+            "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
+        ),
+    )
 end
-function ThreadedPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
-    throw(ArgumentError("PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace."))
+function ThreadedPSO(
+    prob::AbstractOptimizationProblem{SS}; kwargs...
+) where {SS<:SearchSpace}
+    throw(
+        ArgumentError(
+            "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
+        ),
+    )
 end
-function PolyesterPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS <: SearchSpace}
-    throw(ArgumentError("PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace."))
+function PolyesterPSO(
+    prob::AbstractOptimizationProblem{SS}; kwargs...
+) where {SS<:SearchSpace}
+    throw(
+        ArgumentError(
+            "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
+        ),
+    )
 end
 
 function optimize!(opt::PSO)
@@ -348,7 +376,7 @@ function iterate!(opt::PSO)
     # Initialize PSO algorithm parameters
     ns = options.minimum_neighborhood_size  # Neighborhood size
     sc = 0                                  # Stall counter
-    w  = options.inertia_range[2]           # Inertia weight
+    w = options.inertia_range[2]           # Inertia weight
     y1 = options.self_adjustment_weight     # Self adjustment weight
     y2 = options.social_adjustment_weight   # Social adjustment weight
 
@@ -482,12 +510,20 @@ end
 
 Displays the status of the PSO algorithm.
 """
-@inline function display_status(time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}) where {D, FVC}
-    display_status(time, iteration, stall_count, global_fitness, get_display_interval(options), D)
+@inline function display_status(
+    time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}
+) where {D,FVC}
+    display_status(
+        time, iteration, stall_count, global_fitness, get_display_interval(options), D
+    )
     return nothing
 end
-@inline display_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{false}) = nothing
-function display_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{true})
+@inline display_status(
+    time, iteration, stall_count, global_fitness, display_interval, ::Val{false}
+) = nothing
+function display_status(
+    time, iteration, stall_count, global_fitness, display_interval, ::Val{true}
+)
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
         fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")

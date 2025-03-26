@@ -9,7 +9,7 @@ Generate an exponential random variable with rate `λ`.
 # Returns
 - `val::T`: an exponential random variable with rate `λ`. 
 """
-function exprate(λ::T) where T <: AbstractFloat
+function exprate(λ::T) where {T<:AbstractFloat}
     return -log(1.0 - rand(T)) / λ
 end
 
@@ -24,8 +24,8 @@ Generate an exponential random variable with scale `β`.
 # Returns
 - `val::T`: an exponential random variable with scale `β`.
 """
-function expscale(β::T) where T <: AbstractFloat
-    return -β*log(1.0 - rand(T))
+function expscale(β::T) where {T<:AbstractFloat}
+    return -β * log(1.0 - rand(T))
 end
 
 """
@@ -40,9 +40,9 @@ Generate a Laplace random variable with location `μ` and scale `b`.
 # Returns
 - `val::T`: a Laplace random variable with location `μ` and scale `b`.
 """
-function laplace(μ::T, b::T) where T <: AbstractFloat
+function laplace(μ::T, b::T) where {T<:AbstractFloat}
     u = rand(T) - 0.5
-    return μ - b*sign(u)*log(1.0 - 2.0*abs(u))
+    return μ - b * sign(u) * log(1.0 - 2.0 * abs(u))
 end
 
 """

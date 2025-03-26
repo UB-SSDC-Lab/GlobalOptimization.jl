@@ -12,12 +12,12 @@ using Infiltrator
 
 # Schwefel Function
 function schaffer(x)
-    obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5)/(1 + 0.001*(x[1]^2+x[2]^2))^2
+    obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5) / (1 + 0.001 * (x[1]^2 + x[2]^2))^2
     return obj, 0.0
 end
 
 function waveDrop(x)
-    obj = -(1 + cos(12*sqrt(x[1]^2 + x[2]^2)))/(0.5*(x[1]^2 + x[2]^2) + 2.0)
+    obj = -(1 + cos(12 * sqrt(x[1]^2 + x[2]^2))) / (0.5 * (x[1]^2 + x[2]^2) + 2.0)
     return obj, 0.0
 end
 
@@ -25,25 +25,22 @@ end
     obj = 0.0
     @fastmath for val in x
         xm1sq = (val - 1)^2
-        obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
+        obj += 10000.0 * sqrt(abs(exp(xm1sq) - 1.0))
     end
     return obj, 0.0
 end
 
-function rastrigin(x; A = 10)
-    obj = A*length(x)
+function rastrigin(x; A=10)
+    obj = A * length(x)
     for val in x
-        obj += val^2 - A*cos(2*pi*val)
+        obj += val^2 - A * cos(2 * pi * val)
     end
     return obj
 end
 
 # Setup Problem
 N = 100
-ss = ContinuousRectangularSearchSpace(
-    [-5.0 for i in 1:N],
-    [5.0 for i in 1:N],
-)
+ss = ContinuousRectangularSearchSpace([-5.0 for i in 1:N], [5.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate PSO
@@ -57,9 +54,9 @@ prob = OptimizationProblem(rastrigin, ss)
 # res = optimize!(ppso); display(res)
 
 # ======== BENCHMARKING
-sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
-tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
-pres = @benchmark optimize!(_pso) setup=(_pso = PolyesterPSO(prob))
+sres = @benchmark optimize!(_pso) setup = (_pso = SerialPSO(prob))
+tres = @benchmark optimize!(_pso) setup = (_pso = ThreadedPSO(prob))
+pres = @benchmark optimize!(_pso) setup = (_pso = PolyesterPSO(prob))
 display(sres)
 display(tres)
 display(pres)
