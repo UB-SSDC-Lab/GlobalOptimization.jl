@@ -30,7 +30,7 @@ A `RectangularSearchSpace` formed by a single continuous set.
 - `dimmax::Vector{T}`: A vector of maximum values for each dimension.
 - `dimdelta::Vector{T}`: A vector of the difference between the maximum and minimum values for each dimension.
 """
-struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearchSpace{T}
+struct ContinuousRectangularSearchSpace{T<:AbstractFloat} <: RectangularSearchSpace{T}
     dimmin::Vector{T}
     dimmax::Vector{T}
     dimdelta::Vector{T}
@@ -58,7 +58,7 @@ struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearch
     """
     function ContinuousRectangularSearchSpace(
         dimmin::AbstractVector{T1}, dimmax::AbstractVector{T2}
-    ) where {T1 <: Real, T2 <: Real}
+    ) where {T1<:Real,T2<:Real}
         # Check dimensions
         length(dimmin) == length(dimmax) ||
             throw(DimensionMismatch("dimmin and dimmax must be the same length."))
@@ -66,16 +66,24 @@ struct ContinuousRectangularSearchSpace{T <: AbstractFloat} <: RectangularSearch
         # Check values
         for i in eachindex(dimmin)
             if dimmin[i] > dimmax[i]
-                throw(ArgumentError("dimmin[i] must be less than or equal to dimmax[i] for all i."))
+                throw(
+                    ArgumentError(
+                        "dimmin[i] must be less than or equal to dimmax[i] for all i."
+                    ),
+                )
             end
         end
 
         # Handle types
         Tp = promote_type(T1, T2)
-        T  = Tp <: AbstractFloat ? Tp : Float64
+        T = Tp <: AbstractFloat ? Tp : Float64
 
         # Return new search space
-        new{T}(convert(Vector{T}, dimmin), convert(Vector{T}, dimmax), convert(Vector{T}, dimmax - dimmin))
+        return new{T}(
+            convert(Vector{T}, dimmin),
+            convert(Vector{T}, dimmax),
+            convert(Vector{T}, dimmax - dimmin),
+        )
     end
 end
 
@@ -175,9 +183,8 @@ Returns the intersection of the two search spaces `ss1` and `ss2` as a new searc
 - `DimensionMismatch`: if `ss1` and `ss2` do not have the same number of dimensions.
 """
 function intersection(
-    ss1::ContinuousRectangularSearchSpace{T1}, 
-    ss2::ContinuousRectangularSearchSpace{T2},
-) where {T1, T2}
+    ss1::ContinuousRectangularSearchSpace{T1}, ss2::ContinuousRectangularSearchSpace{T2}
+) where {T1,T2}
     # Check inputs
     numdims(ss1) == numdims(ss2) ||
         throw(DimensionMismatch("ss1 and ss2 must have the same number of dimensions."))

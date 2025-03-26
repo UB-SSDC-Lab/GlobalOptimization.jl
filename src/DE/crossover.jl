@@ -1,5 +1,5 @@
 
-abstract type AbstractCrossoverParameters{AS <: AbstractAdaptationStrategy} end
+abstract type AbstractCrossoverParameters{AS<:AbstractAdaptationStrategy} end
 abstract type AbstractBinomialCrossoverParameters{AS} <: AbstractCrossoverParameters{AS} end
 
 abstract type AbstractCrossoverTransformation end
@@ -21,14 +21,14 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
             throw(ArgumentError("pb must be in the range (0, 1]."))
         end
         B = Matrix{Float64}(undef, num_dims, num_dims)
-        new(ps, pb, B, zeros(num_dims), zeros(num_dims))
+        return new(ps, pb, B, zeros(num_dims), zeros(num_dims))
     end
 end
 
 update_transformation!(transformation::NoTransformation, population) = nothing
 function update_transformation!(transformation::CovarianceTransformation, population)
     # Get number of candidates to consider in the covariance matrix
-    n = clamp(ceil(Int, transformation.ps*length(population)), 2, length(population))
+    n = clamp(ceil(Int, transformation.ps * length(population)), 2, length(population))
 
     # Get indices of n best candidates
     idxs = sortperm(population.current_generation.candidates_fitness)[1:n]
@@ -60,54 +60,54 @@ function from_transformed!(transformation::CovarianceTransformation, mt, m)
 end
 
 mutable struct BinomialCrossoverParameters{
-    AS <: AbstractAdaptationStrategy,
-    T  <: AbstractCrossoverTransformation,
-    D
+    AS<:AbstractAdaptationStrategy,T<:AbstractCrossoverTransformation,D
 } <: AbstractBinomialCrossoverParameters{AS}
-
     CR::Float64
     transform::T
     dist::D
 
-    function BinomialCrossoverParameters(CR::Float64; transform = NoTransformation())
-        new{NoAdaptation, typeof(transform), Nothing}(CR, transform, nothing)
+    function BinomialCrossoverParameters(CR::Float64; transform=NoTransformation())
+        return new{NoAdaptation,typeof(transform),Nothing}(CR, transform, nothing)
     end
 
     function BinomialCrossoverParameters(;
-        dist = default_binomial_crossover_dist,
-        transform = NoTransformation(),
+        dist=default_binomial_crossover_dist, transform=NoTransformation()
     )
-        new{RandomAdaptation, typeof(transform), typeof(dist)}(0.0, transform, dist)
+        return new{RandomAdaptation,typeof(transform),typeof(dist)}(0.0, transform, dist)
     end
 end
 struct SelfBinomialCrossoverParameters{
-    AS <: AbstractAdaptationStrategy,
-    T  <: AbstractCrossoverTransformation,
-    D
+    AS<:AbstractAdaptationStrategy,T<:AbstractCrossoverTransformation,D
 } <: AbstractBinomialCrossoverParameters{AS}
-
     CRs::Vector{Float64}
     transform::T
     dist::D
 
     function SelfBinomialCrossoverParameters(;
-        dist = default_binomial_crossover_dist,
-        transform = NoTransformation(),
+        dist=default_binomial_crossover_dist, transform=NoTransformation()
     )
         CRs = Vector{Float64}(undef, 0)
-        new{RandomAdaptation, typeof(transform), typeof(dist)}(CRs, transform, dist)
+        return new{RandomAdaptation,typeof(transform),typeof(dist)}(CRs, transform, dist)
     end
 end
 
 get_parameter(params::BinomialCrossoverParameters, i) = params.CR
 get_parameter(params::SelfBinomialCrossoverParameters, i) = params.CRs[i]
 
-initialize!(params::AbstractCrossoverParameters{NoAdaptation}, numdims, population_size) = nothing
-function initialize!(params::BinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size)
+function initialize!(
+    params::AbstractCrossoverParameters{NoAdaptation}, numdims, population_size
+)
+    return nothing
+end
+function initialize!(
+    params::BinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size
+)
     params.CR = one_clamped_rand(params.dist)
     return nothing
 end
-function initialize!(params::SelfBinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size)
+function initialize!(
+    params::SelfBinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size
+)
     resize!(params.CRs, population_size)
     @inbounds for i in eachindex(params.CRs)
         params.CRs[i] = one_clamped_rand(params.dist)
@@ -115,14 +115,24 @@ function initialize!(params::SelfBinomialCrossoverParameters{RandomAdaptation}, 
     return nothing
 end
 
-adapt!(params::AbstractCrossoverParameters{NoAdaptation}, improved, global_best_improved) = nothing
-function adapt!(params::BinomialCrossoverParameters{RandomAdaptation}, improved, global_best_improved)
+function adapt!(
+    params::AbstractCrossoverParameters{NoAdaptation}, improved, global_best_improved
+)
+    return nothing
+end
+function adapt!(
+    params::BinomialCrossoverParameters{RandomAdaptation}, improved, global_best_improved
+)
     if !global_best_improved
         params.CR = one_clamped_rand(params.dist)
     end
     return nothing
 end
-function adapt!(params::SelfBinomialCrossoverParameters{RandomAdaptation}, improved, global_best_improved)
+function adapt!(
+    params::SelfBinomialCrossoverParameters{RandomAdaptation},
+    improved,
+    global_best_improved,
+)
     @inbounds for i in eachindex(params.CRs)
         if !improved[i]
             params.CRs[i] = one_clamped_rand(params.dist)
@@ -157,11 +167,7 @@ function crossover!(
         mutant = mutants.candidates[i]
 
         # Get transformed candidate and mutant
-        candidate_t, mutant_t, transformed = to_transformed(
-            transform,
-            candidate,
-            mutant,
-        )
+        candidate_t, mutant_t, transformed = to_transformed(transform, candidate, mutant)
 
         # Perform crossover
         mbr_i = rand(1:length(mutant_t))

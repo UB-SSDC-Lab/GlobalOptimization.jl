@@ -4,18 +4,16 @@
 
 The base representation of some population for the DE algorithms.
 """
-struct DEBasePopulation{T <: AbstractFloat} <: AbstractPopulation{T}
+struct DEBasePopulation{T<:AbstractFloat} <: AbstractPopulation{T}
     candidates::Vector{Vector{T}}
     candidates_fitness::Vector{T}
 
     function DEBasePopulation{T}(num_candidates::Integer, num_dims::Integer) where {T}
         return new{T}(
-            [zeros(T, num_dims) for _ in 1:num_candidates],
-            zeros(T, num_candidates),
+            [zeros(T, num_dims) for _ in 1:num_candidates], zeros(T, num_candidates)
         )
     end
 end
-
 
 """
     DEPopulation{T <: AbstractFloat} <: AbstractPopulation{T}
@@ -23,7 +21,7 @@ end
 The full population representation for the DE algorithms, including both the candidates
 and the mutants.
 """
-struct DEPopulation{T <: AbstractFloat}
+struct DEPopulation{T<:AbstractFloat}
     # The current population of candidates
     current_generation::DEBasePopulation{T}
 
@@ -49,21 +47,22 @@ end
 
 Constructs a `DEPopulation` with `num_candidates` candidates in `num_dims` dimensions.
 """
-DEPopulation(num_candidates::Integer, num_dims::Integer) = DEPopulation{Float64}(num_candidates, num_dims)
+DEPopulation(num_candidates::Integer, num_dims::Integer) =
+    DEPopulation{Float64}(num_candidates, num_dims)
 
 """
     DEPopulation_F64(num_candidates::Integer, num_dims::Integer)
 
 Constructs a Float64 `DEPopulation` with `num_candidate` candidates in `num_dims` dimensions.
 """
-DEPopulation_F64(num_candidates::Integer, num_dims::Integer) = DEPopulation{Float64}(num_candidates, num_dims)
+DEPopulation_F64(num_candidates::Integer, num_dims::Integer) =
+    DEPopulation{Float64}(num_candidates, num_dims)
 
 Base.length(population::DEPopulation) = length(population.current_generation)
 
 function initialize_uniform!(
-    population::DEPopulation{T},
-    search_space::ContinuousRectangularSearchSpace{T},
-) where T
+    population::DEPopulation{T}, search_space::ContinuousRectangularSearchSpace{T}
+) where {T}
     # Unpack population
     candidates = population.current_generation.candidates
 
@@ -77,24 +76,24 @@ function initialize_uniform!(
             dΔ = dimdelta(search_space, j)
 
             # Set candidate
-            candidate[j] = dmin + dΔ*rand(T)
+            candidate[j] = dmin + dΔ * rand(T)
         end
     end
     return nothing
 end
 
 function initialize_fitness!(
-    population::DEPopulation{T}, evaluator::BatchEvaluator{T},
+    population::DEPopulation{T}, evaluator::BatchEvaluator{T}
 ) where {T}
     # Evaluate the cost function for each candidate
-    evaluate!(population.current_generation, evaluator)
+    return evaluate!(population.current_generation, evaluator)
 end
 
 function evaluate_mutant_fitness!(
-    population::DEPopulation{T}, evaluator::BatchEvaluator{T},
+    population::DEPopulation{T}, evaluator::BatchEvaluator{T}
 ) where {T}
     # Evaluate the cost function for each mutant
-    evaluate!(population.mutants, evaluator)
+    return evaluate!(population.mutants, evaluator)
 end
 
 """

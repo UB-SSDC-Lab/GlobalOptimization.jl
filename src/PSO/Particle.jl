@@ -1,4 +1,4 @@
-abstract type AbstractParticle{T <: AbstractFloat} end
+abstract type AbstractParticle{T<:AbstractFloat} end
 
 mutable struct Particle{T<:AbstractFloat} <: AbstractParticle{T}
     # Position, velocity, and personal best
@@ -10,28 +10,29 @@ mutable struct Particle{T<:AbstractFloat} <: AbstractParticle{T}
     fx::T # Current
     fp::T # Personal best
 
-    function Particle{T}(nDims::Integer) where {T <:AbstractFloat}
+    function Particle{T}(nDims::Integer) where {T<:AbstractFloat}
         if nDims < 0
             throw(ArgumentError("nDims cannot be less than 0."))
         end
-        return new{T}(Vector{T}(undef, nDims),
-                      Vector{T}(undef, nDims),
-                      Vector{T}(undef, nDims),
-                      zero(T), zero(T))
+        return new{T}(
+            Vector{T}(undef, nDims),
+            Vector{T}(undef, nDims),
+            Vector{T}(undef, nDims),
+            zero(T),
+            zero(T),
+        )
     end
-    function Particle{T}(::UndefInitializer) where {T <: AbstractFloat}
+    function Particle{T}(::UndefInitializer) where {T<:AbstractFloat}
         return Particle{T}(
-            Vector{T}(undef, 0),
-            Vector{T}(undef, 0),
-            Vector{T}(undef, 0),
-            zero(T), zero(T))
+            Vector{T}(undef, 0), Vector{T}(undef, 0), Vector{T}(undef, 0), zero(T), zero(T)
+        )
     end
 end
 
-struct StaticParticle{N, T <: AbstractFloat} <: AbstractParticle{T}
-    x::SVector{N, T}
-    v::SVector{N, T}
-    p::SVector{N, T}
+struct StaticParticle{N,T<:AbstractFloat} <: AbstractParticle{T}
+    x::SVector{N,T}
+    v::SVector{N,T}
+    p::SVector{N,T}
 
     fx::T
     fp::T
@@ -39,7 +40,7 @@ end
 
 # ===== Interface
 Base.length(p::Particle) = length(p.x)
-Base.length(p::StaticParticle{N, T}) where {N, T} = N
+Base.length(p::StaticParticle{N,T}) where {N,T} = N
 
 position(p::AbstractParticle) = p.x
 velocity(p::AbstractParticle) = p.v
@@ -65,12 +66,12 @@ function enforce_bounds!(p::Particle{T}, LB, UB) where {T}
     return nothing
 end
 
-function eval_objective!(p::Particle, f::F) where {F <: Function}
+function eval_objective!(p::Particle, f::F) where {F<:Function}
     p.fx = f(p.x)
     return nothing
 end
 
-function initialize_best!(p::Particle) 
+function initialize_best!(p::Particle)
     p.fp = p.fx
     return nothing
 end

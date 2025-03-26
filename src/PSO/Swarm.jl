@@ -3,7 +3,7 @@
 
 A population of particles for the PSO algorithm.
 """
-struct Swarm{T <: AbstractFloat} <: AbstractPopulation{T}
+struct Swarm{T<:AbstractFloat} <: AbstractPopulation{T}
     # Population information (requried for all AbstractPopulations)
     candidates::Vector{Vector{T}}
     candidates_fitness::Vector{T}
@@ -38,14 +38,16 @@ Swarm(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles,
 
 Constructs a Float64 `Swarm` with `num_particles` particles in `num_dims` dimensions.
 """
-Swarm_F64(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles, num_dims)
+Swarm_F64(num_particles::Integer, num_dims::Integer) =
+    Swarm{Float64}(num_particles, num_dims)
 
 """
     Swarm_F32(num_particles::Integer, num_dims::Integer)
 
 Constructs a Float32 `Swarm` with `num_particles` particles in `num_dims` dimensions.
 """
-Swarm_F32(num_particles::Integer, num_dims::Integer) = Swarm{Float32}(num_particles, num_dims)
+Swarm_F32(num_particles::Integer, num_dims::Integer) =
+    Swarm{Float32}(num_particles, num_dims)
 
 """
     initialize_uniform!(swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T})
@@ -53,12 +55,12 @@ Swarm_F32(num_particles::Integer, num_dims::Integer) = Swarm{Float32}(num_partic
 Initializes the swarm `swarm` with a uniform particle distribution in the search space.
 """
 function initialize_uniform!(
-    swarm::Swarm{T},
-    search_space::ContinuousRectangularSearchSpace{T},
-) where T
+    swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T}
+) where {T}
     # Unpack swarm
-    @unpack candidates, candidates_fitness, candidates_velocity,
-        best_candidates, best_candidates_fitness = swarm
+    @unpack candidates,
+    candidates_fitness, candidates_velocity, best_candidates,
+    best_candidates_fitness = swarm
 
     # Initialize each candidate
     @inbounds for i in eachindex(candidates)
@@ -72,8 +74,8 @@ function initialize_uniform!(
             dΔ = dimdelta(search_space, j)
 
             # Set position and velocity
-            pos[j] = dmin + dΔ*rand(T)
-            vel[j] = -dΔ + 2.0*dΔ*rand(T)
+            pos[j] = dmin + dΔ * rand(T)
+            vel[j] = -dΔ + 2.0 * dΔ * rand(T)
         end
     end
     return nothing
@@ -84,9 +86,7 @@ end
 
 Initializes the fitness of each candidate in the swarm `swarm` using the `evaluator`.
 """
-function initialize_fitness!(
-    swarm::Swarm{T}, evaluator::BatchEvaluator{T},
-) where {T}
+function initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T}) where {T}
     # Evaluate the cost function for each candidate
     evaluate!(swarm, evaluator)
 
@@ -107,9 +107,7 @@ end
 Evaluates the fitness of each candidate in the swarm `swarm` using the `evaluator`.
 Updates the swarms best candidates if any are found.
 """
-function evaluate_fitness!(
-    swarm::Swarm{T}, evaluator::BatchEvaluator{T},
-) where {T}
+function evaluate_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T}) where {T}
     # Evaluate the cost function for each candidate
     evaluate!(swarm, evaluator)
 
@@ -142,14 +140,14 @@ end
 
 Updates the velocity of each candidate in the swarm `swarm`,
 """
-function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where T
+function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where {T}
     # Unpack data
-    @unpack candidates, candidates_velocity, best_candidates,
-        best_candidates_fitness = swarm
+    @unpack candidates, candidates_velocity, best_candidates, best_candidates_fitness =
+        swarm
     @unpack index_vector = cache
 
     # Update velocity for each candidate
-    wT  = T(w)
+    wT = T(w)
     y1T = T(y1)
     y2T = T(y2)
     for (i, vel) in enumerate(candidates_velocity)
@@ -171,9 +169,10 @@ function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where T
 
         # Update velocity
         for j in eachindex(vel)
-            vel[j] = wT*vel[j] +
-                y1T*rand(T)*(best_candidates[i][j] - candidates[i][j]) +
-                y2T*rand(T)*(best_candidates[bestidx][j] - candidates[i][j])
+            vel[j] =
+                wT * vel[j] +
+                y1T * rand(T) * (best_candidates[i][j] - candidates[i][j]) +
+                y2T * rand(T) * (best_candidates[bestidx][j] - candidates[i][j])
         end
     end
     return nothing
@@ -184,7 +183,9 @@ end
 
 Enforces the bounds of the search space on each candidate in the swarm `swarm`. If a candidate
 """
-function enforce_bounds!(swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T}) where T
+function enforce_bounds!(
+    swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T}
+) where {T}
     @unpack candidates, candidates_velocity = swarm
     @inbounds for (i, candidate) in enumerate(candidates)
         for j in eachindex(candidate)

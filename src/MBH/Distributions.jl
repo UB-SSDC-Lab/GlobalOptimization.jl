@@ -24,11 +24,11 @@ of the step memory for the variable at index `var_idx` is returned.
 """
 function step_std(step_memory::MBHStepMemory{T}, var_idx::Integer) where {T}
     # Get view of steps for var_idx
-    steps = view(step_memory.data, var_idx, 1:step_memory.steps_in_memory)
+    steps = view(step_memory.data, var_idx, 1:(step_memory.steps_in_memory))
 
     # Compute mean and std
     mean = sum(steps) / step_memory.steps_in_memory
-    std  = zero(T)
+    std = zero(T)
     @inbounds for x in steps
         std += (x - mean)^2
     end
@@ -53,11 +53,11 @@ function push!(
     @unpack data, steps_in_memory = step_memory
 
     # Get size information
-    N,M = size(data)
+    N, M = size(data)
 
     # Slide steps in memory
-    last_rememvered_step = steps_in_memory 
-    if steps_in_memory == M 
+    last_rememvered_step = steps_in_memory
+    if steps_in_memory == M
         last_rememvered_step -= 1
     else
         step_memory.steps_in_memory += 1
@@ -67,7 +67,7 @@ function push!(
     end
 
     # Update first column with new step
-    data[1:N - 2, 1] .= step
+    data[1:(N - 2), 1] .= step
     data[N - 1, 1] = pre_step_fitness
     data[N, 1] = post_step_fitness
 
@@ -96,12 +96,7 @@ struct MBHStaticDistribution{T} <: AbstractMBHDistribution{T}
     λ::T
 
     # Constructor
-    function MBHStaticDistribution{T}(;
-        a = 0.93,
-        b = 0.05,
-        c = 1.0, 
-        λ = 1.0,
-    ) where {T}
+    function MBHStaticDistribution{T}(; a=0.93, b=0.05, c=1.0, λ=1.0) where {T}
         return new{T}(T(a), T(b), T(c), T(λ))
     end
 end
@@ -128,16 +123,20 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
 
     # Constructor
     function MBHAdaptiveDistribution{T}(
-        num_dims::Integer, memory_len::Integer, min_memory_update::Int;
-        a = 0.93,
-        b = 0.05,
-        c = 1.0, 
-        λhat0 = 1.0,
+        num_dims::Integer,
+        memory_len::Integer,
+        min_memory_update::Int;
+        a=0.93,
+        b=0.05,
+        c=1.0,
+        λhat0=1.0,
     ) where {T}
         return new{T}(
-            MBHStepMemory{T}(num_dims, memory_len), 
+            MBHStepMemory{T}(num_dims, memory_len),
             min_memory_update,
-            T(a), T(b), T(c),
+            T(a),
+            T(b),
+            T(c),
             fill(T(λhat0), num_dims),
         )
     end
@@ -152,9 +151,9 @@ end
     ) where {T}
 """
 function push_accepted_step!(
-    dist::MBHAdaptiveDistribution{T}, 
-    step::AbstractVector{T}, 
-    pre_step_fitness::T, 
+    dist::MBHAdaptiveDistribution{T},
+    step::AbstractVector{T},
+    pre_step_fitness::T,
     post_step_fitness::T,
 ) where {T}
     # Unpack distribution
@@ -171,7 +170,7 @@ function push_accepted_step!(
             display(σ)
 
             # Update scale parameter
-            λhat[i] = (1.0 - a)*σ + a*λhat[i]
+            λhat[i] = (1.0 - a) * σ + a * λhat[i]
             display(λhat[i])
         end
     end
@@ -192,7 +191,7 @@ function draw_step!(step::AbstractVector{T}, dist::MBHStaticDistribution{T}) whe
     #k = length(step) / 2.0
     k = 1.0
     @inbounds for i in eachindex(step)
-        step[i] = k*((1.0 - b)*laplace(0.0, c*λ) + b*laplace(0.0, 1.0)) 
+        step[i] = k * ((1.0 - b) * laplace(0.0, c * λ) + b * laplace(0.0, 1.0))
     end
 
     return nothing
@@ -205,10 +204,8 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     #k = length(step) / 2.0
     k = 1.0
     @inbounds for i in eachindex(step)
-        step[i] = k*((1.0 - b)*laplace(c*λhat[i]) + b*laplace(1.0)) 
+        step[i] = k * ((1.0 - b) * laplace(c * λhat[i]) + b * laplace(1.0))
     end
 
     return nothing
 end
-
-
