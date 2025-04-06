@@ -38,16 +38,18 @@ Swarm(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles,
 
 Constructs a Float64 `Swarm` with `num_particles` particles in `num_dims` dimensions.
 """
-Swarm_F64(num_particles::Integer, num_dims::Integer) =
+function Swarm_F64(num_particles::Integer, num_dims::Integer)
     Swarm{Float64}(num_particles, num_dims)
+end
 
 """
     Swarm_F32(num_particles::Integer, num_dims::Integer)
 
 Constructs a Float32 `Swarm` with `num_particles` particles in `num_dims` dimensions.
 """
-Swarm_F32(num_particles::Integer, num_dims::Integer) =
+function Swarm_F32(num_particles::Integer, num_dims::Integer)
     Swarm{Float32}(num_particles, num_dims)
+end
 
 """
     initialize_uniform!(swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T})

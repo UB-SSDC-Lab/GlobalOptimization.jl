@@ -60,7 +60,7 @@ function MBH(
     display::Bool=false,
     display_interval::Int=1,
     max_time::Real=60.0,
-    min_cost::Real=-Inf,
+    min_cost::Real=(-Inf),
 ) where {T<:Number,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = MBHOptions(

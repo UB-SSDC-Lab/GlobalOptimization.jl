@@ -94,8 +94,9 @@ get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.disp
 
 Returns the function value check option from an algorithm options type.
 """
-get_function_value_check(opts::AbstractAlgorithmSpecificOptions) =
+function get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
     opts.general.function_value_check
+end
 
 """
     get_max_time(opts::AbstractAlgorithmSpecificOptions)
