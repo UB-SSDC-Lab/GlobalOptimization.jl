@@ -27,9 +27,24 @@ Pages = ["SearchSpace.jl"]
 Private = false
 ```
 
-## Optimization Algorithms
+## Optimization
 ```@autodocs
 Modules = [GlobalOptimization]
-Pages = ["Optimizers.jl","PSO.jl","MBH.jl"]
+Pages = ["Optimizers.jl"]
+Private = false
+```
+
+## Algorithms
+### Particle Swarm Optimization
+```@autodocs
+Modules = [GlobalOptimization]
+Pages = ["PSO.jl"]
+Private = false
+```
+
+### Differential Evolution
+```@autodocs
+Modules = [GlobalOptimization]
+Pages = ["DE.jl"]
 Private = false
 ```

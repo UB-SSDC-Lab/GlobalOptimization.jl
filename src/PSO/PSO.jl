@@ -95,12 +95,12 @@ struct PSO{T<:AbstractFloat,E<:BatchEvaluator{T},IBSS,GO} <: AbstractOptimizer
 end
 
 """
-    SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
+    SerialPSO(prob::AbstractProblem{has_penalty,SS}; kwargs...)
 
 Constructs a PSO algorithm with the given options that will employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
 
 # Arguments
-- `prob::AbstractOptimizationProblem{SS}`: The optimization problem to solve.
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
 
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.

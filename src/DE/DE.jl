@@ -1,3 +1,18 @@
+"""
+DEOptions
+
+Options for the Differential Evolution (DE) algorithms.
+
+# Fields:
+- `general<:GeneralOptions`: The general options.
+- `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
+- `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
+- `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
+- `max_iterations::Int`: The maximum number of iterations.
+- `function_tolerance::Float64`: The function tolerance for the stall condition.
+- `max_stall_time::Float64`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Int`: The maximum number of stall iterations for the stall condition.
+"""
 struct DEOptions{
     MP<:AbstractMutationParameters,
     CP<:AbstractCrossoverParameters,
@@ -26,6 +41,21 @@ struct DEOptions{
     max_stall_time::Float64
     max_stall_iterations::Int
 
+    """
+    DEOptions(args...)
+
+    Construct the Differential Evolution (DE) algorithms options.
+
+    # Arguments
+    - `general<:GeneralOptions`: The general options.
+    - `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
+    - `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
+    - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
+    - `max_iterations::Int`: The maximum number of iterations.
+    - `function_tolerance::Float64`: The function tolerance for the stall condition.
+    - `max_stall_time::Float64`: The maximum stall time for the stall condition.
+    - `max_stall_iterations::Int`: The maximum number of stall iterations for the stall condition.
+    """
     function DEOptions(
         general::GO,
         mutation::MP,
@@ -63,7 +93,7 @@ mutable struct DECache{T}
 end
 
 """
-    DE
+DE
 
 Differential Evolution (DE) algorithm.
 """
@@ -89,6 +119,30 @@ struct DE{
     cache::DECache{T}
 end
 
+"""
+    SerialDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function SerialDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
@@ -131,6 +185,30 @@ function SerialDE(
     )
 end
 
+"""
+    ThreadedDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `ThreadedBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function ThreadedDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
@@ -173,6 +251,30 @@ function ThreadedDE(
     )
 end
 
+"""
+    PolyesterDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `PolyesterBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function PolyesterDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
