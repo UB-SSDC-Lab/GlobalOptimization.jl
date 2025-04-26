@@ -21,11 +21,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Manual" => [
-            "PSO" => "man/pso.md",
-            "DE" => "man/de.md",
-            "MBH" => "man/mbh.md",
-        ],
+        "Manual" => ["PSO" => "man/pso.md", "DE" => "man/de.md", "MBH" => "man/mbh.md"],
         "Reference" => ["Public API" => "lib/public.md"],
         "Developers" => [
             "Contributing" => "dev/contributing.md",

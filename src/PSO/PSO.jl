@@ -137,7 +137,7 @@ function SerialPSO(
     display_interval::Int=1,
     function_value_check::Bool=true,
     max_time::Real=60.0,
-    min_cost::Real=-Inf,
+    min_cost::Real=(-Inf),
 ) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
@@ -212,7 +212,7 @@ function ThreadedPSO(
     display_interval::Int=1,
     function_value_check::Bool=true,
     max_time::Real=60.0,
-    min_cost::Real=-Inf,
+    min_cost::Real=(-Inf),
 ) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
@@ -287,7 +287,7 @@ function PolyesterPSO(
     display_interval::Int=1,
     function_value_check::Bool=true,
     max_time::Real=60.0,
-    min_cost::Real=-Inf,
+    min_cost::Real=(-Inf),
 ) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(

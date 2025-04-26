@@ -17,5 +17,6 @@ Perform optimization using the optimizer `opt`. Returns the results of the optim
 # Returns
 - `Results`: The results of the optimization.
 """
-optimize!(opt::AbstractOptimizer) =
+function optimize!(opt::AbstractOptimizer)
     throw(NotImplementedError("optimize! not implemented for $(typeof(opt))."))
+end

@@ -47,16 +47,18 @@ end
 
 Constructs a `DEPopulation` with `num_candidates` candidates in `num_dims` dimensions.
 """
-DEPopulation(num_candidates::Integer, num_dims::Integer) =
+function DEPopulation(num_candidates::Integer, num_dims::Integer)
     DEPopulation{Float64}(num_candidates, num_dims)
+end
 
 """
     DEPopulation_F64(num_candidates::Integer, num_dims::Integer)
 
 Constructs a Float64 `DEPopulation` with `num_candidate` candidates in `num_dims` dimensions.
 """
-DEPopulation_F64(num_candidates::Integer, num_dims::Integer) =
+function DEPopulation_F64(num_candidates::Integer, num_dims::Integer)
     DEPopulation{Float64}(num_candidates, num_dims)
+end
 
 Base.length(population::DEPopulation) = length(population.current_generation)
 
