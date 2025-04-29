@@ -5,7 +5,7 @@ Documentation for GlobalOptimization's public interface.
 ## Contents
 ```@contents
 Pages = ["public.md"]
-Depth = 2:2
+Depth = 2:3
 ```
 
 ## Index
@@ -46,5 +46,35 @@ Private = false
 ```@autodocs
 Modules = [GlobalOptimization]
 Pages = ["DE.jl"]
+Private = false
+```
+
+#### Mutation Parameters
+```@docs 
+MutationParameters 
+MutationParameters(::Any, ::Any, ::Any, ::Any; sel=::Any)
+MutationParameters(::GlobalOptimization.AbstractMutationStrategy; dist=::Any, sel=::Any)
+SelfMutationParameters 
+SelfMutationParameters(::GlobalOptimization.AbstractMutationStrategy; dist=::Any, sel=:Any)
+Rand1
+Rand2
+Best1
+Best2
+CurrentToBest1
+CurrentToBest2
+CurrentToRand1
+CurrentToRand2
+RandToBest1
+RandToBest2
+Unified
+SimpleSelector
+RadiusLimitedSelector
+```
+
+
+#### DE Crossover Strategies
+```@autodocs
+Modules = [GlobalOptimization]
+Pages = ["crossover.jl"]
 Private = false
 ```

@@ -1,14 +1,82 @@
 abstract type AbstractMutationStrategy end
+
+"""
+    Rand1
+
+The DE/rand/1 mutation strategy.
+"""
 struct Rand1 <: AbstractMutationStrategy end
+
+"""
+    Rand2
+
+The DE/rand/2 mutation strategy.
+"""
 struct Rand2 <: AbstractMutationStrategy end
+
+"""
+    Best1
+
+The DE/best/1 mutation strategy.
+"""
 struct Best1 <: AbstractMutationStrategy end
+
+"""
+    Best2
+
+The DE/best/2 mutation strategy.
+"""
 struct Best2 <: AbstractMutationStrategy end
+
+"""
+    CurrentToBest1
+
+The DE/current-to-best/1 mutation strategy.
+"""
 struct CurrentToBest1 <: AbstractMutationStrategy end
+
+"""
+    CurrentToBest2
+
+The DE/current-to-best/2 mutation strategy.
+"""
 struct CurrentToBest2 <: AbstractMutationStrategy end
+
+"""
+    CurrentToRand1
+
+The DE/current-to-rand/1 mutation strategy.
+"""
 struct CurrentToRand1 <: AbstractMutationStrategy end
+
+"""
+    CurrentToRand2
+
+The DE/current-to-rand/2 mutation strategy.
+"""
 struct CurrentToRand2 <: AbstractMutationStrategy end
+
+"""
+    RandToBest1
+
+The DE/rand-to-best/1 mutation strategy.
+"""
 struct RandToBest1 <: AbstractMutationStrategy end
+
+"""
+    RandToBest2
+
+The DE/rand-to-best/2 mutation strategy.
+"""
 struct RandToBest2 <: AbstractMutationStrategy end
+
+"""
+    Unified
+
+The unified DE mutation strategy proposed by Ji Qiang and Chad Mitchell in "A Unified
+Differential Evolution Algorithm for Global Optimization," 2014,
+[https://www.osti.gov/servlets/purl/1163659](https://www.osti.gov/servlets/purl/1163659)
+"""
 struct Unified <: AbstractMutationStrategy end
 
 function get_parameters(strategy::Rand1, dist)
@@ -77,6 +145,29 @@ function get_parameters(strategy::Unified, dist)
 end
 
 abstract type AbstractMutationParameters{AS<:AbstractAdaptationStrategy} end
+
+"""
+    MutationParameters{
+        AS<:AbstractAdaptationStrategy,
+        MS<:AbstractMutationStrategy,
+        S<:AbstractSelector,
+        D,
+    }
+
+The parameters for a DE mutation strategy that applies to all current and future candidates
+in the population.
+
+# Fields
+- `F1::Float64`: The F₁ weight in the unified mutation strategy.
+- `F2::Float64`: The F₂ weight in the unified mutation strategy.
+- `F3::Float64`: The F₃ weight in the unified mutation strategy.
+- `F4::Float64`: The F₄ weight in the unified mutation strategy.
+- `sel<:AbstractSelector`: The selector used to select the candidates considered in
+    mutation.
+- `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the mutation
+    parameters. Note that this should generally be a distribution from Distributions.jl, but
+    the only strict requirement is that rand(dist) returns a floating point value.
+"""
 mutable struct MutationParameters{
     AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
 } <: AbstractMutationParameters{AS}
@@ -87,13 +178,60 @@ mutable struct MutationParameters{
     sel::S
     dist::D
 
-    # For constant parameters
+    @doc """
+        MutationParameters(F1, F2, F3, F4; sel=SimpleSelector())
+
+    Creates a MutationParameters object with the specified (constant) mutation parameters.
+    These constant mutation parameters are used for all candidates in the population and
+    define a unified mutation strategy as defined in Ji Qiang and Chad Mitchell "A Unified
+    Differential Evolution Algorithm for Global Optimization," 2014,
+    [https://www.osti.gov/servlets/purl/1163659](https://www.osti.gov/servlets/purl/1163659)
+
+    # Arguments
+    - `F1::Float64`: The F₁ weight in the unified mutation strategy.
+    - `F2::Float64`: The F₂ weight in the unified mutation strategy.
+    - `F3::Float64`: The F₃ weight in the unified mutation strategy.
+    - `F4::Float64`: The F₄ weight in the unified mutation strategy.
+
+    # Keyword Arguments
+    - `sel::AbstractSelector`: The selector used to select the candidates considered in
+        mutation. Defaults to `SimpleSelector()`.
+    """
     function MutationParameters(F1, F2, F3, F4; sel=SimpleSelector())
         S = typeof(sel)
         return new{NoAdaptation,Unified,S,Nothing}(F1, F2, F3, F4, sel, nothing)
     end
 
-    # For adaptive parameters with distribution `dist`
+    @doc """
+        MutationParameters(
+            strategy::MS;
+            dist=default_mutation_dist,
+            sel=SimpleSelector(),
+        )
+
+    Creates a MutationParameters object with the specified mutation strategy with mutation
+    parameter random adaptation. The mutation parameters are adaptively sampled from the
+    provided `dist`, clamped to the range (0, 1].
+
+    # Arguments
+    - `strategy::MS`: The mutation strategy to use. This should be one of the mutation
+        strategies defined in this module (e.g., `Rand1`, `Best2`, etc.).
+
+    # Keyword Arguments
+    - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
+        mutation parameters each iteration. Note that this should generally be a
+        distribution from Distributions.jl, but the only strict requirement is that
+        rand(dist) returns a floating point value. Defaults to
+        `GlobalOptimization.default_mutation_dist`, which is a mixture model comprised of
+        two Cauchy distributions, with probability density given by:
+
+        ``f_{mix}(x; \\mu, \\sigma) = 0.5 f(x;\\mu_1,\\sigma_1) + 0.5 f(x;\\mu_2,\\sigma_2)``.
+
+        where ``\\mu = \\{0.65, 1.0\\}`` and ``\\sigma = \\{0.1, 0.1\\}``.
+
+    - `sel::AbstractSelector`: The selector used to select the candidates considered in
+        mutation. Defaults to `SimpleSelector()`.
+    """
     function MutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()
     ) where {MS<:AbstractMutationStrategy}
@@ -104,6 +242,26 @@ mutable struct MutationParameters{
     end
 end
 
+"""
+    SelfMutationParameters{
+        AS<:AbstractAdaptationStrategy,
+        MS<:AbstractMutationStrategy,
+        S<:AbstractSelector,
+        D,
+    }
+
+The parameters for a DE mutation strategy that applies a mutation strategy with unique
+parameters for each candidate in the population.
+
+# Fields
+- `Fs::Vector{SVector{4,Float64}}`: The mutation parameters for each candidate in the
+    population. Each element of the vector is an SVector{4} containing the F₁, F₂, F₃, and
+    F₄ weights for the unified mutation strategy.
+- `sel<:AbstractSelector`: The selector used to select the candidates considered in mutation.
+- `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the mutation
+    parameters. Note that this should generally be a distribution from Distributions.jl, but
+    the only strict requirement is that rand(dist) returns a floating point value.
+"""
 struct SelfMutationParameters{
     AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
 } <: AbstractMutationParameters{AS}
@@ -111,6 +269,37 @@ struct SelfMutationParameters{
     sel::S
     dist::D
 
+    @doc """
+        SelfMutationParameters(
+            strategy::MS;
+            dist=default_mutation_dist,
+            sel=SimpleSelector(),
+        )
+
+    Creates a SelfMutationParameters object with the specified mutation strategy and
+    mutation parameter random adaptation. The mutation parameters are adaptively sampled
+    from the provided `dist`, clamped to the range (0, 1].
+
+    # Arguments
+    - `strategy::MS`: The mutation strategy to use. This should be one of the mutation
+        strategies defined in this module (e.g., `Rand1`, `Best2`, etc.).
+
+    # Keyword Arguments
+    - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
+        mutation parameters each iteration. Note that this should generally be a
+        distribution from Distributions.jl, but the only strict requirement is that
+        rand(dist) returns a floating point value. Defaults to
+        `GlobalOptimization.default_mutation_dist`, which is a mixture model comprised of
+        two Cauchy distributions, with probability density given by:
+
+        ``f_{mix}(x; \\mu, \\sigma) = 0.5 f(x;\\mu_1,\\sigma_1) + 0.5 f(x;\\mu_2,\\sigma_2)``.
+
+        where ``\\mu = \\{0.65, 1.0\\}`` and ``\\sigma = \\{0.1, 0.1\\}``.
+
+    - `sel::AbstractSelector`: The selector used to select the candidates considered in
+        mutation. Defaults to `SimpleSelector()`.
+
+    """
     function SelfMutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()
     ) where {MS<:AbstractMutationStrategy}

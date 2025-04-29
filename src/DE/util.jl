@@ -23,7 +23,28 @@ struct NoAdaptation <: AbstractAdaptationStrategy end
 
 # Generic selection types
 abstract type AbstractSelector end
+
+"""
+    SimpleSelector
+
+A selector that simply *selects* all candidates in the population.
+"""
 struct SimpleSelector <: AbstractSelector end
+
+"""
+    RadiusLimitedSelector
+
+A selector that selects candidates within a given radius of the target candidate.
+
+For example, for population size of 10 and a radius of 2, the following will be selected
+for the given target indices:
+
+`target = 5` will select `[3, 4, 5, 6, 7]`
+
+`target = 1` will select `[9, 10, 1, 2, 3]`
+
+`target = 9` will select `[7, 8, 9, 10, 1]`
+"""
 struct RadiusLimitedSelector <: AbstractSelector
     radius::Int
     idxs::Vector{UInt16}
