@@ -11,5 +11,5 @@ A set of global optimization algorithms for the SSDC Lab.
 Currently implemented algorithms:
 
     1. Particle Swarm Optimization
-    2. Differential Evolution (undocumented)
+    2. Differential Evolution (wip documentation)
     3. Monotonic Basin Hopping (work in progress, undocumented)
