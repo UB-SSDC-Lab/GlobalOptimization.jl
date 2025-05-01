@@ -37,7 +37,7 @@ function rastrigin(x; A=10)
     for val in x
         obj += val^2 - A * cos(2 * pi * val)
     end
-    sleep(1e-6)
+    sleep(rand()*2e-6)
     return obj
 end
 
