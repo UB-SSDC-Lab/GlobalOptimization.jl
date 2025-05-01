@@ -3,70 +3,149 @@ abstract type AbstractMutationStrategy end
 """
     Rand1
 
-The DE/rand/1 mutation strategy.
+The DE/rand/1 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{r_1} + F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F`` is a scaling factor, and ``r_1``, ``r_2``, and ``r_3`` are
+randomly selected integers in the set returned by the selector.
 """
 struct Rand1 <: AbstractMutationStrategy end
 
 """
     Rand2
 
-The DE/rand/2 mutation strategy.
+The DE/rand/2 mutation strategy given by:
+
+``
+\\mathbf{v}_i = \\mathbf{x}_{r_1} + F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right) +
+F\\left(\\mathbf{x}_{r_4} - \\mathbf{x}_{r_5}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F`` is a scaling factor, and ``r_1``, ``r_2``, ``r_3``, ``r_4``,
+and ``r_5`` are randomly selected integers in the set returned by the selector.
 """
 struct Rand2 <: AbstractMutationStrategy end
 
 """
     Best1
 
-The DE/best/1 mutation strategy.
+The DE/best/1 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{b} + F\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{r_2}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F`` is a scaling factor, subscript ``b`` denotes the best candidate
+(in terms of the objective/fitness function), and ``r_1`` and ``r_2`` are randomly selected
+integers in the set returned by the selector.
 """
 struct Best1 <: AbstractMutationStrategy end
 
 """
     Best2
 
-The DE/best/2 mutation strategy.
+The DE/best/2 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{b} + F\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{r_2}\\right) +
+F\\left(\\mathbf{x}_{r_3} - \\mathbf{x}_{r_4}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F`` is a scaling factor, subscript ``b`` denotes the best candidate,
+and ``r_1``, ``r_2``, ``r_3``, and ``r_4`` are randomly selected integers in the set
+returned by the selector.
 """
 struct Best2 <: AbstractMutationStrategy end
 
 """
     CurrentToBest1
 
-The DE/current-to-best/1 mutation strategy.
+The DE/current-to-best/1 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{i} + F_{cr}\\left(\\mathbf{x}_{b} - \\mathbf{x}_{i}\\right) +
+F\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{r_2}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, subscript ``b`` denotes the
+best candidate, and ``r_1`` and ``r_2`` are randomly selected integers in the set
+returned by the selector.
 """
 struct CurrentToBest1 <: AbstractMutationStrategy end
 
 """
     CurrentToBest2
 
-The DE/current-to-best/2 mutation strategy.
+The DE/current-to-best/2 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{i} + F_{cr}\\left(\\mathbf{x}_{b} - \\mathbf{x}_{i}\\right) +
+F\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{r_2}\\right) +
+F\\left(\\mathbf{x}_{r_3} - \\mathbf{x}_{r_4}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, subscript ``b`` denotes the
+best candidate, and ``r_1``, ``r_2``, ``r_3``, and ``r_4`` are randomly selected integers
+in the set returned by the selector.
 """
 struct CurrentToBest2 <: AbstractMutationStrategy end
 
 """
     CurrentToRand1
 
-The DE/current-to-rand/1 mutation strategy.
+The DE/current-to-rand/1 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{i} + F_{cr}\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{i}\\right) +
+F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, and ``r_1``, ``r_2``, and
+``r_3`` are randomly selected integers in the set returned by the selector.
 """
 struct CurrentToRand1 <: AbstractMutationStrategy end
 
 """
     CurrentToRand2
 
-The DE/current-to-rand/2 mutation strategy.
+The DE/current-to-rand/2 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{i} + F_{cr}\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_{i}\\right) +
+F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right) +
+F\\left(\\mathbf{x}_{r_4} - \\mathbf{x}_{r_5}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, and ``r_1``, ``r_2``,
+``r_3``, ``r_4``, and ``r_5`` are randomly selected integers in the set returned by the
+selector.
 """
 struct CurrentToRand2 <: AbstractMutationStrategy end
 
 """
     RandToBest1
 
-The DE/rand-to-best/1 mutation strategy.
+The DE/rand-to-best/1 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{r_1} + F_{cr}\\left(\\mathbf{x}_{b} - \\mathbf{x}_i\\right) +
+F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, subscript ``b`` denotes the
+best candidate, and ``r_1``, ``r_2``, and ``r_3`` are randomly selected integers in the set
+returned by the selector.
 """
 struct RandToBest1 <: AbstractMutationStrategy end
 
 """
     RandToBest2
 
-The DE/rand-to-best/2 mutation strategy.
+The DE/rand-to-best/2 mutation strategy given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_{r_1} + F_{cr}\\left(\\mathbf{x}_{b} - \\mathbf{x}_i\\right) +
+F\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right) +
+F\\left(\\mathbf{x}_{r_4} - \\mathbf{x}_{r_5}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, subscript ``b`` denotes the
+best candidate, and ``r_1``, ``r_2``, ``r_3``, ``r_4``, and ``r_5`` are randomly selected
+integers in the set returned by the selector.
 """
 struct RandToBest2 <: AbstractMutationStrategy end
 
@@ -75,7 +154,23 @@ struct RandToBest2 <: AbstractMutationStrategy end
 
 The unified DE mutation strategy proposed by Ji Qiang and Chad Mitchell in "A Unified
 Differential Evolution Algorithm for Global Optimization," 2014,
-[https://www.osti.gov/servlets/purl/1163659](https://www.osti.gov/servlets/purl/1163659)
+[https://www.osti.gov/servlets/purl/1163659](https://www.osti.gov/servlets/purl/1163659).
+
+This mutation strategy is given by:
+
+``\\mathbf{v}_i = \\mathbf{x}_i + F_1\\left(\\mathbf{x}_b - \\mathbf{x}_i\\right) +
+F_2\\left(\\mathbf{x}_{r_1} - \\mathbf{x}_i\\right) +
+F_3\\left(\\mathbf{x}_{r_2} - \\mathbf{x}_{r_3}\\right) +
+F_4\\left(\\mathbf{x}_{r_4} - \\mathbf{x}_{r_5}\\right)``
+
+where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denotes the
+``j``-th candidate, ``F_1``, ``F_2``, ``F_3``, and ``F_4`` are scaling factors, subscript
+``b`` denotes the best candidate, and ``r_1``, ``r_2``, ``r_3``, ``r_4``, and ``r_5`` are
+randomly selected integers in the set returned by the selector.
+
+Note that in the underlying implementation, all mutation strategies are implemented with
+this formulation, where each unique strategy has a different set of
+``F_i \\in \\{1,2,3,4\\}`` that are set to 0.0.
 """
 struct Unified <: AbstractMutationStrategy end
 
@@ -165,8 +260,9 @@ in the population.
 - `sel<:AbstractSelector`: The selector used to select the candidates considered in
     mutation.
 - `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the mutation
-    parameters. Note that this should generally be a distribution from Distributions.jl, but
-    the only strict requirement is that rand(dist) returns a floating point value.
+    parameters. Note that this should generally be a distribution from
+    [Distributions.jl](https://juliastats.org/Distributions.jl/latest/), but the only strict
+    requirement is that rand(dist) returns a floating point value.
 """
 mutable struct MutationParameters{
     AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
@@ -196,6 +292,22 @@ mutable struct MutationParameters{
     # Keyword Arguments
     - `sel::AbstractSelector`: The selector used to select the candidates considered in
         mutation. Defaults to `SimpleSelector()`.
+
+    # Returns
+    - `MutationParameters{NoAdaptation,Unified,typeof(sel),Nothing}`: A mutation parameters
+        object with the specified mutation parameters and selector.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = MutationParameters(0.5, 0.5, 0.5, 0.5)
+    MutationParameters{GlobalOptimization.NoAdaptation, Unified, SimpleSelector, Nothing}(0.5, 0.5, 0.5, 0.5, SimpleSelector(), nothing)
+    ```
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = MutationParameters(0.5, 0.5, 0.5, 0.5; sel=RadiusLimitedSelector(2))
+    MutationParameters{GlobalOptimization.NoAdaptation, Unified, RadiusLimitedSelector, Nothing}(0.5, 0.5, 0.5, 0.5, RadiusLimitedSelector(2, UInt16[0x6cf0, 0x0c33, 0x0001, 0x0000, 0x0560]), nothing)
+    ```
     """
     function MutationParameters(F1, F2, F3, F4; sel=SimpleSelector())
         S = typeof(sel)
@@ -220,8 +332,9 @@ mutable struct MutationParameters{
     # Keyword Arguments
     - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
         mutation parameters each iteration. Note that this should generally be a
-        distribution from Distributions.jl, but the only strict requirement is that
-        rand(dist) returns a floating point value. Defaults to
+        distribution from
+        [Distributions.jl](https://juliastats.org/Distributions.jl/latest/), but the only
+        strict requirement is that rand(dist) returns a floating point value. Defaults to
         `GlobalOptimization.default_mutation_dist`, which is a mixture model comprised of
         two Cauchy distributions, with probability density given by:
 
@@ -231,6 +344,26 @@ mutable struct MutationParameters{
 
     - `sel::AbstractSelector`: The selector used to select the candidates considered in
         mutation. Defaults to `SimpleSelector()`.
+
+    # Returns
+    - `MutationParameters{RandomAdaptation,typeof(strategy),typeof(sel),typeof(dist)}`: A
+        mutation parameters object with the specified mutation strategy and selector.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = MutationParameters(Rand1())
+    MutationParameters{GlobalOptimization.RandomAdaptation, Rand1, SimpleSelector, Distributions.MixtureModel{Distributions.Univariate, Distributions.Continuous, Distributions.Cauchy, Distributions.Categorical{Float64, Vector{Float64}}}}(0.0, 1.0, 0.8450801042502032, 0.0, SimpleSelector(), MixtureModel{Distributions.Cauchy}(K = 2)
+    components[1] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=0.65, σ=0.1)
+    components[2] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=1.0, σ=0.1)
+    )
+    ```
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> using Distributions
+    julia> params = MutationParameters(Rand1(); dist=Normal(0.5, 0.1))
+    MutationParameters{GlobalOptimization.RandomAdaptation, Rand1, SimpleSelector, Normal{Float64}}(0.0, 1.0, 0.5061103661726901, 0.0, SimpleSelector(), Normal{Float64}(μ=0.5, σ=0.1))
+    ```
     """
     function MutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()
@@ -259,8 +392,9 @@ parameters for each candidate in the population.
     F₄ weights for the unified mutation strategy.
 - `sel<:AbstractSelector`: The selector used to select the candidates considered in mutation.
 - `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the mutation
-    parameters. Note that this should generally be a distribution from Distributions.jl, but
-    the only strict requirement is that rand(dist) returns a floating point value.
+    parameters. Note that this should generally be a distribution from
+    [Distributions.jl](https://juliastats.org/Distributions.jl/latest/), but the only strict
+    requirement is that rand(dist) returns a floating point value.
 """
 struct SelfMutationParameters{
     AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
@@ -287,8 +421,9 @@ struct SelfMutationParameters{
     # Keyword Arguments
     - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
         mutation parameters each iteration. Note that this should generally be a
-        distribution from Distributions.jl, but the only strict requirement is that
-        rand(dist) returns a floating point value. Defaults to
+        distribution from
+        [Distributions.jl](https://juliastats.org/Distributions.jl/latest/), but the only
+        strict requirement is that rand(dist) returns a floating point value. Defaults to
         `GlobalOptimization.default_mutation_dist`, which is a mixture model comprised of
         two Cauchy distributions, with probability density given by:
 
@@ -299,6 +434,19 @@ struct SelfMutationParameters{
     - `sel::AbstractSelector`: The selector used to select the candidates considered in
         mutation. Defaults to `SimpleSelector()`.
 
+    # Returns
+    - `SelfMutationParameters{RandomAdaptation,typeof(strategy),typeof(sel),typeof(dist)}`:
+        A mutation parameters object with the specified mutation strategy and selector.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = SelfMutationParameters(Rand1())
+    SelfMutationParameters{GlobalOptimization.RandomAdaptation, Rand1, SimpleSelector, MixtureModel{Univariate, Continuous, Cauchy, Categorical{Float64, Vector{Float64}}}}(StaticArraysCore.SVector{4, Float64}[], SimpleSelector(), MixtureModel{Cauchy}(K = 2)
+    components[1] (prior = 0.5000): Cauchy{Float64}(μ=0.65, σ=0.1)
+    components[2] (prior = 0.5000): Cauchy{Float64}(μ=1.0, σ=0.1)
+    )
+    ```
     """
     function SelfMutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()

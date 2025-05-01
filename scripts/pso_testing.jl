@@ -6,7 +6,7 @@ using Random
 #using PaddedViews
 #using StaticArrays
 using Profile
-#using JET
+using JET
 using Infiltrator
 #Random.seed!(1234)
 
@@ -44,9 +44,9 @@ ss = ContinuousRectangularSearchSpace([-5.0 for i in 1:N], [5.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate PSO
-# spso = SerialPSO(prob; max_time = 20.0)
+spso = SerialPSO(prob; max_time = 20.0)
 # tpso = ThreadedPSO(prob; max_time = 20.0)
-# ppso = PolyesterPSO(prob; max_time = 20.0)
+ppso = PolyesterPSO(prob; max_time = 20.0)
 
 # #res = optimize!(spso)
 # res = optimize!(spso); display(res)
@@ -76,5 +76,6 @@ display(pres)
 # optimize!(pso2)
 
 # ======== TYPES
-#@report_call GlobalOptimization.optimize!(spso)
+#optimize!(spso)
+@report_opt GlobalOptimization.optimize!(spso)
 #report_package(GlobalOptimization)

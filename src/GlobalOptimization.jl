@@ -1,5 +1,6 @@
 module GlobalOptimization
 
+using ChunkSplitters
 using Distributions
 using LinearAlgebra
 using Format

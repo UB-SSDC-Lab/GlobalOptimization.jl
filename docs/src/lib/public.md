@@ -36,17 +36,17 @@ Private = false
 
 ## Algorithms
 ### Particle Swarm Optimization
-```@autodocs
-Modules = [GlobalOptimization]
-Pages = ["PSO.jl"]
-Private = false
+```@docs
+SerialPSO
+ThreadedPSO
+PolyesterPSO
 ```
 
 ### Differential Evolution
-```@autodocs
-Modules = [GlobalOptimization]
-Pages = ["DE.jl"]
-Private = false
+```@docs
+SerialDE
+ThreadedDE
+PolyesterDE
 ```
 
 #### Mutation Parameters

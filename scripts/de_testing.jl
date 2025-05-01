@@ -37,6 +37,7 @@ function rastrigin(x; A=10)
     for val in x
         obj += val^2 - A * cos(2 * pi * val)
     end
+    sleep(rand()*2e-6)
     return obj
 end
 
@@ -56,18 +57,18 @@ crossover_strategy = SelfBinomialCrossoverParameters(;
     #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N),
 )
 
-de = PolyesterDE(
-    prob;
-    num_candidates=100,
-    display=true,
-    display_interval=1,
-    max_iterations=1000,
-    max_stall_iterations=100,
-    mutation_params=mutation_strategy,
-    crossover_params=crossover_strategy,
-)
+# de = PolyesterDE(
+#     prob;
+#     num_candidates=100,
+#     display=true,
+#     display_interval=1,
+#     max_iterations=1000,
+#     max_stall_iterations=100,
+#     mutation_params=mutation_strategy,
+#     crossover_params=crossover_strategy,
+# )
 
-res = optimize!(de)
+# res = optimize!(de)
 #iters_per_solve = map(i->optimize!(deepcopy(de)).iters, 1:100);
 
 # bb_res = bboptimize(
@@ -83,8 +84,8 @@ res = optimize!(de)
 
 # Instantiate PSO
 # spso = SerialPSO(prob; max_time = 20.0)
-# tpso = ThreadedPSO(prob; max_time = 20.0)
-# ppso = PolyesterPSO(prob; max_time = 20.0)
+#tpso = ThreadedPSO(prob; max_time = 20.0)
+#ppso = PolyesterPSO(prob; max_time = 20.0)
 
 # #res = optimize!(spso)
 # res = optimize!(spso); display(res)
@@ -92,12 +93,12 @@ res = optimize!(de)
 # res = optimize!(ppso); display(res)
 
 # ======== BENCHMARKING
-#sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob))
-#tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob))
-#pres = @benchmark optimize!(_pso) setup=(_pso = PolyesterPSO(prob))
-#display(sres)
-#display(tres)
-#display(pres)
+sres = @benchmark optimize!(_pso) setup=(_pso = SerialPSO(prob; max_iterations=20))
+tres = @benchmark optimize!(_pso) setup=(_pso = ThreadedPSO(prob; max_iterations=20))
+pres = @benchmark optimize!(_pso) setup=(_pso = PolyesterPSO(prob; max_iterations=20))
+display(sres)
+display(tres)
+display(pres)
 # GlobalOptimization.initialize!(spso)
 # GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
 # GlobalOptimization.step!(spso.swarm)

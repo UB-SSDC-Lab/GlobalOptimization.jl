@@ -198,22 +198,24 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 """
 function ThreadedPSO(
     prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int=100,
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    max_iterations::Int=1000,
-    function_tolerence::AbstractFloat=1e-6,
-    max_stall_time::Real=Inf,
-    max_stall_iterations::Int=25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat=0.25,
-    self_adjustment_weight::Real=1.49,
-    social_adjustment_weight::Real=1.49,
-    display::Bool=false,
-    display_interval::Int=1,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
+    num_particles::Int = 100,
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
+    max_iterations::Int = 1000,
+    function_tolerence::AbstractFloat = 1e-6,
+    max_stall_time::Real = Inf,
+    max_stall_iterations::Int = 25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat = 0.25,
+    self_adjustment_weight::Real = 1.49,
+    social_adjustment_weight::Real = 1.49,
+    display::Bool = false,
+    display_interval::Int = 1,
+    function_value_check::Bool = true,
+    max_time::Real = 60.0,
+    min_cost::Real = -Inf,
+    batch_n::Int = Threads.nthreads(),
+    batch_split = ChunkSplitters.RoundRobin(),
+) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -238,7 +240,7 @@ function ThreadedPSO(
     # Construct PSO
     return PSO(
         options,
-        ThreadedBatchEvaluator(prob),
+        ThreadedBatchEvaluator(prob, batch_n, batch_split),
         Swarm{T}(num_particles, numdims(prob)),
         PSOCache{T}(num_particles, numdims(prob)),
     )
