@@ -114,7 +114,7 @@ function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
     cs = candidates(pop)
-    Threads.@threads for idx in eachindex(pop)
+    @inbounds Threads.@threads for idx in eachindex(pop)
         candidate = cs[idx]
         fitness = scalar_function(evaluator.prob, candidate)
         set_fitness!(pop, fitness, idx)
@@ -125,11 +125,10 @@ function evaluate!(pop::AbstractPopulation, evaluator::PolyesterBatchEvaluator)
     # Define fitness evaluation function for Polyester
     # NOTE: This is necessary for the @batch macro to work properly
     # on Arm.
-    eval_fitness = let cs = candidates(pop), pop = pop, prob = evaluator.prob
+    eval_fitness = let pop = pop, prob = evaluator.prob
         (idx) -> begin
-            candidate = cs[idx]
-            fitness = scalar_function(prob, candidate)
-            set_fitness!(pop, fitness, idx)
+            cs = candidates(pop)
+            @inbounds set_fitness!(pop, scalar_function(prob, cs[idx]), idx)
         end
     end
 
