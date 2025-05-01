@@ -222,6 +222,8 @@ function ThreadedDE(
     max_stall_iterations::Integer=100,
     min_cost::Real=(-Inf),
     function_value_check::Bool=true,
+    batch_n::Int = Threads.nthreads(),
+    batch_split = ChunkSplitters.RoundRobin(),
     display::Bool=true,
     display_interval::Integer=1,
 ) where {
@@ -231,7 +233,7 @@ function ThreadedDE(
     SS<:ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
-    evaluator = ThreadedBatchEvaluator(prob)
+    evaluator = ThreadedBatchEvaluator(prob, batch_n, batch_split)
     return BuildDE(
         prob,
         evaluator,
