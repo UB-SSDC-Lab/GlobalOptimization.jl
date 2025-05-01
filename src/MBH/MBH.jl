@@ -4,21 +4,17 @@
 
 Options for the Monotonic Basin Hopping (MBH) algorithm.
 """
-struct MBHOptions{ISS <: Union{Nothing, ContinuousRectangularSearchSpace}, GO <: GeneralOptions} <: AbstractAlgorithmSpecificOptions
+struct MBHOptions{
+    ISS<:Union{Nothing,ContinuousRectangularSearchSpace},GO<:GeneralOptions
+} <: AbstractAlgorithmSpecificOptions
     # The general options
     general::GO
 
     # MBH specific options
     initial_space::ISS
 
-    function MBHOptions(
-        general::GO,
-        initial_space::ISS,
-    ) where {ISS,GO}
-        return new{ISS,GO}(
-            general,
-            initial_space,
-        )
+    function MBHOptions(general::GO, initial_space::ISS) where {ISS,GO}
+        return new{ISS,GO}(general, initial_space)
     end
 end
 
@@ -30,11 +26,11 @@ Monotonic Basin Hopping (MBH) algorithm.
 This implementation employs a single candidate rather than a population.
 """
 struct MBH{
-    T <: Number, 
-    H <: AbstractHopper{T}, 
-    E <: SingleEvaluator{T}, 
-    D <: AbstractMBHDistribution, 
-    LS <: AbstractLocalSearch,
+    T<:Number,
+    H<:AbstractHopper{T},
+    E<:SingleEvaluator{T},
+    D<:AbstractMBHDistribution,
+    LS<:AbstractLocalSearch,
 } <: AbstractOptimizer
 
     # Monotonic Basin Hopping Options
@@ -60,12 +56,12 @@ function MBH(
     prob::AbstractProblem{has_penalty,SS},
     hop_distribution::AbstractMBHDistribution{T},
     local_search::AbstractLocalSearch;
-    function_value_check::Bool = true,
-    display::Bool = false,
-    display_interval::Int = 1,
-    max_time::Real = 60.0,
-    min_cost::Real = -Inf,
-) where {T <: Number, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
+    function_value_check::Bool=true,
+    display::Bool=false,
+    display_interval::Int=1,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+) where {T<:Number,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
@@ -119,7 +115,7 @@ function iterate!(opt::MBH)
     iteration = 0
     start_time = time()
     current_time = start_time
-    
+
     # Begin loop
     exit_flag = 0
     draw_count = 0
@@ -155,7 +151,7 @@ function iterate!(opt::MBH)
         end
 
         # Perform local search (performing local search after checkng feasibility but before updating hopper fitness)
-        local_search!(hopper, evaluator, local_search) 
+        local_search!(hopper, evaluator, local_search)
 
         # Update fitness
         update_fitness!(hopper, distribution)
@@ -188,12 +184,20 @@ function iterate!(opt::MBH)
     )
 end
 
-function display_status_mbh(time, iteration, draw_count, fitness, options::GeneralOptions{D,FVC}) where {D,FVC}
-    display_status_mbh(time, iteration, draw_count, fitness, get_display_interval(options), D)
+function display_status_mbh(
+    time, iteration, draw_count, fitness, options::GeneralOptions{D,FVC}
+) where {D,FVC}
+    display_status_mbh(
+        time, iteration, draw_count, fitness, get_display_interval(options), D
+    )
     return nothing
 end
-@inline display_status_mbh(time, iteration, draw_count, fitness, display_interval, ::Val{false}) = nothing
-function display_status_mbh(time, iteration, draw_count, fitness, display_interval, ::Val{true})
+@inline display_status_mbh(
+    time, iteration, draw_count, fitness, display_interval, ::Val{false}
+) = nothing
+function display_status_mbh(
+    time, iteration, draw_count, fitness, display_interval, ::Val{true}
+)
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
         fspec2 = FormatExpr("Draw Count: {1:d}, Best Fitness: {2:e}")
@@ -202,5 +206,3 @@ function display_status_mbh(time, iteration, draw_count, fitness, display_interv
     end
     return nothing
 end
-
-

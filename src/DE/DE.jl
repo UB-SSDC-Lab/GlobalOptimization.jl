@@ -1,8 +1,23 @@
+"""
+DEOptions
+
+Options for the Differential Evolution (DE) algorithms.
+
+# Fields:
+- `general<:GeneralOptions`: The general options.
+- `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
+- `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
+- `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
+- `max_iterations::Int`: The maximum number of iterations.
+- `function_tolerance::Float64`: The function tolerance for the stall condition.
+- `max_stall_time::Float64`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Int`: The maximum number of stall iterations for the stall condition.
+"""
 struct DEOptions{
-    MP  <: AbstractMutationParameters,
-    CP  <: AbstractCrossoverParameters,
-    ISS <: Union{Nothing, ContinuousRectangularSearchSpace},
-    GO  <: GeneralOptions,
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    ISS<:Union{Nothing,ContinuousRectangularSearchSpace},
+    GO<:GeneralOptions,
 } <: AbstractAlgorithmSpecificOptions
 
     # The general options
@@ -26,6 +41,21 @@ struct DEOptions{
     max_stall_time::Float64
     max_stall_iterations::Int
 
+    """
+    DEOptions(args...)
+
+    Construct the Differential Evolution (DE) algorithms options.
+
+    # Arguments
+    - `general<:GeneralOptions`: The general options.
+    - `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
+    - `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
+    - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
+    - `max_iterations::Int`: The maximum number of iterations.
+    - `function_tolerance::Float64`: The function tolerance for the stall condition.
+    - `max_stall_time::Float64`: The maximum stall time for the stall condition.
+    - `max_stall_iterations::Int`: The maximum number of stall iterations for the stall condition.
+    """
     function DEOptions(
         general::GO,
         mutation::MP,
@@ -35,13 +65,8 @@ struct DEOptions{
         function_tolerance::Float64,
         max_stall_time::Float64,
         max_stall_iterations::Int,
-    ) where {
-        MP <: AbstractMutationParameters,
-        CP <: AbstractCrossoverParameters,
-        GO, ISS,
-    }
-
-        return new{MP, CP, ISS, GO}(
+    ) where {MP<:AbstractMutationParameters,CP<:AbstractCrossoverParameters,GO,ISS}
+        return new{MP,CP,ISS,GO}(
             general,
             mutation,
             crossover,
@@ -62,27 +87,27 @@ Cache for the DE algorithm.
 mutable struct DECache{T}
     global_best_candidate::Vector{T}
     global_best_fitness::T
-    function DECache{T}(num_dims::Integer) where T
-        new{T}(zeros(T, num_dims), T(Inf))
+    function DECache{T}(num_dims::Integer) where {T}
+        return new{T}(zeros(T, num_dims), T(Inf))
     end
 end
 
 """
-    DE
+DE
 
 Differential Evolution (DE) algorithm.
 """
 struct DE{
-    MP  <: AbstractMutationParameters,
-    CP  <: AbstractCrossoverParameters,
-    T   <: AbstractFloat,
-    E   <: BatchEvaluator,
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    T<:AbstractFloat,
+    E<:BatchEvaluator,
     IBSS,
-    GO  <: GeneralOptions,
+    GO<:GeneralOptions,
 } <: AbstractOptimizer
 
     # The DE algorithm options
-    options::DEOptions{MP, CP, IBSS, GO}
+    options::DEOptions{MP,CP,IBSS,GO}
 
     # The DE evaluator
     evaluator::E
@@ -92,108 +117,203 @@ struct DE{
 
     # The DE cache
     cache::DECache{T}
-
 end
 
+"""
+    SerialDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function SerialDE(
     prob::AbstractProblem{has_penalty,SS};
-    num_candidates::Integer = 100,
-    mutation_params::MP = SelfMutationParameters(Rand1()),
-    crossover_params::CP = BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Integer = 1000,
-    max_time::Real = 60.0,
-    function_tolerance::Real = 1e-6,
-    max_stall_time::Real = 60.0,
-    max_stall_iterations::Integer = 100,
-    min_cost::Real = -Inf,
-    function_value_check::Bool = true,
-    display::Bool = true,
-    display_interval::Integer = 1,
+    num_candidates::Integer=100,
+    mutation_params::MP=SelfMutationParameters(Rand1()),
+    crossover_params::CP=BinomialCrossoverParameters(0.6),
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Integer=1000,
+    max_time::Real=60.0,
+    function_tolerance::Real=1e-6,
+    max_stall_time::Real=60.0,
+    max_stall_iterations::Integer=100,
+    min_cost::Real=(-Inf),
+    function_value_check::Bool=true,
+    display::Bool=true,
+    display_interval::Integer=1,
 ) where {
-    MP <: AbstractMutationParameters,
-    CP <: AbstractCrossoverParameters,
-    T <: AbstractFloat,
-    SS <: ContinuousRectangularSearchSpace{T},
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    T<:AbstractFloat,
+    SS<:ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
     evaluator = SerialBatchEvaluator(prob)
-    BuildDE(
-        prob, evaluator, num_candidates,
-        mutation_params, crossover_params,
-        initial_bounds, max_iterations,
-        max_time, function_tolerance,
-        max_stall_time, max_stall_iterations,
-        min_cost, function_value_check,
-        display, display_interval,
+    return BuildDE(
+        prob,
+        evaluator,
+        num_candidates,
+        mutation_params,
+        crossover_params,
+        initial_bounds,
+        max_iterations,
+        max_time,
+        function_tolerance,
+        max_stall_time,
+        max_stall_iterations,
+        min_cost,
+        function_value_check,
+        display,
+        display_interval,
     )
 end
 
+"""
+    ThreadedDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `ThreadedBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function ThreadedDE(
     prob::AbstractProblem{has_penalty,SS};
-    num_candidates::Integer = 100,
-    mutation_params::MP = SelfMutationParameters(Rand1()),
-    crossover_params::CP = BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Integer = 1000,
-    max_time::Real = 60.0,
-    function_tolerance::Real = 1e-6,
-    max_stall_time::Real = 60.0,
-    max_stall_iterations::Integer = 100,
-    min_cost::Real = -Inf,
-    function_value_check::Bool = true,
-    display::Bool = true,
-    display_interval::Integer = 1,
+    num_candidates::Integer=100,
+    mutation_params::MP=SelfMutationParameters(Rand1()),
+    crossover_params::CP=BinomialCrossoverParameters(0.6),
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Integer=1000,
+    max_time::Real=60.0,
+    function_tolerance::Real=1e-6,
+    max_stall_time::Real=60.0,
+    max_stall_iterations::Integer=100,
+    min_cost::Real=(-Inf),
+    function_value_check::Bool=true,
+    display::Bool=true,
+    display_interval::Integer=1,
 ) where {
-    MP <: AbstractMutationParameters,
-    CP <: AbstractCrossoverParameters,
-    T <: AbstractFloat,
-    SS <: ContinuousRectangularSearchSpace{T},
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    T<:AbstractFloat,
+    SS<:ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
     evaluator = ThreadedBatchEvaluator(prob)
-    BuildDE(
-        prob, evaluator, num_candidates,
-        mutation_params, crossover_params,
-        initial_bounds, max_iterations,
-        max_time, function_tolerance,
-        max_stall_time, max_stall_iterations,
-        min_cost, function_value_check,
-        display, display_interval,
+    return BuildDE(
+        prob,
+        evaluator,
+        num_candidates,
+        mutation_params,
+        crossover_params,
+        initial_bounds,
+        max_iterations,
+        max_time,
+        function_tolerance,
+        max_stall_time,
+        max_stall_iterations,
+        min_cost,
+        function_value_check,
+        display,
+        display_interval,
     )
 end
 
+"""
+    PolyesterDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+
+Construct a serial Differential Evolution (DE) algorithm with the given options that will
+employ a `PolyesterBatchEvaluator` to evaluate the objective function each iteration.
+
+# Arguments
+- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
+
+# Keyword Arguments
+- `num_candidates::Integer=100`: The number of candidates in the population.
+- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
+- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
+- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `max_time::Real=60.0`: The maximum time to run the algorithm.
+- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
+- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
+- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
+- `function_value_check::Bool=true`: Whether to check the function value.
+- `display::Bool=true`: Whether to display the algorithm status.
+- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+"""
 function PolyesterDE(
     prob::AbstractProblem{has_penalty,SS};
-    num_candidates::Integer = 100,
-    mutation_params::MP = SelfMutationParameters(Rand1()),
-    crossover_params::CP = BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Integer = 1000,
-    max_time::Real = 60.0,
-    function_tolerance::Real = 1e-6,
-    max_stall_time::Real = 60.0,
-    max_stall_iterations::Integer = 100,
-    min_cost::Real = -Inf,
-    function_value_check::Bool = true,
-    display::Bool = true,
-    display_interval::Integer = 1,
+    num_candidates::Integer=100,
+    mutation_params::MP=SelfMutationParameters(Rand1()),
+    crossover_params::CP=BinomialCrossoverParameters(0.6),
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Integer=1000,
+    max_time::Real=60.0,
+    function_tolerance::Real=1e-6,
+    max_stall_time::Real=60.0,
+    max_stall_iterations::Integer=100,
+    min_cost::Real=(-Inf),
+    function_value_check::Bool=true,
+    display::Bool=true,
+    display_interval::Integer=1,
 ) where {
-    MP <: AbstractMutationParameters,
-    CP <: AbstractCrossoverParameters,
-    T <: AbstractFloat,
-    SS <: ContinuousRectangularSearchSpace{T},
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    T<:AbstractFloat,
+    SS<:ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
     evaluator = ThreadedBatchEvaluator(prob)
-    BuildDE(
-        prob, evaluator, num_candidates,
-        mutation_params, crossover_params,
-        initial_bounds, max_iterations,
-        max_time, function_tolerance,
-        max_stall_time, max_stall_iterations,
-        min_cost, function_value_check,
-        display, display_interval,
+    return BuildDE(
+        prob,
+        evaluator,
+        num_candidates,
+        mutation_params,
+        crossover_params,
+        initial_bounds,
+        max_iterations,
+        max_time,
+        function_tolerance,
+        max_stall_time,
+        max_stall_iterations,
+        min_cost,
+        function_value_check,
+        display,
+        display_interval,
     )
 end
 
@@ -203,7 +323,7 @@ function BuildDE(
     num_candidates::Integer,
     mutation_params::MP,
     crossover_params::CP,
-    initial_bounds::Union{Nothing, ContinuousRectangularSearchSpace},
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace},
     max_iterations::Integer,
     max_time::Real,
     function_tolerance::Real,
@@ -214,10 +334,10 @@ function BuildDE(
     display::Bool,
     display_interval::Integer,
 ) where {
-    MP <: AbstractMutationParameters,
-    CP <: AbstractCrossoverParameters,
-    T <: AbstractFloat,
-    SS <: ContinuousRectangularSearchSpace{T},
+    MP<:AbstractMutationParameters,
+    CP<:AbstractCrossoverParameters,
+    T<:AbstractFloat,
+    SS<:ContinuousRectangularSearchSpace{T},
     has_penalty,
 }
     # Construct options
@@ -229,7 +349,8 @@ function BuildDE(
             max_time,
             min_cost,
         ),
-        mutation_params, crossover_params,
+        mutation_params,
+        crossover_params,
         intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerance,
@@ -375,11 +496,21 @@ function update_global_best!(opt::DE)
     return updated
 end
 
-function display_de_status(time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}) where {D,FVC}
-    display_de_status(time, iteration, stall_count, global_fitness, get_display_interval(options), D)
+function display_de_status(
+    time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}
+) where {D,FVC}
+    return display_de_status(
+        time, iteration, stall_count, global_fitness, get_display_interval(options), D
+    )
 end
-display_de_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{false}) = nothing
-function display_de_status(time, iteration, stall_count, global_fitness, display_interval, ::Val{true})
+function display_de_status(
+    time, iteration, stall_count, global_fitness, display_interval, ::Val{false}
+)
+    return nothing
+end
+function display_de_status(
+    time, iteration, stall_count, global_fitness, display_interval, ::Val{true}
+)
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
         fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")

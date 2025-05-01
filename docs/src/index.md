@@ -4,7 +4,7 @@ CurrentModule = GlobalOptimization
 
 # GlobalOptimization
 
-Currently, GlobalOptimization provides Particle Swarm Optimization (PSO) as the only global optimization algorithm supported. Monotonic Basin Hopping (MBH) will be added in the following weeks.
+Currently, GlobalOptimization provides Particle Swarm Optimization (PSO) and several variants of Differential Evolution (DE) as the only global optimization algorithms supported. Monotonic Basin Hopping (MBH) is in the works.
 
 ## Simple PSO Example
 Let's use PSO to find the minimum to the non-convex Ackley function given by
@@ -32,7 +32,7 @@ end
 nothing # hide
 ```
 
-Next, we'll define the `OptimizationProblem` by providing its constructor our new `ackley` function and an bounds that define the search space. Then, we'll instantiate a `StaticPSO` (an implementation of the PSO algorithm that does not use paralle computing to evaluate the cost function) to perform the optimization!
+Next, we'll define the `OptimizationProblem` by providing its constructor our new `ackley` function and bounds that define the search space. Then, we'll instantiate a `StaticPSO` (an implementation of the PSO algorithm that does not use parallel computing to evaluate the cost function) to perform the optimization!
 
 ```@example simple_ackley
 using GlobalOptimization

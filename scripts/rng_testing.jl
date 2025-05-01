@@ -27,49 +27,25 @@ lapu = rand(Laplace(0.0, 1.0), n)
 lapu_go = [GlobalOptimization.laplace() for _ in 1:n]
 
 PyPlot.figure()
-PyPlot.hist(
-    expd_vec; 
-    bins = 100, alpha = 0.5, color = "green", label = "Distributions.jl",
-)
-PyPlot.hist(
-    expd_vec_go;
-    bins = 100, alpha = 0.5, color = "blue", label = "GlobalOptimization.jl",
-)
+PyPlot.hist(expd_vec; bins=100, alpha=0.5, color="green", label="Distributions.jl")
+PyPlot.hist(expd_vec_go; bins=100, alpha=0.5, color="blue", label="GlobalOptimization.jl")
 PyPlot.title("Exponential Distribution")
 PyPlot.legend()
 
 PyPlot.figure()
-PyPlot.hist(
-    lapg; 
-    bins = 100, alpha = 0.5, color = "green", label = "Distributions.jl",
-)
-PyPlot.hist(
-    lapg_go;
-    bins = 100, alpha = 0.5, color = "blue", label = "GlobalOptimization.jl",
-)
+PyPlot.hist(lapg; bins=100, alpha=0.5, color="green", label="Distributions.jl")
+PyPlot.hist(lapg_go; bins=100, alpha=0.5, color="blue", label="GlobalOptimization.jl")
 PyPlot.title("Laplace General Distribution")
 PyPlot.legend()
 
 PyPlot.figure()
-PyPlot.hist(
-    laps; 
-    bins = 100, alpha = 0.5, color = "green", label = "Distributions.jl",
-)
-PyPlot.hist(
-    laps_go;
-    bins = 100, alpha = 0.5, color = "blue", label = "GlobalOptimization.jl",
-)
+PyPlot.hist(laps; bins=100, alpha=0.5, color="green", label="Distributions.jl")
+PyPlot.hist(laps_go; bins=100, alpha=0.5, color="blue", label="GlobalOptimization.jl")
 PyPlot.title("Laplace Symmetric Distribution")
 PyPlot.legend()
 
 PyPlot.figure()
-PyPlot.hist(
-    lapu; 
-    bins = 100, alpha = 0.5, color = "green", label = "Distributions.jl",
-)
-PyPlot.hist(
-    lapu_go;
-    bins = 100, alpha = 0.5, color = "blue", label = "GlobalOptimization.jl",
-)
+PyPlot.hist(lapu; bins=100, alpha=0.5, color="green", label="Distributions.jl")
+PyPlot.hist(lapu_go; bins=100, alpha=0.5, color="blue", label="GlobalOptimization.jl")
 PyPlot.title("Laplace Unit Distribution")
 PyPlot.legend()

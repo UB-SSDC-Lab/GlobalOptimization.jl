@@ -5,13 +5,13 @@ using GlobalOptimization, Random, Test
     obj = 0.0
     @fastmath for val in x
         xm1sq = (val - 1)^2
-        obj += 10000.0*sqrt(abs(exp(xm1sq) - 1.0))
+        obj += 10000.0 * sqrt(abs(exp(xm1sq) - 1.0))
     end
     return obj
 end
 
 # Utility test function
-function check_swarm_equality(pso1,pso2,pso3)
+function check_swarm_equality(pso1, pso2, pso3)
     sswarm = pso1.swarm
     tswarm = pso2.swarm
     pswarm = pso3.swarm
@@ -34,10 +34,9 @@ function check_swarm_equality(pso1,pso2,pso3)
 end
 
 # Define problem
-N  = 10
+N = 10
 ss = GlobalOptimization.ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N],
-    [5.12 for i in 1:N],
+    [-5.12 for i in 1:N], [5.12 for i in 1:N]
 )
 prob = GlobalOptimization.OptimizationProblem(layeb_1, ss)
 
@@ -55,15 +54,15 @@ Random.seed!(1234)
 pres = GlobalOptimization.optimize!(ppso)
 
 if VERSION >= v"1.10" # VERSION < v1.10 has bug that results different rng state when using Threads.@threads
-    check_swarm_equality(spso,tpso,ppso)
+    check_swarm_equality(spso, tpso, ppso)
     @test sres.exitFlag == tres.exitFlag
     @test sres.exitFlag == pres.exitFlag
     @test sres.iters == tres.iters
     @test sres.iters == pres.iters
 end
-@test sres.fbest ≈ tres.fbest atol=1e-6
-@test sres.xbest ≈ tres.xbest atol=1e-6
+@test sres.fbest ≈ tres.fbest atol = 1e-6
+@test sres.xbest ≈ tres.xbest atol = 1e-6
 
 # Check for correct answer
-@test sres.fbest ≈ 0.0 atol=1e-6
-@test sres.xbest ≈ fill(1.0, N) atol=1e-6
+@test sres.fbest ≈ 0.0 atol = 1e-6
+@test sres.xbest ≈ fill(1.0, N) atol = 1e-6

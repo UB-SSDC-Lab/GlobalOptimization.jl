@@ -10,7 +10,7 @@ abstract type AbstractOptions end
 
 General options for all optimizers
 """
-struct GeneralOptions{display, funciton_value_check} <: AbstractOptions
+struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
     # Display options
     display_interval::Int
 
@@ -20,17 +20,41 @@ struct GeneralOptions{display, funciton_value_check} <: AbstractOptions
     # Minimum cost value
     min_cost::Float64
 
-    function GeneralOptions(function_value_check::Val{true}, display::Val{true}, display_interval::Int, max_time, min_cost)
-        return new{display, function_value_check}(display_interval, max_time, min_cost)
+    function GeneralOptions(
+        function_value_check::Val{true},
+        display::Val{true},
+        display_interval::Int,
+        max_time,
+        min_cost,
+    )
+        return new{display,function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{true}, display::Val{false}, display_interval::Int, max_time, min_cost)
-        return new{display, function_value_check}(display_interval, max_time, min_cost)
+    function GeneralOptions(
+        function_value_check::Val{true},
+        display::Val{false},
+        display_interval::Int,
+        max_time,
+        min_cost,
+    )
+        return new{display,function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{false}, display::Val{true}, display_interval::Int, max_time, min_cost)
-        return new{display, function_value_check}(display_interval, max_time, min_cost)
+    function GeneralOptions(
+        function_value_check::Val{false},
+        display::Val{true},
+        display_interval::Int,
+        max_time,
+        min_cost,
+    )
+        return new{display,function_value_check}(display_interval, max_time, min_cost)
     end
-    function GeneralOptions(function_value_check::Val{false}, display::Val{false}, display_interval::Int, max_time, min_cost)
-        return new{display, function_value_check}(display_interval, max_time, min_cost)
+    function GeneralOptions(
+        function_value_check::Val{false},
+        display::Val{false},
+        display_interval::Int,
+        max_time,
+        min_cost,
+    )
+        return new{display,function_value_check}(display_interval, max_time, min_cost)
     end
 end
 
@@ -53,8 +77,8 @@ get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
 
 Returns the display option from an options type.
 """
-get_display(opts::GeneralOptions{Val{true}, fvc}) where fvc = true
-get_display(opts::GeneralOptions{Val{false}, fvc}) where fvc = false
+get_display(opts::GeneralOptions{Val{true},fvc}) where {fvc} = true
+get_display(opts::GeneralOptions{Val{false},fvc}) where {fvc} = false
 get_display(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
 
 """
@@ -70,7 +94,9 @@ get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.disp
 
 Returns the function value check option from an algorithm options type.
 """
-get_function_value_check(opts::AbstractAlgorithmSpecificOptions) = opts.general.function_value_check
+function get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
+    opts.general.function_value_check
+end
 
 """
     get_max_time(opts::AbstractAlgorithmSpecificOptions)
@@ -85,4 +111,3 @@ get_max_time(opts::AbstractAlgorithmSpecificOptions) = opts.general.max_time
 Returns the min cost option from an algorithm options type.
 """
 get_min_cost(opts::AbstractAlgorithmSpecificOptions) = opts.general.min_cost
-

@@ -64,7 +64,9 @@ end
 Checks the fitness of each candidate in the population `pop` to ensure that it is valid
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
-@inline check_fitness!(pop::AbstractPopulation, options::GeneralOptions{D,FVC}) where {D, FVC} = check_fitness!(pop, FVC)
+@inline check_fitness!(pop::AbstractPopulation, options::GeneralOptions{D,FVC}) where {D,FVC} = check_fitness!(
+    pop, FVC
+)
 @inline check_fitness!(pop::AbstractPopulation, ::Val{false}) = nothing
 function check_fitness!(pop::AbstractPopulation, ::Val{true})
     @unpack candidates_fitness = pop

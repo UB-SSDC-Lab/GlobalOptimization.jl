@@ -14,7 +14,7 @@ cost(x) = Threads.threadid()
 prob = GlobalOptimization.OptimizationProblem(cost, [1.0, 1.0], [2.0, 2.0])
 
 # Construct population and evaluator
-N   = 1000
+N = 1000
 spop = SimplePopulation([zeros(2) for _ in 1:N], zeros(N))
 tpop = deepcopy(spop)
 ppop = deepcopy(spop)

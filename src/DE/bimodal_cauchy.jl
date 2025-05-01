@@ -16,15 +16,20 @@ struct BimodalCauchy
     clampAbove1::Bool
 
     function BimodalCauchy(
-        location1, scale1,
-        location2, scale2;
-        mix_prob::Number    = 0.5,
-        clampBelow0::Bool   = true,
-        clampAbove1::Bool   = true)
-        new(
+        location1,
+        scale1,
+        location2,
+        scale2;
+        mix_prob::Number=0.5,
+        clampBelow0::Bool=true,
+        clampAbove1::Bool=true,
+    )
+        return new(
             Cauchy(location1, scale1),
             Cauchy(location2, scale2),
-            mix_prob, clampBelow0, clampAbove1,
+            mix_prob,
+            clampBelow0,
+            clampAbove1,
         )
     end
 end
