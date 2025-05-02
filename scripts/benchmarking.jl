@@ -107,6 +107,22 @@ function construct_radius_limited_de(prob, mut_strat, pop_size, max_iters)
     )
 end
 
+function construct_random_subset_de(prob, mut_strat, pop_size, max_iters)
+    return SerialDE(
+        prob;
+        display=false,
+        num_candidates=pop_size,
+        max_iterations=max_iters,
+        max_stall_iterations=max_iters,
+        mutation_params=SelfMutationParameters(
+            mut_strat;
+            dist=Uniform(0.0, 1.0),
+            sel=GlobalOptimization.RandomSubsetSelector(8),
+        ),
+        crossover_params=SelfBinomialCrossoverParameters(; dist=Uniform(0.0, 1.0)),
+    )
+end
+
 function construct_covbin_de(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
@@ -190,45 +206,60 @@ function algorithm_set()
             (p, s, i) -> construct_radius_limited_de(p, RandToBest1(), s, i),
         ),
         ("rl_de_unified_bin", (p, s, i) -> construct_radius_limited_de(p, Unified(), s, i)),
-        ("covbin_de_rand_1_bin", (p, s, i) -> construct_covbin_de(p, Rand1(), s, i)),
-        ("covbin_de_best_1_bin", (p, s, i) -> construct_covbin_de(p, Best1(), s, i)),
+        ("rs_de_rand_1_bin", (p, s, i) -> construct_random_subset_de(p, Rand1(), s, i)),
+        ("rs_de_best_1_bin", (p, s, i) -> construct_random_subset_de(p, Best1(), s, i)),
         (
-            "covbin_de_current_to_best_1_bin",
-            (p, s, i) -> construct_covbin_de(p, CurrentToBest1(), s, i),
+            "rs_de_current_to_best_1_bin",
+            (p, s, i) -> construct_random_subset_de(p, CurrentToBest1(), s, i),
         ),
         (
-            "covbin_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_covbin_de(p, CurrentToRand1(), s, i),
+            "rs_de_current_to_rand_1_bin",
+            (p, s, i) -> construct_random_subset_de(p, CurrentToRand1(), s, i),
         ),
         (
-            "covbin_de_randto_best_1_bin",
-            (p, s, i) -> construct_covbin_de(p, RandToBest1(), s, i),
+            "rs_de_randto_best_1_bin",
+            (p, s, i) -> construct_random_subset_de(p, RandToBest1(), s, i),
         ),
-        ("covbin_de_unified_bin", (p, s, i) -> construct_covbin_de(p, Unified(), s, i)),
-        (
-            "rl_covbin_de_rand_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Rand1(), s, i),
-        ),
-        (
-            "rl_covbin_de_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Best1(), s, i),
-        ),
-        (
-            "rl_covbin_de_current_to_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToBest1(), s, i),
-        ),
-        (
-            "rl_covbin_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToRand1(), s, i),
-        ),
-        (
-            "rl_covbin_de_randto_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, RandToBest1(), s, i),
-        ),
-        (
-            "rl_covbin_de_unified_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Unified(), s, i),
-        ),
+        ("rs_de_unified_bin", (p, s, i) -> construct_random_subset_de(p, Unified(), s, i)),
+        # ("covbin_de_rand_1_bin", (p, s, i) -> construct_covbin_de(p, Rand1(), s, i)),
+        # ("covbin_de_best_1_bin", (p, s, i) -> construct_covbin_de(p, Best1(), s, i)),
+        # (
+        #     "covbin_de_current_to_best_1_bin",
+        #     (p, s, i) -> construct_covbin_de(p, CurrentToBest1(), s, i),
+        # ),
+        # (
+        #     "covbin_de_current_to_rand_1_bin",
+        #     (p, s, i) -> construct_covbin_de(p, CurrentToRand1(), s, i),
+        # ),
+        # (
+        #     "covbin_de_randto_best_1_bin",
+        #     (p, s, i) -> construct_covbin_de(p, RandToBest1(), s, i),
+        # ),
+        # ("covbin_de_unified_bin", (p, s, i) -> construct_covbin_de(p, Unified(), s, i)),
+        # (
+        #     "rl_covbin_de_rand_1_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, Rand1(), s, i),
+        # ),
+        # (
+        #     "rl_covbin_de_best_1_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, Best1(), s, i),
+        # ),
+        # (
+        #     "rl_covbin_de_current_to_best_1_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToBest1(), s, i),
+        # ),
+        # (
+        #     "rl_covbin_de_current_to_rand_1_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToRand1(), s, i),
+        # ),
+        # (
+        #     "rl_covbin_de_randto_best_1_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, RandToBest1(), s, i),
+        # ),
+        # (
+        #     "rl_covbin_de_unified_bin",
+        #     (p, s, i) -> construct_radius_limited_covbin_de(p, Unified(), s, i),
+        # ),
     ]
 end
 

@@ -55,17 +55,52 @@ struct RadiusLimitedSelector <: AbstractSelector
     end
 end
 
+"""
+    RandomSubsetSelector
+
+A selector that selects a random subset of candidates from the population.
+The size of the subset is determined by the `size` parameter.
+"""
+struct RandomSubsetSelector <: AbstractSelector
+    size::Int
+    idxs::Vector{UInt16}
+
+    function RandomSubsetSelector(size::Int)
+        idxs = Vector{UInt16}(undef, 0)
+        return new(size, idxs)
+    end
+end
+
+initialize!(s::SimpleSelector, population_size) = nothing
+initialize!(s::RadiusLimitedSelector, population_size) = nothing
+function initialize!(s::RandomSubsetSelector, population_size)
+    if s.size > population_size
+        error(
+            "The size specified in RandomSubsetSelector is greater than the population" *
+            "size. Please increase the population size or decrease the size of the" *
+            " random selection."
+        )
+    end
+    resize!(s.idxs, population_size)
+    s.idxs .= 1:population_size
+    return nothing
+end
+
 select(s::SimpleSelector, target, pop_size) = 1:pop_size
 function select(s::RadiusLimitedSelector, target, pop_size)
-    # Pick target index
-    #target = rand(1:pop_size)
-
     # Set indices
-    for i in eachindex(s.idxs)
+    @inbounds for i in eachindex(s.idxs)
         s.idxs[i] = UInt16(mod1(target + i - s.radius - 1, pop_size))
     end
 
     return s.idxs
+end
+function select(s::RandomSubsetSelector, target, pop_size)
+    # Shuffle the indices
+    shuffle!(s.idxs)
+
+    # Return view of first `s.size` indices
+    return view(s.idxs, 1:s.size)
 end
 
 # Define function for sampling a distribution and clamping for realization > 1 and
