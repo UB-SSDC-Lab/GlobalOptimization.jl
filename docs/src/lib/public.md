@@ -69,6 +69,7 @@ RandToBest2
 Unified
 SimpleSelector
 RadiusLimitedSelector
+RandomSubsetSelector
 ```
 
 
