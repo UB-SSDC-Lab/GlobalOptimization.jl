@@ -1,4 +1,7 @@
 .vscode
+*.jld2
+*.pdf
+*.png
 *.jl.*.cov
 *.jl.cov
 *.mem
