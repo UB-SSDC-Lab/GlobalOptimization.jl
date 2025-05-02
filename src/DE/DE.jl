@@ -416,7 +416,7 @@ function iterate!(opt::DE)
         iteration += 1
 
         # Perform mutation
-        mutate!(population, mutation_params, cache.global_best_candidate)
+        mutate!(population, mutation_params)
 
         # Perform crossover
         crossover!(population, crossover_params, search_space)

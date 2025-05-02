@@ -462,10 +462,14 @@ function get_parameters(params::SelfMutationParameters, i)
     return (Fs[1], Fs[2], Fs[3], Fs[4])
 end
 
-initialize!(params::AbstractMutationParameters{NoAdaptation}, population_size) = nothing
+function initialize!(params::AbstractMutationParameters{NoAdaptation}, population_size)
+    initialize!(params.sel, population_size)
+    return nothing
+end
 function initialize!(
     params::MutationParameters{RandomAdaptation,MS}, population_size
 ) where {MS}
+    initialize!(params.sel, population_size)
     Fs = get_parameters(MS(), params.dist)
     params.F1 = Fs[1]
     params.F2 = Fs[2]
@@ -476,6 +480,7 @@ end
 function initialize!(
     params::SelfMutationParameters{RandomAdaptation,MS}, population_size
 ) where {MS}
+    initialize!(params.sel, population_size)
     resize!(params.Fs, population_size)
     @inbounds for i in eachindex(params.Fs)
         params.Fs[i] = get_parameters(MS(), params.dist)
@@ -511,16 +516,33 @@ function adapt!(
 end
 
 """
-    mutate!(population::DEPopulation{T}, F, best_candidate)
+    get_best_candidate_in_selection(population::DEPopulation, idxs)
+
+Get the best candidate in the selected subset of population (as specified by the indices
+in `idxs`).
+"""
+function get_best_candidate_in_selection(population::DEPopulation, idxs)
+    # Get the index of the best candidate in the selected subset of population
+    best_idx = argmin(
+        let gen_fitness = population.current_generation.candidates_fitness
+            i -> gen_fitness[i]
+        end,
+        idxs,
+    )
+
+    return population.current_generation.candidates[best_idx]
+end
+
+"""
+    mutate!(population::DEPopulation{T}, F)
 
 Mutates the population `population` using the DE mutation strategy.
 
 This is an implementation of the unified mutation strategy proposed by Ji Qiang and
 Chad Mitchell in "A Unified Differential Evolution Algorithm for Global Optimization".
 """
-function mutate!(
-    population::DEPopulation, F::MP, best_candidate
-) where {MP<:AbstractMutationParameters}
+function mutate!(population::DEPopulation, F::MP) where {MP<:AbstractMutationParameters}
+
     @unpack current_generation, mutants = population
     N = length(current_generation)
 
@@ -544,6 +566,9 @@ function mutate!(
 
         # Update mutant based on values of F1, F2, F3, F4
         if F1 > 0.0
+            # Get the best candidate in the selected subset of population
+            best_candidate = get_best_candidate_in_selection(population, idxs)
+
             @. mutants.candidates[i] +=
                 F1 * (best_candidate - current_generation.candidates[i])
         end

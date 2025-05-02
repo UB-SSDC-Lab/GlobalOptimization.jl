@@ -1,9 +1,11 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 GlobalOptimization = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
