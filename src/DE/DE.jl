@@ -85,10 +85,25 @@ end
 Cache for the DE algorithm.
 """
 mutable struct DECache{T}
+    iteration::Int
+    start_time::Float64
+    stall_start_time::Float64
+    stall_value::T
+    stall_count::Int
+
     global_best_candidate::Vector{T}
     global_best_fitness::T
+
     function DECache{T}(num_dims::Integer) where {T}
-        return new{T}(zeros(T, num_dims), T(Inf))
+        return new{T}(
+            0,
+            NaN,
+            NaN,
+            T(Inf),
+            0,
+            zeros(T, num_dims),
+            T(Inf),
+        )
     end
 end
 
@@ -376,7 +391,13 @@ end
 
 function initialize!(opt::DE)
     # Unpack DE
-    @unpack options, evaluator, population = opt
+    @unpack options, evaluator, population, cache = opt
+
+    # Initialize cache variables
+    cache.start_time = time()
+    cache.stall_start_time = cache.start_time
+    cache.stall_value = Inf
+    cache.stall_count = 0
 
     # Initialize mutation and crossover parameters
     N = length(population)
@@ -393,82 +414,80 @@ function initialize!(opt::DE)
     return nothing
 end
 
-function iterate!(opt::DE)
+function step!(opt::DE)
     # Unpack DE
     @unpack options, evaluator, population, cache = opt
+    @unpack mutation_params, crossover_params = options
     search_space = evaluator.prob.ss
 
-    # Initialize DE algorithm parameters
-    @unpack mutation_params, crossover_params = options
+    # Update iteration counter
+    cache.iteration += 1
 
-    # Initialize algorithm stopping criteria requirements
-    iteration = 0
-    start_time = time()
-    current_time = start_time
-    stall_start_time = start_time
-    stall_value = Inf
-    stall_count = 0
+    # Perform mutation
+    mutate!(population, mutation_params)
 
-    # Begin loop
+    # Perform crossover
+    crossover!(population, crossover_params, search_space)
+
+    # Perform selection
+    evaluate_mutant_fitness!(population, evaluator)
+    check_fitness!(population.mutants, get_general(options))
+    selection!(population)
+
+    # Update global best
+    new_best = update_global_best!(opt)
+
+    # Adapt mutation and crossover parameters if necessary
+    adapt!(mutation_params, population.improved, new_best)
+    adapt!(crossover_params, population.improved, new_best)
+
+    # Handle stall
+    if cache.stall_value - cache.global_best_fitness < options.function_tolerance
+        cache.stall_count += 1
+    else
+        cache.stall_count = 0
+        cache.stall_value = cache.global_best_fitness
+        cache.stall_start_time = time()
+    end
+
+    # Check stopping criteria
+    exit_flag = 0
+    current_time = time()
+    if current_time - cache.start_time >= options.general.max_time
+        exit_flag = 1
+    elseif cache.iteration >= options.max_iterations
+        exit_flag = 2
+    elseif cache.stall_count >= options.max_stall_iterations
+        exit_flag = 3
+    elseif current_time - cache.stall_start_time >= options.max_stall_time
+        exit_flag = 4
+    end
+
+    # Print information
+    display_de_status(
+        current_time - cache.start_time,
+        cache.iteration,
+        cache.stall_count,
+        cache.global_best_fitness,
+        get_general(options),
+    )
+
+    return exit_flag
+end
+
+function iterate!(opt::DE)
+
+    # Iteration loop
     exit_flag = 0
     while exit_flag == 0
-        # Update iteration counter
-        iteration += 1
-
-        # Perform mutation
-        mutate!(population, mutation_params)
-
-        # Perform crossover
-        crossover!(population, crossover_params, search_space)
-
-        # Perform selection
-        evaluate_mutant_fitness!(population, evaluator)
-        check_fitness!(population.mutants, get_general(options))
-        selection!(population)
-
-        # Update global best
-        new_best = update_global_best!(opt)
-
-        # Adapt mutation and crossover parameters if necessary
-        adapt!(mutation_params, population.improved, new_best)
-        adapt!(crossover_params, population.improved, new_best)
-
-        # Handle stall
-        if stall_value - cache.global_best_fitness < options.function_tolerance
-            stall_count += 1
-        else
-            stall_count = 0
-            stall_value = cache.global_best_fitness
-            stall_start_time = time()
-        end
-
-        # Check stopping criteria
-        current_time = time()
-        if current_time - start_time >= options.general.max_time
-            exit_flag = 1
-        elseif iteration >= options.max_iterations
-            exit_flag = 2
-        elseif stall_count >= options.max_stall_iterations
-            exit_flag = 3
-        elseif current_time - stall_start_time >= options.max_stall_time
-            exit_flag = 4
-        end
-
-        # Print information
-        display_de_status(
-            current_time - start_time,
-            iteration,
-            stall_count,
-            cache.global_best_fitness,
-            get_general(options),
-        )
+        exit_flag = step!(opt)
     end
 
     return Results(
-        cache.global_best_fitness,
-        cache.global_best_candidate,
-        iteration,
-        current_time - start_time,
+        opt.cache.global_best_fitness,
+        opt.cache.global_best_candidate,
+        opt.cache.iteration,
+        time() - opt.cache.start_time,
         exit_flag,
     )
 end
