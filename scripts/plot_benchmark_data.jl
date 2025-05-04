@@ -32,6 +32,8 @@ function main()
         # Plot data
         barplot!(ax, axes(data_subset,1), data_subset[!, :AvgFitness])
 
+        @infiltrate pname=="Griewank"
+
         # Save
         save("figs/$(pname)_$(ndims)dims.pdf", fig)
     end
