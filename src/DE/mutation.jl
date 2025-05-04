@@ -170,7 +170,7 @@ randomly selected integers in the set returned by the selector.
 
 Note that in the underlying implementation, all mutation strategies are implemented with
 this formulation, where each unique strategy has a different set of
-``F_i \\in \\{1,2,3,4\\}`` that are set to 0.0.
+``\\{F_i : i \\in \\{1,2,3,4\\}\\}`` that are set to 0.0.
 """
 struct Unified <: AbstractMutationStrategy end
 
