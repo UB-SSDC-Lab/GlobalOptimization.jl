@@ -1,6 +1,5 @@
 
 using GlobalOptimization
-using Dates
 using Distributions
 using DataFrames
 using DataFramesMeta
@@ -362,11 +361,11 @@ function main()
     end
 
     # Save data
-    date_str = replace(Dates.today(), "-" => "_")
+    short_hash = get_git_commit_hash(; abbrev=true)
     jldsave(
-        joinpath(@__DIR__, "data", "benchmark_data_$(date_str).jld2"); 
+        joinpath(@__DIR__, "data", "benchmark_data_$(short_hash).jld2"); 
         df=data,
-        commit=get_git_commit_hash(),
+        commit_hash=get_git_commit_hash(),
     )
 
     return data

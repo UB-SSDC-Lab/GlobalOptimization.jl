@@ -80,19 +80,10 @@ function get_git_commit_hash(; abbrev::Bool = false)
         @warn "Repository is dirty, commit hash may not be accurate."
     end
 
-    commit_hash = try
-        gdr = LibGit2.GitDescribeResult(repo)
-        fopt = if abbrev 
-            LibGit2.DescribeFormatOptions(;
-                dirty_suffix=pointer(suffix),
-                always_use_long_format=0,
-            )
-        else
-            LibGit2.DescribeFormatOptions(dirty_suffix=pointer(suffix))
-        end
-        LibGit2.format(gdr, fopt)
-    catch
-        string(LibGit2.head_oid(repo))*suffix
+    commit_hash = LibGit2.head_oid(repo)
+    if abbrev
+        return string(LibGit2.GitShortHash(commit_hash, 7)) * suffix
+    else
+        return string(commit_hash) * suffix
     end
-    return commit_hash
 end
