@@ -85,7 +85,7 @@ function get_git_commit_hash(; abbrev::Bool = false)
         fopt = if abbrev 
             LibGit2.DescribeFormatOptions(;
                 dirty_suffix=pointer(suffix),
-                always_use_long_format=false,
+                always_use_long_format=0,
             )
         else
             LibGit2.DescribeFormatOptions(dirty_suffix=pointer(suffix))
