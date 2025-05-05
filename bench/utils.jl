@@ -71,7 +71,7 @@ base_test_problems = Dict{String, TestProblem}(
 )
 
 # ==== Git Utility ===
-function get_git_commit_hash()
+function get_git_commit_hash(; abbrev::Bool = false)
     repo = LibGit2.GitRepoExt(joinpath(@__DIR__, ".."))
 
     suffix = ""
@@ -82,7 +82,14 @@ function get_git_commit_hash()
 
     commit_hash = try
         gdr = LibGit2.GitDescribeResult(repo)
-        fopt = LibGit2.DescribeFormatOptions(dirty_suffix=pointer(suffix))
+        fopt = if abbrev 
+            LibGit2.DescribeFormatOptions(;
+                dirty_suffix=pointer(suffix),
+                always_use_long_format=false,
+            )
+        else
+            LibGit2.DescribeFormatOptions(dirty_suffix=pointer(suffix))
+        end
         LibGit2.format(gdr, fopt)
     catch
         string(LibGit2.head_oid(repo))*suffix
