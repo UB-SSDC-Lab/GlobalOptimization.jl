@@ -1,57 +1,56 @@
 
 using GlobalOptimization
-using BenchmarkTools
-using Random
-using Statistics
 using Distributions
-using Infiltrator
 using DataFrames
 using DataFramesMeta
 using JLD2
-using GLMakie
+using CairoMakie
 
 import BlackBoxOptim as BBO
+
+# Include benchmarking utilities
+include(joinpath(@__DIR__, "utils.jl"))
 
 function get_problem_sets()
     # Define problem sets
     ProblemSets = Dict{String,Any}(
         "easy" => [
-            # ProblemName, NumDims, PopSize, MaxFevals
-            ("Sphere", 5, 20, 5e3),
-            ("Sphere", 10, 20, 1e4),
-            ("Sphere", 30, 20, 3e4),
-            ("Schwefel2.22", 5, 20, 5e3),
-            ("Schwefel2.22", 10, 20, 1e4),
-            ("Schwefel2.22", 30, 20, 3e4),
-            ("Schwefel2.21", 5, 20, 5e3),
-            ("Schwefel2.21", 10, 20, 1e4),
-            ("Schwefel2.21", 30, 20, 3e4),
+            # ProblemName, NumDims, PopSize, MaxIters
+            ("Sphere", 5, 20, 250),
+            ("Sphere", 10, 20, 500),
+            ("Sphere", 30, 20, 1500),
+            ("Schwefel 2.22", 5, 20, 250),
+            ("Schwefel 2.22", 10, 20, 500),
+            ("Schwefel 2.22", 30, 20, 1500),
+            ("Schwefel 2.21", 5, 20, 250),
+            ("Schwefel 2.21", 10, 20, 500),
+            ("Schwefel 2.21", 30, 20, 1500),
         ],
         "harder" => [
             # Harder problems
-            ("Schwefel1.2", 5, 20, 5e3),
-            ("Schwefel1.2", 10, 50, 5e4),
-            ("Schwefel1.2", 30, 50, 2e5),
-            ("Schwefel1.2", 50, 50, 3e5),
-            ("Rosenbrock", 5, 20, 1e4),
-            ("Rosenbrock", 10, 50, 5e4),
-            ("Rosenbrock", 30, 50, 2e5),
+            ("Schwefel 1.2", 5, 20, 250),
+            ("Schwefel 1.2", 10, 50, 1000),
+            ("Schwefel 1.2", 30, 50, 4000),
+            ("Schwefel 1.2", 50, 50, 6000),
+            ("Rosenbrock", 5, 20, 500),
+            ("Rosenbrock", 10, 50, 1000),
+            ("Rosenbrock", 30, 50, 4000),
             ("Rosenbrock", 50, 40, 3e5),
-            ("Rastrigin", 50, 50, 5e5),
-            ("Rastrigin", 100, 90, 8e5),
-            ("Ackley", 50, 50, 5e5),
-            ("Ackley", 100, 90, 8e5),
-            ("Griewank", 50, 50, 5e5),
-            ("Griewank", 100, 90, 8e5),
+            ("Rastrigin", 50, 50, 10000),
+            ("Rastrigin", 100, 90, 8889),
+            ("Ackley", 50, 50, 10000),
+            ("Ackley", 100, 90, 8889),
+            ("Griewank", 50, 50, 10000),
+            ("Griewank", 100, 90, 8889),
         ],
         "lowdim" => [
-            ("Schwefel1.2", 2, 25, 1e4),
-            ("Rosenbrock", 2, 25, 1e4),
-            ("Rastrigin", 2, 25, 1e4),
-            ("Ackley", 2, 25, 1e4),
-            ("Griewank", 2, 25, 1e4),
+            ("Schwefel 1.2", 2, 25, 400),
+            ("Rosenbrock", 2, 25, 400),
+            ("Rastrigin", 2, 25, 400),
+            ("Ackley", 2, 25, 400),
+            ("Griewank", 2, 25, 400),
         ],
-        "test" => [("Rosenbrock", 30, 50, 2e5)],
+        "test" => [("Rosenbrock", 30, 50, 4000)],
     )
     ProblemSets["all"] = vcat(ProblemSets["easy"], ProblemSets["harder"])
     return ProblemSets
@@ -233,10 +232,14 @@ function algorithm_set()
 end
 
 function main()
+    # Get problems and algorithms
     prob_set = get_problem_sets()["all"]
     algs = algorithm_set()
 
-    N = 100
+    # Number of trials per case
+    N = 500
+
+    # Initialize DataFrame to store results
     data = DataFrame(;
         ProblemName=String[],
         NumDims=Int[],
@@ -248,26 +251,24 @@ function main()
         AvgFitness=Float64[],
     )
 
-    l = ReentrantLock()
     for prob in prob_set
         # Get info
         prob_name = prob[1]
         num_dims = prob[2]
         pop_size = prob[3]
-        max_iters = round(Int, prob[4] / pop_size)
+        max_iters = prob[4]
 
         println("Running $prob_name with $num_dims dimensions")
 
-        # Get BBO problem
-        bbo_prob = BBO.example_problems[prob[1]]
-        opt_val = bbo_prob.opt_value
+        # Get problem
+        test_prob = base_test_problems[prob_name]
 
         # Construct problem
         opt_prob = OptimizationProblem(
-            bbo_prob.objfunc,
+            test_prob.fun,
             ContinuousRectangularSearchSpace(
-                fill(bbo_prob.range_per_dim[1], num_dims),
-                fill(bbo_prob.range_per_dim[2], num_dims),
+                fill(test_prob.lb_per_dim, num_dims),
+                fill(test_prob.ub_per_dim, num_dims),
             ),
         )
 
@@ -289,15 +290,88 @@ function main()
                     pop_size,
                     max_iters,
                     alg[1],
-                    opt_val,
+                    test_prob.min,
                     best_fitness,
                     avg_fitness,
                 ),
             )
         end
+
+        # Run with BlackBoxOptiml adaptive DE/rand/1/bin radius limited
+        println("\tBBO adaptive DE/rand/1/bin radius limited")
+        fitness = Vector{Float64}(undef, N)
+        Threads.@threads for i in 1:N
+            res = BBO.bboptimize(
+                test_prob.fun;
+                Method=:adaptive_de_rand_1_bin_radiuslimited,
+                SearchRange=(test_prob.lb_per_dim, test_prob.ub_per_dim),
+                NumDimensions=num_dims,
+                PopulationSize=pop_size,
+                MaxFuncEvals=max_iters * pop_size,
+                TraceMode=:silent,
+            )
+            fitness[i] = BBO.best_fitness(res)
+        end
+        avg_fitness = mean(fitness)
+        best_fitness = minimum(fitness)
+        push!(
+            data,
+            (
+                prob_name,
+                num_dims,
+                pop_size,
+                max_iters,
+                "BBO_adaptive_de_rand_1_bin_radius_limited",
+                test_prob.min,
+                best_fitness,
+                avg_fitness,
+            ),
+        )
     end
-    jldsave("benchmark_data.jld2"; df=data)
-    return data
+
+    # Save data
+    short_hash = get_git_commit_hash(; abbrev=true)
+    jldsave(
+        joinpath(@__DIR__, "data", "benchmark_data_$(short_hash).jld2"); 
+        df=data,
+        commit_hash=get_git_commit_hash(),
+    )
+
+    return data, short_hash
 end
 
-data = main()
+function plot(data, short_hash)
+    # Create directory for plots
+    plot_dir = joinpath(@__DIR__, "data", "plots_$(short_hash)")
+    mkpath(plot_dir)
+
+    # Get unique problem configurations
+    unique_probs = unique(data[:,1:2])
+
+    # Loop over unique problem configs
+    for i in axes(unique_probs, 1)
+        # Get subset
+        pname = unique_probs[i, :ProblemName]
+        ndims = unique_probs[i, :NumDims]
+        data_subset = @subset(data,
+            :ProblemName .== pname,
+            :NumDims .== ndims,
+        )
+
+        # Create figure
+        fig = Figure(;size=(1920,1080))
+        ax = Axis(fig[1,1]; ylabel="Avg. Fitness", yscale=log10)
+        ax.xticks = (axes(data_subset, 1), data_subset[!, :AlgorithmName])
+        ax.xticklabelrotation = 70.0
+
+        # Plot data
+        barplot!(ax, axes(data_subset,1), data_subset[!, :AvgFitness])
+
+        # Save
+        save(joinpath(plot_dir, "$(pname)_$(ndims)dims.pdf"), fig)
+    end
+end
+
+data, shash = main()
+
+plot(data, shash)
