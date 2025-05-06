@@ -36,7 +36,7 @@ function get_problem_sets()
             ("Rosenbrock", 5, 20, 500),
             ("Rosenbrock", 10, 50, 1000),
             ("Rosenbrock", 30, 50, 4000),
-            ("Rosenbrock", 50, 40, 3e5),
+            ("Rosenbrock", 50, 40, 7500),
             ("Rastrigin", 50, 50, 10000),
             ("Rastrigin", 100, 90, 8889),
             ("Ackley", 50, 50, 10000),
@@ -311,8 +311,9 @@ function main()
 
             # Compute fitness over N trials
             fitness = Vector{Float64}(undef, N)
+            bsolver = alg[2](opt_prob, pop_size, max_iters)
             Threads.@threads for i in 1:N
-                solver = alg[2](opt_prob, pop_size, max_iters)
+                solver = deepcopy(bsolver)
                 res = optimize!(solver)
                 fitness[i] = res.fbest
             end
