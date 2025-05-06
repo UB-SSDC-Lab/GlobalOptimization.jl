@@ -1,5 +1,6 @@
 
 using GlobalOptimization
+using Statistics
 using Distributions
 using DataFrames
 using DataFramesMeta
@@ -248,7 +249,9 @@ function main()
         AlgorithmName=String[],
         OptFitness=Float64[],
         BestFitness=Float64[],
-        AvgFitness=Float64[],
+        MeanFitness=Float64[],
+        MedianFitness=Float64[],
+        AllFitness=Vector{Vector{Float64}}(undef, 0)
     )
 
     for prob in prob_set
@@ -274,14 +277,21 @@ function main()
 
         for alg in algs
             println("\t$(alg[1])")
+
+            # Compute fitness over N trials
             fitness = Vector{Float64}(undef, N)
             Threads.@threads for i in 1:N
                 solver = alg[2](opt_prob, pop_size, max_iters)
                 res = optimize!(solver)
                 fitness[i] = res.fbest
             end
-            avg_fitness = mean(fitness)
+
+            # Get fitness statistics
+            mean_fitness = mean(fitness)
+            median_fitness = median(fitness)
             best_fitness = minimum(fitness)
+
+            # Append to data
             push!(
                 data,
                 (
@@ -292,13 +302,17 @@ function main()
                     alg[1],
                     test_prob.min,
                     best_fitness,
-                    avg_fitness,
+                    mean_fitness,
+                    median_fitness,
+                    fitness,
                 ),
             )
         end
 
         # Run with BlackBoxOptiml adaptive DE/rand/1/bin radius limited
         println("\tBBO adaptive DE/rand/1/bin radius limited")
+
+        # Compute fitness over N trials
         fitness = Vector{Float64}(undef, N)
         Threads.@threads for i in 1:N
             res = BBO.bboptimize(
@@ -312,8 +326,12 @@ function main()
             )
             fitness[i] = BBO.best_fitness(res)
         end
-        avg_fitness = mean(fitness)
+
+        # Get fitness statistics
+        mean_fitness = mean(fitness)
+        median_fitness = median(fitness)
         best_fitness = minimum(fitness)
+
         push!(
             data,
             (
@@ -321,10 +339,12 @@ function main()
                 num_dims,
                 pop_size,
                 max_iters,
-                "BBO_adaptive_de_rand_1_bin_radius_limited",
+                "BBO_adaptive_de_rand_1_bin_radiuslimited",
                 test_prob.min,
                 best_fitness,
-                avg_fitness,
+                mean_fitness,
+                median_fitness,
+                fitness,
             ),
         )
     end
@@ -332,7 +352,7 @@ function main()
     # Save data
     short_hash = get_git_commit_hash(; abbrev=true)
     jldsave(
-        joinpath(@__DIR__, "data", "benchmark_data_$(short_hash).jld2"); 
+        joinpath(@__DIR__, "data", "benchmark_data_$(short_hash).jld2");
         df=data,
         commit_hash=get_git_commit_hash(),
     )
@@ -365,7 +385,7 @@ function plot(data, short_hash)
         ax.xticklabelrotation = 70.0
 
         # Plot data
-        barplot!(ax, axes(data_subset,1), data_subset[!, :AvgFitness])
+        barplot!(ax, axes(data_subset,1), data_subset[!, :MeanFitness])
 
         # Save
         save(joinpath(plot_dir, "$(pname)_$(ndims)dims.pdf"), fig)
@@ -374,4 +394,4 @@ end
 
 data, shash = main()
 
-plot(data, shash)
+#plot(data, shash)
