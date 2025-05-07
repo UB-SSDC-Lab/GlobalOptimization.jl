@@ -352,8 +352,10 @@ function main()
 
     # Save data
     short_hash = get_git_commit_hash(; abbrev=true)
+    data_dir = joinpath(@__DIR__, "data")
+    mkpath(data_dir)
     jldsave(
-        joinpath(@__DIR__, "data", "benchmark_data_$(short_hash).jld2");
+        joinpath(data_dir, "benchmark_data_$(short_hash).jld2");
         df=data,
         commit_hash=get_git_commit_hash(),
     )
