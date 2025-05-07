@@ -67,7 +67,7 @@ function construct_pso(prob, pop_size, max_iters)
     )
 end
 
-function construct_default_de(prob, mut_strat, pop_size, max_iters)
+function construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
         display=false,
@@ -79,7 +79,7 @@ function construct_default_de(prob, mut_strat, pop_size, max_iters)
     )
 end
 
-function construct_de(prob, mut_strat, pop_size, max_iters)
+function construct_uniform_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
         display=false,
@@ -91,7 +91,7 @@ function construct_de(prob, mut_strat, pop_size, max_iters)
     )
 end
 
-function construct_radius_limited_de(prob, mut_strat, pop_size, max_iters)
+function construct_rl_uniform_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
         display=false,
@@ -107,7 +107,7 @@ function construct_radius_limited_de(prob, mut_strat, pop_size, max_iters)
     )
 end
 
-function construct_covbin_de(prob, mut_strat, pop_size, max_iters)
+function construct_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
         display=false,
@@ -124,7 +124,7 @@ function construct_covbin_de(prob, mut_strat, pop_size, max_iters)
     )
 end
 
-function construct_radius_limited_covbin_de(prob, mut_strat, pop_size, max_iters)
+function construct_rl_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
     return SerialDE(
         prob;
         display=false,
@@ -148,86 +148,86 @@ end
 function algorithm_set()
     return [
         ("pso", construct_pso),
-        ("default_de_rand_1_bin", (p, s, i) -> construct_default_de(p, Rand1(), s, i)),
-        ("default_de_best_1_bin", (p, s, i) -> construct_default_de(p, Best1(), s, i)),
+        ("default_adaptive_de_rand_1_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, Rand1(), s, i)),
+        ("default_adaptive_de_best_1_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, Best1(), s, i)),
         (
-            "default_de_current_to_best_1_bin",
-            (p, s, i) -> construct_default_de(p, CurrentToBest1(), s, i),
+            "default_adaptive_de_current_to_best_1_bin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, CurrentToBest1(), s, i),
         ),
         (
-            "default_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_default_de(p, CurrentToRand1(), s, i),
+            "default_adaptive_de_current_to_rand_1_bin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, CurrentToRand1(), s, i),
         ),
         (
-            "default_de_randto_best_1_bin",
-            (p, s, i) -> construct_default_de(p, RandToBest1(), s, i),
+            "default_adaptive_de_rand_to_best_1_bin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, RandToBest1(), s, i),
         ),
-        ("default_de_unified_bin", (p, s, i) -> construct_de(p, Unified(), s, i)),
-        ("uniform_de_rand_1_bin", (p, s, i) -> construct_de(p, Rand1(), s, i)),
-        ("uniform_de_best_1_bin", (p, s, i) -> construct_de(p, Best1(), s, i)),
+        ("default_adaptive_de_unified_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_binfault_adaptive_de_mutstrat_bin(p, Unified(), s, i)),
+        ("uniform_adaptive_de_rand_1_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, Rand1(), s, i)),
+        ("uniform_adaptive_de_best_1_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, Best1(), s, i)),
         (
-            "uniform_de_current_to_best_1_bin",
-            (p, s, i) -> construct_de(p, CurrentToBest1(), s, i),
-        ),
-        (
-            "uniform_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_de(p, CurrentToRand1(), s, i),
-        ),
-        ("uniform_de_randto_best_1_bin", (p, s, i) -> construct_de(p, RandToBest1(), s, i)),
-        ("uniform_de_unified_bin", (p, s, i) -> construct_de(p, Unified(), s, i)),
-        ("rl_de_rand_1_bin", (p, s, i) -> construct_radius_limited_de(p, Rand1(), s, i)),
-        ("rl_de_best_1_bin", (p, s, i) -> construct_radius_limited_de(p, Best1(), s, i)),
-        (
-            "rl_de_current_to_best_1_bin",
-            (p, s, i) -> construct_radius_limited_de(p, CurrentToBest1(), s, i),
+            "uniform_adaptive_de_current_to_best_1_bin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, CurrentToBest1(), s, i),
         ),
         (
-            "rl_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_radius_limited_de(p, CurrentToRand1(), s, i),
+            "uniform_adaptive_de_current_to_rand_1_bin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, CurrentToRand1(), s, i),
+        ),
+        ("uniform_adaptive_de_rand_to_best_1_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, RandToBest1(), s, i)),
+        ("uniform_adaptive_de_unified_bin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_bin(p, Unified(), s, i)),
+        ("rl_uniform_adaptive_de_rand_1_bin", (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, Rand1(), s, i)),
+        ("rl_uniform_adaptive_de_best_1_bin", (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, Best1(), s, i)),
+        (
+            "rl_uniform_adaptive_de_current_to_best_1_bin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, CurrentToBest1(), s, i),
         ),
         (
-            "rl_de_randto_best_1_bin",
-            (p, s, i) -> construct_radius_limited_de(p, RandToBest1(), s, i),
-        ),
-        ("rl_de_unified_bin", (p, s, i) -> construct_radius_limited_de(p, Unified(), s, i)),
-        ("covbin_de_rand_1_bin", (p, s, i) -> construct_covbin_de(p, Rand1(), s, i)),
-        ("covbin_de_best_1_bin", (p, s, i) -> construct_covbin_de(p, Best1(), s, i)),
-        (
-            "covbin_de_current_to_best_1_bin",
-            (p, s, i) -> construct_covbin_de(p, CurrentToBest1(), s, i),
+            "rl_uniform_adaptive_de_current_to_rand_1_bin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, CurrentToRand1(), s, i),
         ),
         (
-            "covbin_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_covbin_de(p, CurrentToRand1(), s, i),
+            "rl_uniform_adaptive_de_rand_to_best_1_bin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, RandToBest1(), s, i),
+        ),
+        ("rl_uniform_adaptive_de_unified_bin", (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_bin(p, Unified(), s, i)),
+        ("uniform_adaptive_de_rand_1_covbin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, Rand1(), s, i)),
+        ("uniform_adaptive_de_best_1_covbin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, Best1(), s, i)),
+        (
+            "uniform_adaptive_de_current_to_best_1_covbin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, CurrentToBest1(), s, i),
         ),
         (
-            "covbin_de_randto_best_1_bin",
-            (p, s, i) -> construct_covbin_de(p, RandToBest1(), s, i),
-        ),
-        ("covbin_de_unified_bin", (p, s, i) -> construct_covbin_de(p, Unified(), s, i)),
-        (
-            "rl_covbin_de_rand_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Rand1(), s, i),
+            "uniform_adaptive_de_current_to_rand_1_covbin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, CurrentToRand1(), s, i),
         ),
         (
-            "rl_covbin_de_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Best1(), s, i),
+            "uniform_adaptive_de_rand_to_best_1_covbin",
+            (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, RandToBest1(), s, i),
+        ),
+        ("uniform_adaptive_de_unified_covbin", (p, s, i) -> construct_uniform_adaptive_de_mutstrat_covbin(p, Unified(), s, i)),
+        (
+            "rl_uniform_adaptive_de_rand_1_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, Rand1(), s, i),
         ),
         (
-            "rl_covbin_de_current_to_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToBest1(), s, i),
+            "rl_uniform_adaptive_de_best_1_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, Best1(), s, i),
         ),
         (
-            "rl_covbin_de_current_to_rand_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, CurrentToRand1(), s, i),
+            "rl_uniform_adaptive_de_current_to_best_1_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, CurrentToBest1(), s, i),
         ),
         (
-            "rl_covbin_de_randto_best_1_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, RandToBest1(), s, i),
+            "rl_uniform_adaptive_de_current_to_rand_1_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, CurrentToRand1(), s, i),
         ),
         (
-            "rl_covbin_de_unified_bin",
-            (p, s, i) -> construct_radius_limited_covbin_de(p, Unified(), s, i),
+            "rl_uniform_adaptive_de_rand_to_best_1_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, RandToBest1(), s, i),
+        ),
+        (
+            "rl_uniform_adaptive_de_unified_covbin",
+            (p, s, i) -> construct_rl_uniform_adaptive_de_mutstrat_covbin(p, Unified(), s, i),
         ),
     ]
 end
