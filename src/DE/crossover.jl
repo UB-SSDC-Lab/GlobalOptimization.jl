@@ -4,6 +4,26 @@ abstract type AbstractBinomialCrossoverParameters{AS} <: AbstractCrossoverParame
 
 abstract type AbstractCrossoverTransformation end
 struct NoTransformation <: AbstractCrossoverTransformation end
+
+"""
+    CovarianceTransformation{T<:AbstractCrossoverTransformation}
+
+A transformation for performing crossover in the eigen-space of the covariance matrix of the
+best candidates in the population.
+
+This is an implementation of the method proposed by Wang and Li in "Differential Evolution
+Based on Covariance Matrix Learning and Bimodal Distribution Parameter Setting, " 2014,
+DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
+
+# Fields
+- `ps::Float64`: The proportion of candidates to consider in the covariance matrix. That is,
+    for a population size of `N`, the covariance matrix is calculated using the
+    `clamp(ceil(ps * N), 2, N)` best candidates.
+- `pb::Float64`: The probability of applying the transformation.
+- `B::Matrix{Float64}`: The real part of the eigenvectors of the covariance matrix.
+- `ct::Vector{Float64}`: The transformed candidate.
+- `mt::Vector{Float64}`: The transformed mutant.
+"""
 struct CovarianceTransformation <: AbstractCrossoverTransformation
     ps::Float64
     pb::Float64
@@ -13,6 +33,33 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
     ct::Vector{Float64}
     mt::Vector{Float64}
 
+    @doc """
+        CovarianceTransformation(ps::Float64, pb::Float64, num_dims::Int)
+
+    Creates a `CovarianceTransformation` object with the specified proportion of candidates
+    to consider in the covariance matrix `ps`, the probability of applying the transformation
+    `pb`, and the number of dimensions `num_dims`.
+
+    This is an implementation of the method proposed by Wang and Li in "Differential Evolution
+    Based on Covariance Matrix Learning and Bimodal Distribution Parameter Setting, " 2014,
+    DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
+
+    # Arguments
+    - `ps::Float64`: The proportion of candidates to consider in the covariance matrix.
+    - `pb::Float64`: The probability of applying the transformation.
+    - `num_dims::Int`: The number of dimensions in the search space.
+
+    # Returns
+    - `CovarianceTransformation`: A `CovarianceTransformation` object with the specified
+        parameters.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> transformation = CovarianceTransformation(0.5, 0.5, 10)
+    CovarianceTransformation(0.5, 0.5, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    ```
+    """
     function CovarianceTransformation(ps, pb, num_dims)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
@@ -59,6 +106,23 @@ function from_transformed!(transformation::CovarianceTransformation, mt, m)
     return nothing
 end
 
+"""
+    BinomialCrossoverParameters{
+        AS<:AbstractAdaptationStrategy,
+        T<:AbstractCrossoverTransformation,
+        D,
+    }
+
+The parameters for a DE binomial crossover strategy.
+
+# Fields
+- `CR::Float64`: The crossover rate.
+- `transform::T`: The transformation to apply to the candidate and mutant.
+- `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the crossover
+    rate parameter. Note that this should generally be a distribution from
+    [Distributions.jl](https://juliastats.org/Distributions.jl/stable/), but the only
+    strict requirement is that rand(dist) returns a floating point value.
+"""
 mutable struct BinomialCrossoverParameters{
     AS<:AbstractAdaptationStrategy,T<:AbstractCrossoverTransformation,D
 } <: AbstractBinomialCrossoverParameters{AS}
@@ -66,16 +130,114 @@ mutable struct BinomialCrossoverParameters{
     transform::T
     dist::D
 
+    @doc """
+        BinomialCrossoverParameters(CR::Float64; transform=NoTransformation())
+
+    Creates a `BinomialCrossoverParameters` object with a fixed crossover rate `CR` and
+    optional transformation `transform`.
+
+    # Arguments
+    - `CR::Float64`: The crossover rate.
+
+    # Keyword Arguments
+    - `transform::AbstractCrossoverTransformation`: The transformation to apply to the
+        candidate and mutant. Defaults to `NoTransformation()`.
+
+    # Returns
+    - `BinomialCrossoverParameters{NoAdaptation,typeof(transform),Nothing}`: A
+        `BinomialCrossoverParameters` object with a fixed crossover rate and the optionally
+        specified transformation.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = BinomialCrossoverParameters(0.5)
+    BinomialCrossoverParameters{GlobalOptimization.NoAdaptation, GlobalOptimization.NoTransformation, Nothing}(0.5, GlobalOptimization.NoTransformation(), nothing)
+    ```
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = BinomialCrossoverParameters(0.5, transform=CovarianceTransformation(0.5, 0.5, 10))
+    BinomialCrossoverParameters{GlobalOptimization.NoAdaptation, CovarianceTransformation, Nothing}(0.5, CovarianceTransformation(0.5, 0.5, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), nothing)
+    ```
+    """
     function BinomialCrossoverParameters(CR::Float64; transform=NoTransformation())
         return new{NoAdaptation,typeof(transform),Nothing}(CR, transform, nothing)
     end
 
+    @doc """
+        BinomialCrossoverParameters(; dist=default_binomial_crossover_dist, transform=NoTransformation())
+
+    Creates a `BinomialCrossoverParameters` object with an adaptive crossover rate and
+    optional transformation `transform`.
+
+    # Keyword Arguments
+    - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
+        crossover rate parameter. Note that this should generally be a distribution from
+        [Distributions.jl](https://juliastats.org/Distributions.jl/stable/), but the only
+        strict requirement is that rand(dist) returns a floating point value. Defaults to
+        `default_binomial_crossover_dist`, which is a mixture model comprised of two Cauchy
+        distributions, with probability density given by:
+
+        ``f_{mix}(x; \\mu, \\sigma) = 0.5 f(x;\\mu_1,\\sigma_1) + 0.5 f(x;\\mu_2,\\sigma_2)``
+
+        where ``\\mu = \\{0.1, 0.95\\}`` and ``\\sigma = \\{0.1, 0.1\\}``.
+
+    - `transform::AbstractCrossoverTransformation`: The transformation to apply to the
+        candidate and mutant. Defaults to `NoTransformation()`.
+
+    # Returns
+    - `BinomialCrossoverParameters{RandomAdaptation,typeof(transform),typeof(dist)}`: A
+        `BinomialCrossoverParameters` object with an adaptive crossover rate and the
+        optionally specified transformation.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = BinomialCrossoverParameters()
+    BinomialCrossoverParameters{GlobalOptimization.RandomAdaptation, GlobalOptimization.NoTransformation, Distributions.MixtureModel{Distributions.Univariate, Distributions.Continuous, Distributions.Cauchy, Distributions.Categorical{Float64, Vector{Float64}}}}(0.0, GlobalOptimization.NoTransformation(), MixtureModel{Distributions.Cauchy}(K = 2)
+    components[1] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=0.1, σ=0.1)
+    components[2] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=0.95, σ=0.1)
+    )
+    ```
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = BinomialCrossoverParameters(transform=CovarianceTransformation(0.5, 0.5, 10))
+    BinomialCrossoverParameters{GlobalOptimization.RandomAdaptation, CovarianceTransformation, Distributions.MixtureModel{Distributions.Univariate, Distributions.Continuous, Distributions.Cauchy, Distributions.Categorical{Float64, Vector{Float64}}}}(0.0, CovarianceTransformation(0.5, 0.5, [2.195780764e-314 2.2117846174e-314 … 2.1293782266e-314 1.5617889024864e-311; 2.366805627e-314 2.316670011e-314 … 2.3355803934e-314 1.4259811738567e-311; … ; 2.195781025e-314 2.195781096e-314 … 1.4531427176862e-310 1.27319747493e-313; 2.366805627e-314 2.366805627e-314 … 1.0270459628367e-310 2.121995795e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), MixtureModel{Distributions.Cauchy}(K = 2)
+    components[1] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=0.1, σ=0.1)
+    components[2] (prior = 0.5000): Distributions.Cauchy{Float64}(μ=0.95, σ=0.1)
+    )
+    ```
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> using Distributions
+    julia> params = BinomialCrossoverParameters(dist=Uniform(0.0, 1.0))
+    BinomialCrossoverParameters{GlobalOptimization.RandomAdaptation, GlobalOptimization.NoTransformation, Uniform{Float64}}(0.0, GlobalOptimization.NoTransformation(), Uniform{Float64}(a=0.0, b=1.0))
+    ```
+    """
     function BinomialCrossoverParameters(;
         dist=default_binomial_crossover_dist, transform=NoTransformation()
     )
         return new{RandomAdaptation,typeof(transform),typeof(dist)}(0.0, transform, dist)
     end
 end
+
+"""
+    SelfBinomialCrossoverParameters{
+        AS<:AbstractAdaptationStrategy,
+        T<:AbstractCrossoverTransformation,
+        D,
+    }
+
+The parameters for a DE self-adaptive binomial crossover strategy.
+
+# Fields
+- `CRs::Vector{Float64}`: The crossover rates for each candidate in the population.
+- `transform::T`: The transformation to apply to the candidate and mutant.
+- `dist<:Distribution{Univariate,Continuous}`: The distribution used to adapt the crossover
+    rate parameter. Note that this should generally be a distribution from
+    [Distributions.jl](https://juliastats.org/Distributions.jl/stable/), but the only
+    strict requirement is that rand(dist) returns a floating point value.
+"""
 struct SelfBinomialCrossoverParameters{
     AS<:AbstractAdaptationStrategy,T<:AbstractCrossoverTransformation,D
 } <: AbstractBinomialCrossoverParameters{AS}
@@ -83,6 +245,44 @@ struct SelfBinomialCrossoverParameters{
     transform::T
     dist::D
 
+    @doc """
+        SelfBinomialCrossoverParameters(;
+            dist=default_binomial_crossover_dist,
+            transform=NoTransformation()
+        )
+
+    Creates a `SelfBinomialCrossoverParameters` object with an adaptive crossover rate for each
+    candidate in the population and an optional transformation `transform`.
+
+    # Keyword Arguments
+    - `dist::Distribution{Univariate,Continuous}`: The distribution used to adapt the
+        crossover rate parameter. Note that this should generally be a distribution from
+        [Distributions.jl](https://juliastats.org/Distributions.jl/stable/), but the only
+        strict requirement is that rand(dist) returns a floating point value. Defaults to
+        `default_binomial_crossover_dist`, which is a mixture model comprised of two Cauchy
+        distributions, with probability density given by:
+
+        ``f_{mix}(x; \\mu, \\sigma) = 0.5 f(x;\\mu_1,\\sigma_1) + 0.5 f(x;\\mu_2,\\sigma_2)``
+
+        where ``\\mu = \\{0.1, 0.95\\}`` and ``\\sigma = \\{0.1, 0.1\\}``.
+    - `transform::AbstractCrossoverTransformation`: The transformation to apply to the
+        candidate and mutant. Defaults to `NoTransformation()`.
+
+    # Returns
+    - `SelfBinomialCrossoverParameters{RandomAdaptation,typeof(transform),typeof(dist)}`: A
+        `SelfBinomialCrossoverParameters` object with an adaptive crossover rate for each
+        candidate and the optionally specified transformation.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> params = SelfBinomialCrossoverParameters()
+    SelfBinomialCrossoverParameters{GlobalOptimization.RandomAdaptation, GlobalOptimization.NoTransformation, MixtureModel{Univariate, Continuous, Cauchy, Categorical{Float64, Vector{Float64}}}}(Float64[], GlobalOptimization.NoTransformation(), MixtureModel{Cauchy}(K = 2)
+    components[1] (prior = 0.5000): Cauchy{Float64}(μ=0.1, σ=0.1)
+    components[2] (prior = 0.5000): Cauchy{Float64}(μ=0.95, σ=0.1)
+    )
+    ```
+    """
     function SelfBinomialCrossoverParameters(;
         dist=default_binomial_crossover_dist, transform=NoTransformation()
     )
