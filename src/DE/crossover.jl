@@ -13,6 +13,9 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
     ct::Vector{Float64}
     mt::Vector{Float64}
 
+    # Preallocate storage for calculating transformation
+    idxs::Vector{UInt16}
+
     function CovarianceTransformation(ps, pb, num_dims)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
@@ -21,8 +24,15 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
             throw(ArgumentError("pb must be in the range (0, 1]."))
         end
         B = Matrix{Float64}(undef, num_dims, num_dims)
-        return new(ps, pb, B, zeros(num_dims), zeros(num_dims))
+        return new(ps, pb, B, zeros(num_dims), zeros(num_dims), Vector{UInt16}(undef, 0))
     end
+end
+
+initialize!(transformation::NoTransformation, population_size) = nothing
+function initialize!(transformation::CovarianceTransformation, population_size)
+    resize!(transformation.idxs, population_size)
+    transformation.idxs .= 1:population_size
+    return nothing
 end
 
 update_transformation!(transformation::NoTransformation, population) = nothing
@@ -31,13 +41,15 @@ function update_transformation!(transformation::CovarianceTransformation, popula
     n = clamp(ceil(Int, transformation.ps * length(population)), 2, length(population))
 
     # Get indices of n best candidates
-    idxs = sortperm(population.current_generation.candidates_fitness)[1:n]
+    sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
+    idxs = view(transformation.idxs, 1:n)
 
     # Calculate the covariance matrix for n best candidates
     C = cov(view(population.current_generation.candidates, idxs))
 
     # Compute eigen decomposition
-    transformation.B .= real.(eigvecs(C))
+    E = eigen!(C)
+    transformation.B .= real.(E.vectors)
 
     return nothing
 end
@@ -97,17 +109,20 @@ get_parameter(params::SelfBinomialCrossoverParameters, i) = params.CRs[i]
 function initialize!(
     params::AbstractCrossoverParameters{NoAdaptation}, numdims, population_size
 )
+    initialize!(params.transform, population_size)
     return nothing
 end
 function initialize!(
     params::BinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size
 )
+    initialize!(params.transform, population_size)
     params.CR = one_clamped_rand(params.dist)
     return nothing
 end
 function initialize!(
     params::SelfBinomialCrossoverParameters{RandomAdaptation}, num_dims, population_size
 )
+    initialize!(params.transform, population_size)
     resize!(params.CRs, population_size)
     @inbounds for i in eachindex(params.CRs)
         params.CRs[i] = one_clamped_rand(params.dist)
