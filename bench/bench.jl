@@ -19,8 +19,12 @@ function main()
     prob_set = get_problem_sets()["all"]
     algs = get_algorithm_sets()["all"]
 
+    # Get commit hash
+    short_hash = get_git_commit_hash(; abbrev=true)
+    full_hash = get_git_commit_hash()
+
     # Number of trials per case
-    N = 500
+    N = 50
 
     # Initialize DataFrame to store results
     data = DataFrame(;
@@ -133,13 +137,12 @@ function main()
     end
 
     # Save data
-    short_hash = get_git_commit_hash(; abbrev=true)
     data_dir = joinpath(@__DIR__, "data")
     mkpath(data_dir)
     jldsave(
         joinpath(data_dir, "benchmark_data_$(short_hash).jld2");
         df=data,
-        commit_hash=get_git_commit_hash(),
+        commit_hash=full_hash,
     )
 
     return data, short_hash
