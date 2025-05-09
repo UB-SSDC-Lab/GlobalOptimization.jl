@@ -262,7 +262,7 @@ function main()
     algs = algorithm_set()
 
     # Number of trials per case
-    N = 500
+    N = 50
 
     # Initialize DataFrame to store results
     data = DataFrame(;
