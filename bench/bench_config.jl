@@ -38,9 +38,38 @@ function get_problem_sets()
             ("Ackley", 2, 25, 400),
             ("Griewank", 2, 25, 400),
         ],
-        "test" => [("Rosenbrock", 30, 50, 4000)],
+        "highpopsize" => [
+            ("Schwefel 2.22", 5, 50, 100),
+            ("Schwefel 2.22", 10, 100, 100),
+            ("Schwefel 2.22", 30, 300, 100),
+            ("Schwefel 2.21", 5, 50, 100),
+            ("Schwefel 2.21", 10, 100, 100),
+            ("Schwefel 2.21", 30, 300, 100),
+            ("Schwefel 1.2", 5, 50, 100),
+            ("Schwefel 1.2", 10, 250, 200),
+            ("Schwefel 1.2", 30, 250, 800),
+            ("Schwefel 1.2", 50, 250, 1200),
+            ("Rosenbrock", 5, 50, 200),
+            ("Rosenbrock", 10, 250, 200),
+            ("Rosenbrock", 30, 250, 800),
+            ("Rosenbrock", 50, 250, 1200),
+            ("Rastrigin", 50, 250, 2000),
+            ("Rastrigin", 100, 500, 1600),
+            ("Ackley", 50, 250, 2000),
+            ("Ackley", 100, 500, 1600),
+            ("Griewank", 50, 250, 2000),
+            ("Griewank", 100, 500, 1600),
+        ]
     )
-    ProblemSets["all"] = vcat(ProblemSets["easy"], ProblemSets["harder"])
+    ProblemSets["all"] = vcat(
+        ProblemSets["easy"],
+        ProblemSets["harder"],
+        ProblemSets["highpopsize"],
+    )
+    ProblemSets["lowpopsize"] = vcat(
+        ProblemSets["easy"],
+        ProblemSets["harder"],
+    )
     return ProblemSets
 end
 
