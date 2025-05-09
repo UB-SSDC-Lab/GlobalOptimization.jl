@@ -41,6 +41,7 @@ function main(hash)
             :BestFitnessRank => num_rank_1s => :NumRank1ByBestFitness,
         )
 
+
     CSV.write(
         joinpath(@__DIR__, "data", "benchmark_summary_$(hash).csv"),
         alg_summary_data,

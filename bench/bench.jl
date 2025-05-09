@@ -1,4 +1,4 @@
-
+using ArgParse
 using GlobalOptimization
 using Statistics
 using Distributions
@@ -9,14 +9,34 @@ import BlackBoxOptim as BBO
 
 # Include benchmarking utility functions
 include(joinpath(@__DIR__, "src", "utils.jl"))
-include(joinpath(@__DIR__, "src", "alg_constructers.jl"))
+include(joinpath(@__DIR__, "src", "alg_constructors.jl"))
 
 # Include benchmark problem set and algorithm set
 include(joinpath(@__DIR__, "bench_config.jl"))
 
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table! s begin
+        "--problem-set", "-p"
+            help = "The problem set to run. Default is all problems."
+            arg_type = String
+            default = "all"
+        "--num-trials", "-n"
+            help = "The number of trials to run for each problem and algorithm. Default is 50."
+            arg_type = Int
+            default = 50
+    end
+
+    return parse_args(s)
+end
+
 function main()
+    # Parse command line arguments
+    parsed_args = parse_commandline()
+
     # Get problems and algorithms
-    prob_set = get_problem_sets()["all"]
+    prob_set = get_problem_sets()[parsed_args["problem-set"]]
     algs = get_algorithm_sets()["all"]
 
     # Get commit hash
@@ -24,7 +44,7 @@ function main()
     full_hash = get_git_commit_hash()
 
     # Number of trials per case
-    N = 50
+    N = parsed_args["num-trials"]
 
     # Initialize DataFrame to store results
     data = DataFrame(;
@@ -138,16 +158,19 @@ function main()
 
     # Save data
     data_dir = joinpath(@__DIR__, "data")
+    file_name = if parsed_args["problem-set"] == "all"
+        "benchmark_data_$(short_hash).jld2"
+    else
+        "benchmark_data_$(parsed_args["problem-set"])_$(short_hash).jld2"
+    end
     mkpath(data_dir)
     jldsave(
-        joinpath(data_dir, "benchmark_data_$(short_hash).jld2");
+        joinpath(data_dir, file_name);
         df=data,
         commit_hash=full_hash,
     )
 
     return data, short_hash
 end
-
-
 
 data, shash = main()
