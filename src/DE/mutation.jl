@@ -542,7 +542,6 @@ This is an implementation of the unified mutation strategy proposed by Ji Qiang 
 Chad Mitchell in "A Unified Differential Evolution Algorithm for Global Optimization".
 """
 function mutate!(population::DEPopulation, F::MP) where {MP<:AbstractMutationParameters}
-
     @unpack current_generation, mutants = population
     N = length(current_generation)
 

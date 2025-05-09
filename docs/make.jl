@@ -1,4 +1,5 @@
-using Revise; Revise.revise()
+using Revise;
+Revise.revise()
 using GlobalOptimization
 using Documenter
 

@@ -1,4 +1,4 @@
-import LibGit2
+using LibGit2: LibGit2
 
 # ==== Base Test Problems ====
 
@@ -6,30 +6,30 @@ sphere(x) = sum(abs2, x)
 
 function rastrigin(x)
     val = 10.0 * length(x)
-    return val + sum(abs2,x) - 10.0*sum(xx->cos(2.0 * pi * xx), x)
+    return val + sum(abs2, x) - 10.0*sum(xx->cos(2.0 * pi * xx), x)
 end
 
-function ackley(x::AbstractVector{T}) where T
+function ackley(x::AbstractVector{T}) where {T}
     d_inv = 1.0 / length(x)
-    t1 = -20.0*exp(-0.2*sqrt(d_inv*sum(abs2,x)))
-    t2 = -exp(d_inv*sum(xx->cos(2.0*pi*xx), x)) 
+    t1 = -20.0*exp(-0.2*sqrt(d_inv*sum(abs2, x)))
+    t2 = -exp(d_inv*sum(xx->cos(2.0*pi*xx), x))
     return t1 + t2 + 20.0 + 2.718281828459045
 end
 
 function rosenbrock(x)
     val = zero(eltype(x))
-    @inbounds for i in 1:(length(x)-1)
+    @inbounds for i in 1:(length(x) - 1)
         xi = x[i]
-        t1 = x[i+1] - xi*xi
+        t1 = x[i + 1] - xi*xi
         t2 = xi - 1.0
-        val += 100.0 * t1*t1 + t2*t2
+        val += 100.0 * t1 * t1 + t2*t2
     end
     return val
 end
 
 function griewank(x)
     sum_term = sum(abs2, x) / 4000.0
-    prod_term = one(eltype(x)) 
+    prod_term = one(eltype(x))
     @inbounds for i in eachindex(x)
         prod_term *= cos(x[i] / sqrt(i))
     end
@@ -51,7 +51,7 @@ schwefel2_21(x) = maximum(abs, x)
 schwefel2_22(x) = sum(abs, x) + prod(abs, x)
 
 # ===== Test Problem Set =====
-struct TestProblem{F <: Function}
+struct TestProblem{F<:Function}
     name::String
     fun::F
     lb_per_dim::Float64
@@ -59,7 +59,7 @@ struct TestProblem{F <: Function}
     min::Float64
 end
 
-base_test_problems = Dict{String, TestProblem}(
+base_test_problems = Dict{String,TestProblem}(
     "Sphere" => TestProblem("Sphere", sphere, -100.0, 100.0, 0.0),
     "Rastrigin" => TestProblem("Rastrigin", rastrigin, -5.12, 5.12, 0.0),
     "Ackley" => TestProblem("Ackley", ackley, -32.768, 32.768, 0.0),
@@ -71,7 +71,7 @@ base_test_problems = Dict{String, TestProblem}(
 )
 
 # ==== Git Utility ===
-function get_git_commit_hash(; abbrev::Bool = false)
+function get_git_commit_hash(; abbrev::Bool=false)
     repo = LibGit2.GitRepoExt(joinpath(@__DIR__, ".."))
 
     suffix = ""
