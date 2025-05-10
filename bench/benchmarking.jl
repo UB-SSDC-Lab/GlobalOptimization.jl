@@ -266,7 +266,7 @@ function main()
     full_hash = get_git_commit_hash()
 
     # Number of trials per case
-    N = 50
+    N = 100
 
     # Initialize DataFrame to store results
     data = DataFrame(;
