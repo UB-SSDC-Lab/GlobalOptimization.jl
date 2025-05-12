@@ -5,6 +5,7 @@ Options for the Differential Evolution (DE) algorithms.
 
 # Fields:
 - `general<:GeneralOptions`: The general options.
+- `pop_init_method<:AbstractPopulationInitialization`: The population initialization method.
 - `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
 - `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
 - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
@@ -17,11 +18,15 @@ struct DEOptions{
     MP<:AbstractMutationParameters,
     CP<:AbstractCrossoverParameters,
     ISS<:Union{Nothing,ContinuousRectangularSearchSpace},
+    PI<:AbstractPopulationInitialization,
     GO<:GeneralOptions,
 } <: AbstractAlgorithmSpecificOptions
 
     # The general options
     general::GO
+
+    # The Population initialization method
+    pop_init_method::PI
 
     # ===== DE specific options
     # Mutation strategy parameters
@@ -48,6 +53,7 @@ struct DEOptions{
 
     # Arguments
     - `general<:GeneralOptions`: The general options.
+    - `pim<:AbstractPopulationInitialization`: The population initialization method.
     - `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
     - `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
     - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
@@ -58,6 +64,7 @@ struct DEOptions{
     """
     function DEOptions(
         general::GO,
+        pim::PI,
         mutation::MP,
         crossover::CP,
         initial_space::ISS,
@@ -65,9 +72,10 @@ struct DEOptions{
         function_tolerance::Float64,
         max_stall_time::Float64,
         max_stall_iterations::Int,
-    ) where {MP<:AbstractMutationParameters,CP<:AbstractCrossoverParameters,GO,ISS}
-        return new{MP,CP,ISS,GO}(
+    ) where {MP<:AbstractMutationParameters,CP<:AbstractCrossoverParameters,GO,PI,ISS}
+        return new{MP,CP,ISS,PI,GO}(
             general,
+            pim,
             mutation,
             crossover,
             initial_space,
@@ -103,11 +111,12 @@ struct DE{
     T<:AbstractFloat,
     E<:BatchEvaluator,
     IBSS,
+    PI<:AbstractPopulationInitialization,
     GO<:GeneralOptions,
 } <: AbstractOptimizer
 
     # The DE algorithm options
-    options::DEOptions{MP,CP,IBSS,GO}
+    options::DEOptions{MP,CP,IBSS,PI,GO}
 
     # The DE evaluator
     evaluator::E
@@ -130,6 +139,7 @@ employ a `SerialBatchEvaluator` to evaluate the objective function each iteratio
 
 # Keyword Arguments
 - `num_candidates::Integer=100`: The number of candidates in the population.
+- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
@@ -146,6 +156,7 @@ employ a `SerialBatchEvaluator` to evaluate the objective function each iteratio
 function SerialDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
@@ -170,6 +181,7 @@ function SerialDE(
         prob,
         evaluator,
         num_candidates,
+        population_init_method,
         mutation_params,
         crossover_params,
         initial_bounds,
@@ -196,6 +208,7 @@ employ a `ThreadedBatchEvaluator` to evaluate the objective function each iterat
 
 # Keyword Arguments
 - `num_candidates::Integer=100`: The number of candidates in the population.
+- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
@@ -212,6 +225,7 @@ employ a `ThreadedBatchEvaluator` to evaluate the objective function each iterat
 function ThreadedDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
@@ -238,6 +252,7 @@ function ThreadedDE(
         prob,
         evaluator,
         num_candidates,
+        population_init_method,
         mutation_params,
         crossover_params,
         initial_bounds,
@@ -264,6 +279,7 @@ employ a `PolyesterBatchEvaluator` to evaluate the objective function each itera
 
 # Keyword Arguments
 - `num_candidates::Integer=100`: The number of candidates in the population.
+- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
@@ -280,6 +296,7 @@ employ a `PolyesterBatchEvaluator` to evaluate the objective function each itera
 function PolyesterDE(
     prob::AbstractProblem{has_penalty,SS};
     num_candidates::Integer=100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
@@ -304,6 +321,7 @@ function PolyesterDE(
         prob,
         evaluator,
         num_candidates,
+        population_init_method,
         mutation_params,
         crossover_params,
         initial_bounds,
@@ -323,6 +341,7 @@ function BuildDE(
     prob::AbstractProblem{has_penalty,SS},
     evaluator::BatchEvaluator,
     num_candidates::Integer,
+    population_init_method::PI,
     mutation_params::MP,
     crossover_params::CP,
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace},
@@ -336,6 +355,7 @@ function BuildDE(
     display::Bool,
     display_interval::Integer,
 ) where {
+    PI<:AbstractPopulationInitialization,
     MP<:AbstractMutationParameters,
     CP<:AbstractCrossoverParameters,
     T<:AbstractFloat,
@@ -351,6 +371,7 @@ function BuildDE(
             max_time,
             min_cost,
         ),
+        population_init_method,
         mutation_params,
         crossover_params,
         intersection(search_space(prob), initial_bounds),
@@ -377,6 +398,7 @@ end
 function initialize!(opt::DE)
     # Unpack DE
     @unpack options, evaluator, population = opt
+    @unpack pop_init_method = options
 
     # Initialize mutation and crossover parameters
     N = length(population)
@@ -384,7 +406,7 @@ function initialize!(opt::DE)
     initialize!(options.crossover_params, num_dims(evaluator.prob), N)
 
     # Initialize population
-    initialize_uniform!(population, options.initial_space)
+    initialize!(population, pop_init_method, options.initial_space)
 
     # Handle fitness
     initialize_fitness!(population, evaluator)

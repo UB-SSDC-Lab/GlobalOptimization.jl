@@ -62,25 +62,18 @@ end
 
 Base.length(population::DEPopulation) = length(population.current_generation)
 
-function initialize_uniform!(
-    population::DEPopulation{T}, search_space::ContinuousRectangularSearchSpace{T}
+function initialize!(
+    population::DEPopulation{T},
+    pop_init_method::AbstractPopulationInitialization,
+    search_space::ContinuousRectangularSearchSpace{T},
 ) where {T}
     # Unpack population
     candidates = population.current_generation.candidates
+    @unpack candidates = population.current_generation
+    @unpack dim_min, dim_max = search_space
 
-    # Initialize each candidate
-    @inbounds for i in eachindex(candidates)
-        candidate = candidates[i]
+    initialize_population_vector!(candidates, dim_min, dim_max, pop_init_method)
 
-        # Iterate over dimensions
-        for j in eachindex(candidate)
-            dmin = dim_min(search_space, j)
-            dΔ = dim_delta(search_space, j)
-
-            # Set candidate
-            candidate[j] = dmin + dΔ * rand(T)
-        end
-    end
     return nothing
 end
 

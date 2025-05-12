@@ -5,10 +5,15 @@
 Options for the PSO algorithm.
 """
 struct PSOOptions{
-    ISS<:Union{Nothing,ContinuousRectangularSearchSpace},GO<:GeneralOptions
+    ISS<:Union{Nothing,ContinuousRectangularSearchSpace},
+    PI<:AbstractPopulationInitialization,
+    GO<:GeneralOptions
 } <: AbstractAlgorithmSpecificOptions
     # The general options
     general::GO
+
+    # Population initialization method
+    pop_init_method::PI
 
     # ===== PSO specific options
     # Defines the search space that the initial particles are drawn from
@@ -32,6 +37,7 @@ struct PSOOptions{
     function PSOOptions(
         general::GO,
         num_particles,
+        pim::PI,
         initial_space::ISS,
         max_iterations,
         function_tolerence,
@@ -41,12 +47,13 @@ struct PSOOptions{
         minimum_neighborhood_fraction,
         self_adjustment_weight,
         social_adjustment_weight,
-    ) where {GO,ISS}
+    ) where {GO,PI,ISS}
         minimum_neighborhood_size = max(
             2, floor(Int, num_particles * minimum_neighborhood_fraction)
         )
-        return new{ISS,GO}(
+        return new{ISS,PI,GO}(
             general,
+            pim,
             initial_space,
             max_iterations,
             function_tolerence,
@@ -80,9 +87,9 @@ end
 
 Particle Swarm Optimization (PSO) algorithm.
 """
-struct PSO{T<:AbstractFloat,E<:BatchEvaluator{T},IBSS,GO} <: AbstractOptimizer
+struct PSO{T<:AbstractFloat,E<:BatchEvaluator{T},IBSS,PI,GO} <: AbstractOptimizer
     # The PSO algorithm options
-    options::PSOOptions{IBSS,GO}
+    options::PSOOptions{IBSS,PI,GO}
 
     # The PSO evaluator
     evaluator::E
@@ -104,6 +111,7 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
+- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
@@ -124,6 +132,7 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 function SerialPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int=100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Int=1000,
     function_tolerence::AbstractFloat=1e-6,
@@ -149,6 +158,7 @@ function SerialPSO(
             min_cost,
         ),
         num_particles,
+        population_init_method,
         intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerence,
@@ -179,6 +189,7 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
+- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
@@ -199,6 +210,7 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 function ThreadedPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int = 100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
     max_iterations::Int = 1000,
     function_tolerence::AbstractFloat = 1e-6,
@@ -226,6 +238,7 @@ function ThreadedPSO(
             min_cost,
         ),
         num_particles,
+        population_init_method,
         intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerence,
@@ -256,6 +269,7 @@ Constructs a PSO algorithm with the given options that will employ a `PolyesterB
 
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
+- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
 - `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
@@ -276,6 +290,7 @@ Constructs a PSO algorithm with the given options that will employ a `PolyesterB
 function PolyesterPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int=100,
+    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Int=1000,
     function_tolerence::AbstractFloat=1e-6,
@@ -301,6 +316,7 @@ function PolyesterPSO(
             min_cost,
         ),
         num_particles,
+        population_init_method,
         intersection(search_space(prob), initial_bounds),
         max_iterations,
         function_tolerence,
@@ -360,7 +376,7 @@ function initialize!(opt::PSO)
     @unpack options, evaluator, swarm = opt
 
     # Initialize swarm
-    initialize_uniform!(swarm, options.initial_space)
+    initialize!(swarm, options.pop_init_method, options.initial_space)
 
     # Handel swarm fitness
     initialize_fitness!(swarm, evaluator)
