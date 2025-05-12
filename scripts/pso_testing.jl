@@ -39,7 +39,7 @@ function rastrigin(x; A=10)
 end
 
 # Setup Problem
-N = 100
+N = 10
 ss = ContinuousRectangularSearchSpace([-5.0 for i in 1:N], [5.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 
@@ -48,18 +48,18 @@ spso = SerialPSO(prob; max_time = 20.0)
 # tpso = ThreadedPSO(prob; max_time = 20.0)
 ppso = PolyesterPSO(prob; max_time = 20.0)
 
-# #res = optimize!(spso)
+res = optimize!(spso)
 # res = optimize!(spso); display(res)
 # res = optimize!(tpso); display(res)
 # res = optimize!(ppso); display(res)
 
 # ======== BENCHMARKING
-sres = @benchmark optimize!(_pso) setup = (_pso = SerialPSO(prob))
-tres = @benchmark optimize!(_pso) setup = (_pso = ThreadedPSO(prob))
-pres = @benchmark optimize!(_pso) setup = (_pso = PolyesterPSO(prob))
-display(sres)
-display(tres)
-display(pres)
+#sres = @benchmark optimize!(_pso) setup = (_pso = SerialPSO(prob))
+#tres = @benchmark optimize!(_pso) setup = (_pso = ThreadedPSO(prob))
+#pres = @benchmark optimize!(_pso) setup = (_pso = PolyesterPSO(prob))
+#display(sres)
+#display(tres)
+#display(pres)
 # GlobalOptimization.initialize!(spso)
 # GlobalOptimization.update_velocity!(spso.swarm, spso.cache, 10, 0.5, 0.49, 0.49)
 # GlobalOptimization.step!(spso.swarm)
@@ -77,5 +77,5 @@ display(pres)
 
 # ======== TYPES
 #optimize!(spso)
-@report_opt GlobalOptimization.optimize!(spso)
+#@report_opt GlobalOptimization.optimize!(spso)
 #report_package(GlobalOptimization)
