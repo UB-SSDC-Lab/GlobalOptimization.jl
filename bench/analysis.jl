@@ -12,7 +12,7 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "--hash", "-h"
+        "--hash"
         help = "The abbreviated commit hash of the benchmark data to load."
         required = true
         arg_type = String
@@ -117,8 +117,9 @@ function main()
         )
 
 
+    file = joinpath(@__DIR__, "data", "benchmark_summary_$(parsed_args["hash"]).csv")
     CSV.write(
-        joinpath(@__DIR__, "data", "benchmark_summary_$(hash).csv"),
+        file,
         alg_summary_data,
     )
 end

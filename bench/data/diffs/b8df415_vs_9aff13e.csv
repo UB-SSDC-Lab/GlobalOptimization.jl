@@ -1,0 +1,378 @@
+ProblemName,NumDims,PopSize,AlgorithmName,PValue,Change
+Rosenbrock,30,50,pso,0.035033379448227014,+
+Sphere,30,20,default_adaptive_de_rand_1_bin,0.04404062425026521,+
+Ackley,50,50,default_adaptive_de_rand_1_bin,0.0009448326621325712,+
+Schwefel 2.22,5,20,default_adaptive_de_best_1_bin,0.03601374893262602,+
+Schwefel 2.21,10,20,default_adaptive_de_current_to_best_1_bin,0.03744258389084348,-
+Schwefel 1.2,30,50,default_adaptive_de_current_to_rand_1_bin,0.039096333037662384,+
+Schwefel 2.21,10,20,default_adaptive_de_rand_to_best_1_bin,0.04624280822392405,+
+Sphere,10,20,default_adaptive_de_unified_bin,0.000734421687294371,-
+Sphere,30,20,default_adaptive_de_unified_bin,0.043165597170339014,+
+Schwefel 2.21,10,20,default_adaptive_de_unified_bin,0.013542343561658352,-
+Sphere,5,20,uniform_adaptive_de_current_to_rand_1_bin,0.03769967539249389,+
+Schwefel 2.21,10,20,uniform_adaptive_de_current_to_rand_1_bin,0.04221062148993641,-
+Schwefel 1.2,10,50,uniform_adaptive_de_current_to_rand_1_bin,0.011200502498852167,-
+Rosenbrock,5,20,uniform_adaptive_de_current_to_rand_1_bin,0.026803038515753098,+
+Ackley,50,50,uniform_adaptive_de_current_to_rand_1_bin,0.00519807499754941,-
+Schwefel 2.22,30,20,uniform_adaptive_de_rand_to_best_1_bin,0.03839260589835454,+
+Rastrigin,50,50,uniform_adaptive_de_rand_to_best_1_bin,0.02511853975493659,+
+Ackley,50,50,uniform_adaptive_de_rand_to_best_1_bin,0.028968851702604746,+
+Schwefel 2.22,10,20,uniform_adaptive_de_unified_bin,0.039452285433155786,+
+Sphere,5,20,rl_default_adaptive_de_best_1_bin,0.002850137110341665,+
+Sphere,30,20,rl_default_adaptive_de_best_1_bin,0.000945049094253883,-
+Schwefel 2.22,5,20,rl_default_adaptive_de_best_1_bin,0.009402875750129044,+
+Schwefel 2.22,10,20,rl_default_adaptive_de_best_1_bin,0.004462763892593798,+
+Schwefel 2.22,30,20,rl_default_adaptive_de_best_1_bin,2.8387694926536186e-6,-
+Schwefel 1.2,10,50,rl_default_adaptive_de_best_1_bin,1.8922821771009251e-31,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_best_1_bin,2.685313570949293e-25,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_best_1_bin,0.001152454137810723,+
+Rastrigin,50,50,rl_default_adaptive_de_best_1_bin,3.953269839527978e-21,-
+Rastrigin,100,90,rl_default_adaptive_de_best_1_bin,1.2498070927196499e-29,-
+Ackley,50,50,rl_default_adaptive_de_best_1_bin,5.81636891726457e-29,-
+Ackley,100,90,rl_default_adaptive_de_best_1_bin,1.8922728217802835e-31,-
+Griewank,50,50,rl_default_adaptive_de_best_1_bin,1.0847333088528284e-9,-
+Griewank,100,90,rl_default_adaptive_de_best_1_bin,1.041258362225714e-18,-
+Sphere,5,20,rl_default_adaptive_de_current_to_best_1_bin,0.012160701168994294,+
+Sphere,30,20,rl_default_adaptive_de_current_to_best_1_bin,6.832703426457051e-10,-
+Schwefel 2.22,5,20,rl_default_adaptive_de_current_to_best_1_bin,0.021753620899821562,+
+Schwefel 2.22,30,20,rl_default_adaptive_de_current_to_best_1_bin,8.271091725289041e-5,-
+Schwefel 2.21,5,20,rl_default_adaptive_de_current_to_best_1_bin,0.03761381185378537,+
+Schwefel 2.21,10,20,rl_default_adaptive_de_current_to_best_1_bin,0.002079359247561995,-
+Schwefel 1.2,5,20,rl_default_adaptive_de_current_to_best_1_bin,5.323703863635148e-5,+
+Schwefel 1.2,10,50,rl_default_adaptive_de_current_to_best_1_bin,1.9342454887381263e-31,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_current_to_best_1_bin,6.176215281552963e-24,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_current_to_best_1_bin,0.0016879901613988408,+
+Rastrigin,50,50,rl_default_adaptive_de_current_to_best_1_bin,9.841517567365646e-12,-
+Rastrigin,100,90,rl_default_adaptive_de_current_to_best_1_bin,1.0601603530649707e-27,-
+Ackley,50,50,rl_default_adaptive_de_current_to_best_1_bin,1.8868088566437752e-24,-
+Ackley,100,90,rl_default_adaptive_de_current_to_best_1_bin,1.8922774994350043e-31,-
+Griewank,50,50,rl_default_adaptive_de_current_to_best_1_bin,1.219957194914287e-9,-
+Griewank,100,90,rl_default_adaptive_de_current_to_best_1_bin,2.1179498963300483e-10,-
+Schwefel 2.22,10,20,rl_default_adaptive_de_current_to_rand_1_bin,0.04278143806487642,+
+Schwefel 1.2,10,50,rl_default_adaptive_de_rand_to_best_1_bin,4.6662834300275155e-5,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_rand_to_best_1_bin,0.0004483342598442406,-
+Schwefel 1.2,50,50,rl_default_adaptive_de_rand_to_best_1_bin,3.536759147532249e-13,-
+Rastrigin,50,50,rl_default_adaptive_de_rand_to_best_1_bin,6.367147366272386e-11,-
+Rastrigin,100,90,rl_default_adaptive_de_rand_to_best_1_bin,6.003599449960585e-17,-
+Ackley,50,50,rl_default_adaptive_de_rand_to_best_1_bin,6.136900430796031e-6,-
+Ackley,100,90,rl_default_adaptive_de_rand_to_best_1_bin,2.8922515417253363e-12,-
+Griewank,50,50,rl_default_adaptive_de_rand_to_best_1_bin,3.708264948793451e-5,-
+Griewank,100,90,rl_default_adaptive_de_rand_to_best_1_bin,1.4933608384350964e-10,-
+Schwefel 1.2,30,50,rl_default_adaptive_de_unified_bin,1.3258066294118562e-8,-
+Schwefel 1.2,50,50,rl_default_adaptive_de_unified_bin,2.585536645921102e-14,-
+Rosenbrock,10,50,rl_default_adaptive_de_unified_bin,0.0009900902023623345,+
+Rosenbrock,30,50,rl_default_adaptive_de_unified_bin,0.0007098935643523706,-
+Rosenbrock,50,40,rl_default_adaptive_de_unified_bin,0.00010919081313979508,-
+Rastrigin,100,90,rl_default_adaptive_de_unified_bin,1.6798623735579577e-6,-
+Ackley,50,50,rl_default_adaptive_de_unified_bin,1.640493216775723e-9,-
+Ackley,100,90,rl_default_adaptive_de_unified_bin,7.862934844782749e-5,-
+Griewank,50,50,rl_default_adaptive_de_unified_bin,0.005436144038054985,-
+Griewank,100,90,rl_default_adaptive_de_unified_bin,0.00010753101821865143,-
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_rand_1_bin,0.00024128715466738144,+
+Rosenbrock,30,50,rl_uniform_adaptive_de_rand_1_bin,0.0373572189704484,+
+Rosenbrock,50,40,rl_uniform_adaptive_de_rand_1_bin,0.03089881961563033,+
+Sphere,5,20,rl_uniform_adaptive_de_best_1_bin,1.1913315132101395e-11,-
+Sphere,10,20,rl_uniform_adaptive_de_best_1_bin,5.506358470797153e-18,-
+Sphere,30,20,rl_uniform_adaptive_de_best_1_bin,1.7192704893054318e-15,-
+Schwefel 2.22,5,20,rl_uniform_adaptive_de_best_1_bin,6.550767062465114e-12,-
+Schwefel 2.22,10,20,rl_uniform_adaptive_de_best_1_bin,7.967742129345704e-12,-
+Schwefel 2.22,30,20,rl_uniform_adaptive_de_best_1_bin,1.8568511189367673e-11,-
+Schwefel 1.2,5,20,rl_uniform_adaptive_de_best_1_bin,3.5752422184716304e-5,-
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_best_1_bin,4.2193203588932486e-23,-
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_best_1_bin,1.8922821771009251e-31,-
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_best_1_bin,1.8922821771009251e-31,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_best_1_bin,5.0795018956202495e-17,-
+Rosenbrock,30,50,rl_uniform_adaptive_de_best_1_bin,8.903816578766191e-31,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_best_1_bin,1.8922821771009251e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_best_1_bin,2.949174924675525e-28,-
+Rastrigin,100,90,rl_uniform_adaptive_de_best_1_bin,3.235436056396727e-31,-
+Ackley,50,50,rl_uniform_adaptive_de_best_1_bin,2.9323396301063485e-31,-
+Ackley,100,90,rl_uniform_adaptive_de_best_1_bin,1.8922821771009251e-31,-
+Griewank,50,50,rl_uniform_adaptive_de_best_1_bin,6.470767665480437e-28,-
+Griewank,100,90,rl_uniform_adaptive_de_best_1_bin,2.11153492468652e-31,-
+Sphere,30,20,rl_uniform_adaptive_de_current_to_best_1_bin,0.0003757819692358946,-
+Schwefel 2.22,30,20,rl_uniform_adaptive_de_current_to_best_1_bin,0.012096619845962355,-
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_current_to_best_1_bin,5.320054274982197e-29,-
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_current_to_best_1_bin,9.09903251837226e-31,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_current_to_best_1_bin,0.003158348657814825,-
+Rosenbrock,30,50,rl_uniform_adaptive_de_current_to_best_1_bin,3.005352268771323e-17,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_current_to_best_1_bin,2.1041956268466513e-18,-
+Rastrigin,50,50,rl_uniform_adaptive_de_current_to_best_1_bin,2.9647806139323213e-22,-
+Rastrigin,100,90,rl_uniform_adaptive_de_current_to_best_1_bin,7.415406087048898e-30,-
+Ackley,50,50,rl_uniform_adaptive_de_current_to_best_1_bin,2.3715019732068985e-28,-
+Ackley,100,90,rl_uniform_adaptive_de_current_to_best_1_bin,1.955572295417225e-31,-
+Griewank,50,50,rl_uniform_adaptive_de_current_to_best_1_bin,8.195319341965407e-6,-
+Griewank,100,90,rl_uniform_adaptive_de_current_to_best_1_bin,1.261549482492915e-17,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_current_to_rand_1_bin,0.01715770153943693,-
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_rand_to_best_1_bin,1.6566204911914685e-13,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_rand_to_best_1_bin,5.963923306642472e-10,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_rand_to_best_1_bin,3.0269456931107044e-7,+
+Rosenbrock,5,20,rl_uniform_adaptive_de_rand_to_best_1_bin,0.04811289431339876,+
+Rosenbrock,10,50,rl_uniform_adaptive_de_rand_to_best_1_bin,1.8320034299673114e-25,+
+Rosenbrock,30,50,rl_uniform_adaptive_de_rand_to_best_1_bin,3.163906686822621e-27,+
+Rosenbrock,50,40,rl_uniform_adaptive_de_rand_to_best_1_bin,1.684401417278972e-8,+
+Rastrigin,50,50,rl_uniform_adaptive_de_rand_to_best_1_bin,7.610427002846964e-12,-
+Rastrigin,100,90,rl_uniform_adaptive_de_rand_to_best_1_bin,1.4398127027392913e-13,-
+Ackley,100,90,rl_uniform_adaptive_de_rand_to_best_1_bin,9.798360347862836e-26,+
+Sphere,10,20,rl_uniform_adaptive_de_unified_bin,0.03676429056297066,+
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_unified_bin,2.432041277491103e-30,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_unified_bin,3.8530246070547485e-31,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_unified_bin,2.2623488892307172e-26,+
+Rosenbrock,10,50,rl_uniform_adaptive_de_unified_bin,3.0472630085466004e-22,+
+Rosenbrock,30,50,rl_uniform_adaptive_de_unified_bin,9.742094121333306e-10,+
+Rastrigin,100,90,rl_uniform_adaptive_de_unified_bin,0.03617939726863896,-
+Ackley,50,50,rl_uniform_adaptive_de_unified_bin,2.270066368797511e-14,-
+Ackley,100,90,rl_uniform_adaptive_de_unified_bin,2.4735244390335225e-31,-
+Griewank,100,90,rl_uniform_adaptive_de_unified_bin,8.847760933399002e-11,-
+Schwefel 1.2,50,50,default_adaptive_de_rand_1_covbin,1.8922821771009251e-31,-
+Rosenbrock,50,40,default_adaptive_de_rand_1_covbin,6.088359373420005e-31,-
+Rastrigin,50,50,default_adaptive_de_rand_1_covbin,1.0654628667684539e-29,-
+Rastrigin,100,90,default_adaptive_de_rand_1_covbin,6.091533047821678e-7,-
+Ackley,50,50,default_adaptive_de_rand_1_covbin,1.8901549982659754e-31,-
+Ackley,100,90,default_adaptive_de_rand_1_covbin,3.879308063864687e-23,-
+Griewank,50,50,default_adaptive_de_rand_1_covbin,1.8850918598958795e-31,-
+Griewank,100,90,default_adaptive_de_rand_1_covbin,0.0021588865964606665,-
+Schwefel 2.22,30,20,default_adaptive_de_best_1_covbin,0.007546445464183196,-
+Schwefel 1.2,50,50,default_adaptive_de_best_1_covbin,1.8922821771009251e-31,-
+Rosenbrock,50,40,default_adaptive_de_best_1_covbin,7.089014510207274e-31,-
+Rastrigin,50,50,default_adaptive_de_best_1_covbin,9.08132382538333e-30,-
+Rastrigin,100,90,default_adaptive_de_best_1_covbin,1.1128101047694418e-8,-
+Ackley,50,50,default_adaptive_de_best_1_covbin,3.0299972919556955e-31,-
+Ackley,100,90,default_adaptive_de_best_1_covbin,7.10539710937948e-30,-
+Griewank,50,50,default_adaptive_de_best_1_covbin,3.6073369365043076e-31,-
+Schwefel 2.21,10,20,default_adaptive_de_current_to_best_1_covbin,0.035848747684636195,-
+Schwefel 1.2,50,50,default_adaptive_de_current_to_best_1_covbin,1.8922821771009251e-31,-
+Rosenbrock,50,40,default_adaptive_de_current_to_best_1_covbin,1.8922821771009251e-31,-
+Rastrigin,50,50,default_adaptive_de_current_to_best_1_covbin,7.99055607714423e-30,-
+Rastrigin,100,90,default_adaptive_de_current_to_best_1_covbin,2.727541304176538e-7,-
+Ackley,50,50,default_adaptive_de_current_to_best_1_covbin,2.837675004346541e-31,-
+Ackley,100,90,default_adaptive_de_current_to_best_1_covbin,1.210566943893394e-29,-
+Griewank,50,50,default_adaptive_de_current_to_best_1_covbin,4.789146207737996e-31,-
+Griewank,100,90,default_adaptive_de_current_to_best_1_covbin,2.1041144349190846e-7,-
+Schwefel 2.21,10,20,default_adaptive_de_current_to_rand_1_covbin,0.043262091159724694,-
+Schwefel 1.2,50,50,default_adaptive_de_current_to_rand_1_covbin,1.913149610074266e-31,-
+Rosenbrock,50,40,default_adaptive_de_current_to_rand_1_covbin,1.7792599677549e-30,-
+Rastrigin,50,50,default_adaptive_de_current_to_rand_1_covbin,5.6166161047303185e-30,-
+Rastrigin,100,90,default_adaptive_de_current_to_rand_1_covbin,2.860000291227264e-10,-
+Ackley,50,50,default_adaptive_de_current_to_rand_1_covbin,1.880437035856537e-31,-
+Ackley,100,90,default_adaptive_de_current_to_rand_1_covbin,1.7742542550876034e-29,-
+Griewank,50,50,default_adaptive_de_current_to_rand_1_covbin,2.397358058948959e-31,-
+Schwefel 2.21,30,20,default_adaptive_de_rand_to_best_1_covbin,0.021540404166523443,+
+Schwefel 1.2,50,50,default_adaptive_de_rand_to_best_1_covbin,1.8922821771009251e-31,-
+Rosenbrock,50,40,default_adaptive_de_rand_to_best_1_covbin,2.088525043161897e-31,-
+Rastrigin,50,50,default_adaptive_de_rand_to_best_1_covbin,2.602241689816234e-26,-
+Rastrigin,100,90,default_adaptive_de_rand_to_best_1_covbin,0.00549896681571524,-
+Ackley,50,50,default_adaptive_de_rand_to_best_1_covbin,1.8922821771009251e-31,-
+Ackley,100,90,default_adaptive_de_rand_to_best_1_covbin,2.1713123468101827e-15,-
+Griewank,50,50,default_adaptive_de_rand_to_best_1_covbin,1.8922821771009251e-31,-
+Griewank,100,90,default_adaptive_de_rand_to_best_1_covbin,7.84578655074471e-6,-
+Schwefel 2.21,30,20,default_adaptive_de_unified_covbin,0.013366737138052679,+
+Schwefel 1.2,50,50,default_adaptive_de_unified_covbin,1.8922821771009251e-31,-
+Rosenbrock,10,50,default_adaptive_de_unified_covbin,0.0407198604912235,+
+Rosenbrock,50,40,default_adaptive_de_unified_covbin,1.2519110519587395e-26,-
+Rastrigin,50,50,default_adaptive_de_unified_covbin,1.6282213871071895e-25,-
+Rastrigin,100,90,default_adaptive_de_unified_covbin,0.01187468576871907,-
+Ackley,50,50,default_adaptive_de_unified_covbin,2.6866845629089357e-31,-
+Ackley,100,90,default_adaptive_de_unified_covbin,3.065448654331878e-15,-
+Griewank,50,50,default_adaptive_de_unified_covbin,1.8922821771009251e-31,-
+Schwefel 1.2,50,50,uniform_adaptive_de_rand_1_covbin,2.134807003686041e-31,-
+Rosenbrock,10,50,uniform_adaptive_de_rand_1_covbin,0.04685925140922216,-
+Rosenbrock,50,40,uniform_adaptive_de_rand_1_covbin,2.2798506518647146e-31,-
+Rastrigin,50,50,uniform_adaptive_de_rand_1_covbin,2.3303056996648625e-31,-
+Rastrigin,100,90,uniform_adaptive_de_rand_1_covbin,3.7833676067062236e-11,-
+Ackley,50,50,uniform_adaptive_de_rand_1_covbin,1.797265240506441e-31,-
+Ackley,100,90,uniform_adaptive_de_rand_1_covbin,1.1118029549310517e-29,-
+Griewank,50,50,uniform_adaptive_de_rand_1_covbin,3.088207567379768e-31,-
+Griewank,100,90,uniform_adaptive_de_rand_1_covbin,1.0388236113296152e-17,-
+Schwefel 1.2,50,50,uniform_adaptive_de_best_1_covbin,2.6866845629089357e-31,-
+Rosenbrock,10,50,uniform_adaptive_de_best_1_covbin,0.031940945674373805,-
+Rosenbrock,50,40,uniform_adaptive_de_best_1_covbin,2.0209635100404135e-31,-
+Rastrigin,50,50,uniform_adaptive_de_best_1_covbin,1.4835756093971338e-16,-
+Rastrigin,100,90,uniform_adaptive_de_best_1_covbin,1.1779488297410264e-12,-
+Ackley,50,50,uniform_adaptive_de_best_1_covbin,5.720380006707431e-7,-
+Ackley,100,90,uniform_adaptive_de_best_1_covbin,2.299366805788718e-19,-
+Griewank,50,50,uniform_adaptive_de_best_1_covbin,2.206085885882934e-31,-
+Schwefel 1.2,50,50,uniform_adaptive_de_current_to_best_1_covbin,1.8922821771009251e-31,-
+Rosenbrock,50,40,uniform_adaptive_de_current_to_best_1_covbin,1.913149610074266e-31,-
+Rastrigin,50,50,uniform_adaptive_de_current_to_best_1_covbin,7.566337723154528e-31,-
+Rastrigin,100,90,uniform_adaptive_de_current_to_best_1_covbin,5.141785866517073e-10,-
+Ackley,50,50,uniform_adaptive_de_current_to_best_1_covbin,4.383642320791994e-24,-
+Ackley,100,90,uniform_adaptive_de_current_to_best_1_covbin,1.796941228229147e-26,-
+Griewank,50,50,uniform_adaptive_de_current_to_best_1_covbin,3.1654698179043186e-31,-
+Griewank,100,90,uniform_adaptive_de_current_to_best_1_covbin,9.959483192203643e-19,-
+Schwefel 1.2,50,50,uniform_adaptive_de_current_to_rand_1_covbin,2.0916297433214307e-30,-
+Rosenbrock,50,40,uniform_adaptive_de_current_to_rand_1_covbin,2.997159881909497e-31,-
+Rastrigin,50,50,uniform_adaptive_de_current_to_rand_1_covbin,1.8922821771009251e-31,-
+Rastrigin,100,90,uniform_adaptive_de_current_to_rand_1_covbin,1.7983302286094938e-11,-
+Ackley,50,50,uniform_adaptive_de_current_to_rand_1_covbin,2.9970053353050326e-31,-
+Ackley,100,90,uniform_adaptive_de_current_to_rand_1_covbin,2.3616567994557286e-29,-
+Griewank,50,50,uniform_adaptive_de_current_to_rand_1_covbin,2.2261719547248285e-31,-
+Sphere,30,20,uniform_adaptive_de_rand_to_best_1_covbin,0.01411805796032641,-
+Schwefel 1.2,10,50,uniform_adaptive_de_rand_to_best_1_covbin,0.01874097819774165,-
+Schwefel 1.2,50,50,uniform_adaptive_de_rand_to_best_1_covbin,1.6824773207025594e-18,-
+Rosenbrock,5,20,uniform_adaptive_de_rand_to_best_1_covbin,0.04864350042052945,+
+Rosenbrock,50,40,uniform_adaptive_de_rand_to_best_1_covbin,1.9989287562481855e-31,-
+Rastrigin,50,50,uniform_adaptive_de_rand_to_best_1_covbin,1.8922821771009251e-31,-
+Rastrigin,100,90,uniform_adaptive_de_rand_to_best_1_covbin,1.4267974982458e-7,-
+Ackley,50,50,uniform_adaptive_de_rand_to_best_1_covbin,1.889664440653397e-31,-
+Ackley,100,90,uniform_adaptive_de_rand_to_best_1_covbin,3.163906686822621e-27,-
+Griewank,50,50,uniform_adaptive_de_rand_to_best_1_covbin,1.9296143919631394e-31,-
+Griewank,100,90,uniform_adaptive_de_rand_to_best_1_covbin,1.6810575396443479e-16,-
+Schwefel 1.2,50,50,uniform_adaptive_de_unified_covbin,6.385510269755467e-30,-
+Rosenbrock,50,40,uniform_adaptive_de_unified_covbin,4.344160983922841e-31,-
+Rastrigin,50,50,uniform_adaptive_de_unified_covbin,1.913149610074266e-31,-
+Rastrigin,100,90,uniform_adaptive_de_unified_covbin,2.879270083174181e-5,-
+Ackley,50,50,uniform_adaptive_de_unified_covbin,4.381341113346015e-31,-
+Ackley,100,90,uniform_adaptive_de_unified_covbin,6.184013951379735e-30,-
+Griewank,50,50,uniform_adaptive_de_unified_covbin,2.6688000983235872e-31,-
+Schwefel 1.2,50,50,rl_default_adaptive_de_rand_1_covbin,3.1085580216588964e-29,-
+Rosenbrock,50,40,rl_default_adaptive_de_rand_1_covbin,2.230447341406526e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_rand_1_covbin,1.8922774994350043e-31,-
+Rastrigin,100,90,rl_default_adaptive_de_rand_1_covbin,4.895474925511513e-6,-
+Ackley,50,50,rl_default_adaptive_de_rand_1_covbin,1.889664440653397e-31,-
+Ackley,100,90,rl_default_adaptive_de_rand_1_covbin,6.743083696974752e-28,-
+Griewank,50,50,rl_default_adaptive_de_rand_1_covbin,2.016894829680956e-31,-
+Griewank,100,90,rl_default_adaptive_de_rand_1_covbin,2.5595374313825402e-20,-
+Sphere,10,20,rl_default_adaptive_de_best_1_covbin,9.790535435260522e-6,+
+Schwefel 2.22,10,20,rl_default_adaptive_de_best_1_covbin,0.004970820019859159,+
+Schwefel 2.22,30,20,rl_default_adaptive_de_best_1_covbin,0.04821862475347727,-
+Schwefel 2.21,5,20,rl_default_adaptive_de_best_1_covbin,0.0037828941371578504,+
+Schwefel 1.2,5,20,rl_default_adaptive_de_best_1_covbin,3.357877328548236e-6,+
+Schwefel 1.2,10,50,rl_default_adaptive_de_best_1_covbin,1.8922821771009251e-31,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_best_1_covbin,4.439913461098656e-31,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_best_1_covbin,2.9799215727369796e-28,-
+Rosenbrock,50,40,rl_default_adaptive_de_best_1_covbin,2.6866845629089357e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_best_1_covbin,1.9342454887381263e-31,-
+Rastrigin,100,90,rl_default_adaptive_de_best_1_covbin,2.617571862225857e-12,-
+Ackley,50,50,rl_default_adaptive_de_best_1_covbin,1.8917489954917491e-31,-
+Ackley,100,90,rl_default_adaptive_de_best_1_covbin,4.8350249038877306e-30,-
+Griewank,50,50,rl_default_adaptive_de_best_1_covbin,1.8812787310222601e-31,-
+Griewank,100,90,rl_default_adaptive_de_best_1_covbin,1.3113701766232988e-6,-
+Sphere,5,20,rl_default_adaptive_de_current_to_best_1_covbin,0.01647386881602434,+
+Sphere,10,20,rl_default_adaptive_de_current_to_best_1_covbin,0.0026079869557785814,+
+Schwefel 2.22,5,20,rl_default_adaptive_de_current_to_best_1_covbin,8.665554012600755e-5,+
+Schwefel 2.22,10,20,rl_default_adaptive_de_current_to_best_1_covbin,0.0026079869557785814,+
+Schwefel 2.22,30,20,rl_default_adaptive_de_current_to_best_1_covbin,0.019168210953124994,-
+Schwefel 2.21,5,20,rl_default_adaptive_de_current_to_best_1_covbin,0.00947980677890003,+
+Schwefel 2.21,30,20,rl_default_adaptive_de_current_to_best_1_covbin,0.012064691557075406,-
+Schwefel 1.2,5,20,rl_default_adaptive_de_current_to_best_1_covbin,0.010475831495433989,+
+Schwefel 1.2,10,50,rl_default_adaptive_de_current_to_best_1_covbin,1.8922821771009251e-31,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_current_to_best_1_covbin,5.401622654570211e-31,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_current_to_best_1_covbin,2.4779272553420685e-27,-
+Rosenbrock,30,50,rl_default_adaptive_de_current_to_best_1_covbin,0.026963492908936425,+
+Rosenbrock,50,40,rl_default_adaptive_de_current_to_best_1_covbin,2.9645738819342507e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_current_to_best_1_covbin,1.24318265350496e-28,-
+Rastrigin,100,90,rl_default_adaptive_de_current_to_best_1_covbin,2.724229055316075e-12,-
+Ackley,50,50,rl_default_adaptive_de_current_to_best_1_covbin,3.3787726921311043e-31,-
+Ackley,100,90,rl_default_adaptive_de_current_to_best_1_covbin,5.324045432190641e-30,-
+Griewank,50,50,rl_default_adaptive_de_current_to_best_1_covbin,1.9526222164176038e-31,-
+Griewank,100,90,rl_default_adaptive_de_current_to_best_1_covbin,4.281726408574821e-28,-
+Sphere,5,20,rl_default_adaptive_de_current_to_rand_1_covbin,0.04374729936165561,+
+Schwefel 1.2,10,50,rl_default_adaptive_de_current_to_rand_1_covbin,0.026357207167177005,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_current_to_rand_1_covbin,1.219003166491254e-30,-
+Rosenbrock,10,50,rl_default_adaptive_de_current_to_rand_1_covbin,0.0230718930338002,+
+Rosenbrock,50,40,rl_default_adaptive_de_current_to_rand_1_covbin,2.6574511551538227e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_current_to_rand_1_covbin,1.5931907055270656e-26,-
+Rastrigin,100,90,rl_default_adaptive_de_current_to_rand_1_covbin,1.0134331565196634e-7,-
+Ackley,50,50,rl_default_adaptive_de_current_to_rand_1_covbin,3.270976684582427e-31,-
+Ackley,100,90,rl_default_adaptive_de_current_to_rand_1_covbin,2.543152154875168e-29,-
+Griewank,50,50,rl_default_adaptive_de_current_to_rand_1_covbin,1.8079747788544562e-31,-
+Sphere,30,20,rl_default_adaptive_de_rand_to_best_1_covbin,0.001093377198166772,-
+Schwefel 2.22,30,20,rl_default_adaptive_de_rand_to_best_1_covbin,0.013021551944501969,-
+Schwefel 1.2,10,50,rl_default_adaptive_de_rand_to_best_1_covbin,0.04230530768356367,+
+Schwefel 1.2,30,50,rl_default_adaptive_de_rand_to_best_1_covbin,0.0008693075676549383,-
+Schwefel 1.2,50,50,rl_default_adaptive_de_rand_to_best_1_covbin,3.8150712204494836e-21,-
+Rosenbrock,10,50,rl_default_adaptive_de_rand_to_best_1_covbin,0.0027224359366185584,+
+Rosenbrock,50,40,rl_default_adaptive_de_rand_to_best_1_covbin,3.0970666725466245e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_rand_to_best_1_covbin,1.6275539541363147e-18,-
+Rastrigin,100,90,rl_default_adaptive_de_rand_to_best_1_covbin,2.1022327485337335e-8,-
+Ackley,50,50,rl_default_adaptive_de_rand_to_best_1_covbin,2.790705974844179e-26,-
+Ackley,100,90,rl_default_adaptive_de_rand_to_best_1_covbin,1.527184680365246e-24,-
+Griewank,50,50,rl_default_adaptive_de_rand_to_best_1_covbin,1.8922821771009251e-31,-
+Griewank,100,90,rl_default_adaptive_de_rand_to_best_1_covbin,7.029185513085465e-13,-
+Schwefel 1.2,10,50,rl_default_adaptive_de_unified_covbin,0.0003305090861571092,+
+Schwefel 1.2,50,50,rl_default_adaptive_de_unified_covbin,1.011830598947138e-15,-
+Rosenbrock,10,50,rl_default_adaptive_de_unified_covbin,0.030971401052473382,+
+Rosenbrock,50,40,rl_default_adaptive_de_unified_covbin,2.1115401360624064e-31,-
+Rastrigin,50,50,rl_default_adaptive_de_unified_covbin,9.669095261198216e-22,-
+Rastrigin,100,90,rl_default_adaptive_de_unified_covbin,1.3612617673157572e-16,-
+Ackley,50,50,rl_default_adaptive_de_unified_covbin,8.291051117179947e-22,-
+Ackley,100,90,rl_default_adaptive_de_unified_covbin,1.3899144162065607e-18,-
+Griewank,50,50,rl_default_adaptive_de_unified_covbin,1.8922821771009251e-31,-
+Griewank,100,90,rl_default_adaptive_de_unified_covbin,0.000419347451540141,-
+Schwefel 2.21,5,20,rl_uniform_adaptive_de_rand_1_covbin,0.007237449018716406,-
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_rand_1_covbin,9.866354790206305e-28,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_rand_1_covbin,1.8922821771009251e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_rand_1_covbin,1.465757609534816e-29,-
+Rastrigin,100,90,rl_uniform_adaptive_de_rand_1_covbin,2.7717920439563388e-27,-
+Ackley,50,50,rl_uniform_adaptive_de_rand_1_covbin,3.7382519331576345e-30,-
+Ackley,100,90,rl_uniform_adaptive_de_rand_1_covbin,3.1145513685865184e-30,-
+Griewank,50,50,rl_uniform_adaptive_de_rand_1_covbin,2.397358058948959e-31,-
+Griewank,100,90,rl_uniform_adaptive_de_rand_1_covbin,1.9691513334529772e-21,-
+Sphere,5,20,rl_uniform_adaptive_de_best_1_covbin,0.0018102029633730267,-
+Sphere,10,20,rl_uniform_adaptive_de_best_1_covbin,2.6590556497099038e-15,-
+Sphere,30,20,rl_uniform_adaptive_de_best_1_covbin,2.6310460018999736e-28,-
+Schwefel 2.22,5,20,rl_uniform_adaptive_de_best_1_covbin,0.001242558417676965,-
+Schwefel 2.22,10,20,rl_uniform_adaptive_de_best_1_covbin,1.175580550751492e-10,-
+Schwefel 2.22,30,20,rl_uniform_adaptive_de_best_1_covbin,1.2348201537600015e-5,-
+Schwefel 2.21,5,20,rl_uniform_adaptive_de_best_1_covbin,0.010934646221957594,-
+Schwefel 2.21,10,20,rl_uniform_adaptive_de_best_1_covbin,5.642771001576537e-6,-
+Schwefel 2.21,30,20,rl_uniform_adaptive_de_best_1_covbin,0.023583838995183508,-
+Schwefel 1.2,5,20,rl_uniform_adaptive_de_best_1_covbin,1.5935269191769304e-5,-
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_best_1_covbin,3.0466374778962884e-20,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_best_1_covbin,1.8922821771009251e-31,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_best_1_covbin,8.428273910807643e-30,-
+Rosenbrock,5,20,rl_uniform_adaptive_de_best_1_covbin,0.001314443879927067,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_best_1_covbin,2.6039756507634642e-5,-
+Rosenbrock,30,50,rl_uniform_adaptive_de_best_1_covbin,6.337619798735958e-5,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_best_1_covbin,1.8922821771009251e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_best_1_covbin,8.721733366837366e-28,-
+Rastrigin,100,90,rl_uniform_adaptive_de_best_1_covbin,8.889690342492734e-27,-
+Ackley,50,50,rl_uniform_adaptive_de_best_1_covbin,1.9342454887381263e-31,-
+Ackley,100,90,rl_uniform_adaptive_de_best_1_covbin,1.913149610074266e-31,-
+Griewank,50,50,rl_uniform_adaptive_de_best_1_covbin,2.4609334225461107e-31,-
+Griewank,100,90,rl_uniform_adaptive_de_best_1_covbin,1.4395072286235036e-5,-
+Sphere,30,20,rl_uniform_adaptive_de_current_to_best_1_covbin,0.043942665349086765,-
+Schwefel 2.22,10,20,rl_uniform_adaptive_de_current_to_best_1_covbin,0.013227704225146365,-
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_current_to_best_1_covbin,8.217391886052626e-19,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_current_to_best_1_covbin,0.0040498411262711274,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_current_to_best_1_covbin,1.6299077021058378e-29,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_current_to_best_1_covbin,0.0034235322696757105,+
+Rosenbrock,50,40,rl_uniform_adaptive_de_current_to_best_1_covbin,2.158328379844075e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_current_to_best_1_covbin,2.8758917153012034e-23,-
+Rastrigin,100,90,rl_uniform_adaptive_de_current_to_best_1_covbin,5.685028468713402e-23,-
+Ackley,50,50,rl_uniform_adaptive_de_current_to_best_1_covbin,2.7162372045572796e-31,-
+Ackley,100,90,rl_uniform_adaptive_de_current_to_best_1_covbin,2.9645738819342507e-31,-
+Griewank,50,50,rl_uniform_adaptive_de_current_to_best_1_covbin,2.964464673513354e-31,-
+Griewank,100,90,rl_uniform_adaptive_de_current_to_best_1_covbin,3.49648384062108e-25,-
+Sphere,30,20,rl_uniform_adaptive_de_current_to_rand_1_covbin,0.00721725876426159,-
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_current_to_rand_1_covbin,6.154930025494641e-31,-
+Rosenbrock,50,40,rl_uniform_adaptive_de_current_to_rand_1_covbin,2.0209635100404135e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_current_to_rand_1_covbin,1.1765210720091982e-25,-
+Rastrigin,100,90,rl_uniform_adaptive_de_current_to_rand_1_covbin,1.0739872053202633e-28,-
+Ackley,50,50,rl_uniform_adaptive_de_current_to_rand_1_covbin,7.566337723154528e-31,-
+Ackley,100,90,rl_uniform_adaptive_de_current_to_rand_1_covbin,1.7370203143398738e-29,-
+Griewank,50,50,rl_uniform_adaptive_de_current_to_rand_1_covbin,1.954731734303447e-31,-
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,7.064036613260074e-6,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,1.1983870854840375e-5,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,9.515642548672304e-25,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,2.9912958568765127e-19,+
+Rosenbrock,30,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,2.8665336999153746e-20,+
+Rosenbrock,50,40,rl_uniform_adaptive_de_rand_to_best_1_covbin,3.270976684582427e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,9.657783128939545e-26,-
+Rastrigin,100,90,rl_uniform_adaptive_de_rand_to_best_1_covbin,0.0026321348144830604,-
+Ackley,50,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,3.41705683052512e-31,-
+Ackley,100,90,rl_uniform_adaptive_de_rand_to_best_1_covbin,6.563901862011618e-29,-
+Griewank,50,50,rl_uniform_adaptive_de_rand_to_best_1_covbin,2.8860519374957286e-31,-
+Griewank,100,90,rl_uniform_adaptive_de_rand_to_best_1_covbin,2.3705684499905613e-14,-
+Schwefel 2.21,5,20,rl_uniform_adaptive_de_unified_covbin,0.007889031454195875,+
+Schwefel 1.2,10,50,rl_uniform_adaptive_de_unified_covbin,7.258759343980621e-30,+
+Schwefel 1.2,30,50,rl_uniform_adaptive_de_unified_covbin,2.2798506518647146e-31,+
+Schwefel 1.2,50,50,rl_uniform_adaptive_de_unified_covbin,7.573190729864244e-22,-
+Rosenbrock,10,50,rl_uniform_adaptive_de_unified_covbin,1.6439629981505375e-22,+
+Rosenbrock,30,50,rl_uniform_adaptive_de_unified_covbin,3.9040664849018585e-11,+
+Rosenbrock,50,40,rl_uniform_adaptive_de_unified_covbin,2.158328379844075e-31,-
+Rastrigin,50,50,rl_uniform_adaptive_de_unified_covbin,3.0377322430562274e-27,-
+Ackley,50,50,rl_uniform_adaptive_de_unified_covbin,1.9188061910903607e-30,-
+Ackley,100,90,rl_uniform_adaptive_de_unified_covbin,1.798560550218921e-30,-
+Griewank,50,50,rl_uniform_adaptive_de_unified_covbin,1.8465968552213679e-31,-

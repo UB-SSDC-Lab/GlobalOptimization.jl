@@ -105,7 +105,7 @@ function construct_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size
         mutation_params=SelfMutationParameters(mut_strat),
         crossover_params=SelfBinomialCrossoverParameters(;
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             ),
         ),
     )
@@ -122,7 +122,7 @@ function construct_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size
         crossover_params=SelfBinomialCrossoverParameters(;
             dist=Uniform(0.0, 1.0),
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             ),
         ),
     )
@@ -141,7 +141,7 @@ function construct_rl_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         ),
         crossover_params=SelfBinomialCrossoverParameters(;
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             ),
         ),
     )
@@ -162,7 +162,7 @@ function construct_rl_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         crossover_params=SelfBinomialCrossoverParameters(;
             dist=Uniform(0.0, 1.0),
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             ),
         ),
     )
@@ -181,7 +181,7 @@ function construct_rs_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         ),
         crossover_params=SelfBinomialCrossoverParameters(;
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             )
         ),
     )
@@ -202,7 +202,7 @@ function construct_rs_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         crossover_params=SelfBinomialCrossoverParameters(;
             dist=Uniform(0.0, 1.0),
             transform=GlobalOptimization.CovarianceTransformation(
-                0.1, 0.5, GlobalOptimization.numdims(prob.ss)
+                0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
             )
         ),
     )
