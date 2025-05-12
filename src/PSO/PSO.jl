@@ -164,8 +164,8 @@ function SerialPSO(
     return PSO(
         options,
         SerialBatchEvaluator(prob),
-        Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob)),
+        Swarm{T}(num_particles, num_dims(prob)),
+        PSOCache{T}(num_particles, num_dims(prob)),
     )
 end
 
@@ -241,8 +241,8 @@ function ThreadedPSO(
     return PSO(
         options,
         ThreadedBatchEvaluator(prob, batch_n, batch_split),
-        Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob)),
+        Swarm{T}(num_particles, num_dims(prob)),
+        PSOCache{T}(num_particles, num_dims(prob)),
     )
 end
 
@@ -316,8 +316,8 @@ function PolyesterPSO(
     return PSO(
         options,
         PolyesterBatchEvaluator(prob),
-        Swarm{T}(num_particles, numdims(prob)),
-        PSOCache{T}(num_particles, numdims(prob)),
+        Swarm{T}(num_particles, num_dims(prob)),
+        PSOCache{T}(num_particles, num_dims(prob)),
     )
 end
 

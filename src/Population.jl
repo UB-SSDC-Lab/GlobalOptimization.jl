@@ -75,3 +75,24 @@ function check_fitness!(pop::AbstractPopulation, ::Val{true})
     end
     return nothing
 end
+
+# ==== Some utilities for initialization of populations
+
+abstract type AbstractPopulationInitialization end
+struct UniformInitialization <: AbstractPopulationInitialization end
+struct LatinHypercubeInitialization <: AbstractPopulationInitialization end
+
+function initialize_population_vector!(
+    pop_vec::Vector{<:AbstractVector{T}},
+    min::AbstractVector,
+    max::AbstractVector,
+    method::UniformInitialization
+) where T
+    @inbounds for i in eachindex(pop_vec)
+        vec = pop_vec[i]
+        for j in eachindex(vec)
+            vec[j] = min[j] + (max[j] - min[j]) * rand(T)
+        end
+    end
+    return nothing
+end

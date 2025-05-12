@@ -364,8 +364,8 @@ function BuildDE(
     return DE(
         options,
         evaluator,
-        DEPopulation{T}(num_candidates, numdims(prob)),
-        DECache{T}(numdims(prob)),
+        DEPopulation{T}(num_candidates, num_dims(prob)),
+        DECache{T}(num_dims(prob)),
     )
 end
 
@@ -381,7 +381,7 @@ function initialize!(opt::DE)
     # Initialize mutation and crossover parameters
     N = length(population)
     initialize!(options.mutation_params, N)
-    initialize!(options.crossover_params, numdims(evaluator.prob), N)
+    initialize!(options.crossover_params, num_dims(evaluator.prob), N)
 
     # Initialize population
     initialize_uniform!(population, options.initial_space)

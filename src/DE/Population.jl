@@ -74,8 +74,8 @@ function initialize_uniform!(
 
         # Iterate over dimensions
         for j in eachindex(candidate)
-            dmin = dimmin(search_space, j)
-            dΔ = dimdelta(search_space, j)
+            dmin = dim_min(search_space, j)
+            dΔ = dim_delta(search_space, j)
 
             # Set candidate
             candidate[j] = dmin + dΔ * rand(T)

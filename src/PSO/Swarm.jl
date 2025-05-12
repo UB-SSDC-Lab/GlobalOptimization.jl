@@ -63,23 +63,20 @@ function initialize_uniform!(
     @unpack candidates,
     candidates_fitness, candidates_velocity, best_candidates,
     best_candidates_fitness = swarm
+    @unpack dim_min, dim_max, dim_delta = search_space
 
-    # Initialize each candidate
-    @inbounds for i in eachindex(candidates)
-        # Get candidate position and velocity
-        pos = candidates[i]
-        vel = candidates_velocity[i]
+    # Initialize the positions
+    initialize_population_vector!(
+        candidates, dim_min, dim_max, UniformInitialization()
+    )
 
-        # Iterate over each dimension
-        for j in eachindex(pos)
-            dmin = dimmin(search_space, j)
-            dΔ = dimdelta(search_space, j)
+    # Initialize the velocities
+    vel_min = -dim_delta
+    vel_max = dim_delta
+    initialize_population_vector!(
+        candidates_velocity, vel_min, vel_max, UniformInitialization()
+    )
 
-            # Set position and velocity
-            pos[j] = dmin + dΔ * rand(T)
-            vel[j] = -dΔ + 2.0 * dΔ * rand(T)
-        end
-    end
     return nothing
 end
 
@@ -191,11 +188,11 @@ function enforce_bounds!(
     @unpack candidates, candidates_velocity = swarm
     @inbounds for (i, candidate) in enumerate(candidates)
         for j in eachindex(candidate)
-            if candidate[j] < dimmin(search_space, j)
-                candidate[j] = dimmin(search_space, j)
+            if candidate[j] < dim_min(search_space, j)
+                candidate[j] = dim_min(search_space, j)
                 candidates_velocity[i][j] = 0.0
-            elseif candidate[j] > dimmax(search_space, j)
-                candidate[j] = dimmax(search_space, j)
+            elseif candidate[j] > dim_max(search_space, j)
+                candidate[j] = dim_max(search_space, j)
                 candidates_velocity[i][j] = 0.0
             end
         end
