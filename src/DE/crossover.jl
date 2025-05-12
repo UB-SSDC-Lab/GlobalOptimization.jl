@@ -107,7 +107,7 @@ get_parameter(params::BinomialCrossoverParameters, i) = params.CR
 get_parameter(params::SelfBinomialCrossoverParameters, i) = params.CRs[i]
 
 function initialize!(
-    params::AbstractCrossoverParameters{NoAdaptation}, numdims, population_size
+    params::AbstractCrossoverParameters{NoAdaptation}, num_dims, population_size
 )
     initialize!(params.transform, population_size)
     return nothing
@@ -199,10 +199,10 @@ function crossover!(
 
         for j in eachindex(mutant)
             # Ensure mutant is within search space
-            if mutant[j] < dimmin(search_space, j)
-                mutant[j] = dimmin(search_space, j)
-            elseif mutant[j] > dimmax(search_space, j)
-                mutant[j] = dimmax(search_space, j)
+            if mutant[j] < dim_min(search_space, j)
+                mutant[j] = dim_min(search_space, j)
+            elseif mutant[j] > dim_max(search_space, j)
+                mutant[j] = dim_max(search_space, j)
             end
         end
     end

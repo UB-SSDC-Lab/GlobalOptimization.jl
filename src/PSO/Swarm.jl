@@ -52,34 +52,37 @@ function Swarm_F32(num_particles::Integer, num_dims::Integer)
 end
 
 """
-    initialize_uniform!(swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T})
+    initialize!(
+        swarm::Swarm{T},
+        pop_init_method::AbstractPopulationInitialization,
+        search_space::ContinuousRectangularSearchSpace{T}
+    )
 
-Initializes the swarm `swarm` with a uniform particle distribution in the search space.
+Initializes the `swarm` population with `pop_init_method` in the `search_space`.
 """
-function initialize_uniform!(
-    swarm::Swarm{T}, search_space::ContinuousRectangularSearchSpace{T}
+function initialize!(
+    swarm::Swarm{T},
+    pop_init_method::AbstractPopulationInitialization,
+    search_space::ContinuousRectangularSearchSpace{T}
 ) where {T}
     # Unpack swarm
-    @unpack candidates,
-    candidates_fitness, candidates_velocity, best_candidates,
-    best_candidates_fitness = swarm
+    @unpack candidates, candidates_fitness, candidates_velocity, best_candidates,
+        best_candidates_fitness = swarm
+    @unpack dim_min, dim_max, dim_delta = search_space
 
-    # Initialize each candidate
-    @inbounds for i in eachindex(candidates)
-        # Get candidate position and velocity
-        pos = candidates[i]
-        vel = candidates_velocity[i]
+    # Initialize velocities
+    vel_min = candidates[1]; # We're using the first candidate here to avoid an allocation
+    vel_min .= -dim_delta
+    vel_max = dim_delta
+    initialize_population_vector!(
+        candidates_velocity, vel_min, vel_max, pop_init_method,
+    )
 
-        # Iterate over each dimension
-        for j in eachindex(pos)
-            dmin = dimmin(search_space, j)
-            dΔ = dimdelta(search_space, j)
+    # Initialize the positions
+    initialize_population_vector!(
+        candidates, dim_min, dim_max, pop_init_method,
+    )
 
-            # Set position and velocity
-            pos[j] = dmin + dΔ * rand(T)
-            vel[j] = -dΔ + 2.0 * dΔ * rand(T)
-        end
-    end
     return nothing
 end
 
@@ -191,11 +194,11 @@ function enforce_bounds!(
     @unpack candidates, candidates_velocity = swarm
     @inbounds for (i, candidate) in enumerate(candidates)
         for j in eachindex(candidate)
-            if candidate[j] < dimmin(search_space, j)
-                candidate[j] = dimmin(search_space, j)
+            if candidate[j] < dim_min(search_space, j)
+                candidate[j] = dim_min(search_space, j)
                 candidates_velocity[i][j] = 0.0
-            elseif candidate[j] > dimmax(search_space, j)
-                candidate[j] = dimmax(search_space, j)
+            elseif candidate[j] > dim_max(search_space, j)
+                candidate[j] = dim_max(search_space, j)
                 candidates_velocity[i][j] = 0.0
             end
         end

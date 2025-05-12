@@ -34,6 +34,12 @@ Pages = ["Optimizers.jl"]
 Private = false
 ```
 
+## Population Initialization
+```@docs
+    LatinHypercubeInitialization
+    LatinHypercubeInitialization(::Int)
+```
+
 ## Algorithms
 ### Particle Swarm Optimization
 ```@docs

@@ -58,8 +58,8 @@ function initialize!(
     while !feasible
         # Initialize the hopper position in search space
         @inbounds for i in eachindex(candidate)
-            dmin = dimmin(search_space, i)
-            dΔ = dimdelta(search_space, i)
+            dmin = dim_min(search_space, i)
+            dΔ = dim_delta(search_space, i)
             candidate[i] = dmin + dΔ * rand(T)
         end
 

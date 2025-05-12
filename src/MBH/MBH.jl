@@ -78,7 +78,7 @@ function MBH(
     return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
-        BasicHopper{T}(numdims(prob)),
+        BasicHopper{T}(num_dims(prob)),
         hop_distribution,
         local_search,
     )
@@ -127,7 +127,7 @@ function iterate!(opt::MBH)
         step_accepted = false
         draw_count = 0
         while !step_accepted
-            # Draw update 
+            # Draw update
             draw_update!(hopper, distribution)
 
             # Update counter
@@ -135,8 +135,8 @@ function iterate!(opt::MBH)
 
             # Check if we're in feasable search space
             if feasible(hopper.candidate, search_space)
-                # We're in the search space, so we're about to accept the step, 
-                # but we need to check if we're also 
+                # We're in the search space, so we're about to accept the step,
+                # but we need to check if we're also
                 # in the feasible reagion defined by the penalty parameter
                 fitness, penalty = evaluate_with_penalty(evaluator, hopper.candidate)
 
