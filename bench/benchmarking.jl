@@ -9,6 +9,11 @@ using CairoMakie
 
 import BlackBoxOptim as BBO
 
+# Set linear algebra to use one thread. We need this to avoid the eigen decomposition
+# consuming all of the threads when using covbin algorithms
+import LinearAlgebra
+LinearAlgebra.BLAS.set_num_threads(1)
+
 # Include benchmarking utilities
 include(joinpath(@__DIR__, "utils.jl"))
 include(joinpath(@__DIR__, "alg_constructers.jl"))
@@ -266,7 +271,7 @@ function main()
     full_hash = get_git_commit_hash()
 
     # Number of trials per case
-    N = 1000
+    N = 500
 
     # Initialize DataFrame to store results
     data = DataFrame(;
