@@ -7,6 +7,9 @@ using JLD2
 
 import BlackBoxOptim as BBO
 
+import LinearAlgebra
+LinearAlgebra.BLAS.set_num_threads(1)
+
 # Include benchmarking utility functions
 include(joinpath(@__DIR__, "src", "utils.jl"))
 include(joinpath(@__DIR__, "src", "alg_constructors.jl"))
