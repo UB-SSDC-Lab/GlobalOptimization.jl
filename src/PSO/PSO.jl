@@ -537,10 +537,10 @@ Displays the status of the PSO algorithm.
     return nothing
 end
 @inline display_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Val{false}
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}},
 ) = nothing
 function display_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Val{true}
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}},
 )
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")

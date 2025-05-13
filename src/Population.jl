@@ -64,11 +64,14 @@ end
 Checks the fitness of each candidate in the population `pop` to ensure that it is valid
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
-@inline check_fitness!(pop::AbstractPopulation, options::GeneralOptions{D,FVC}) where {D,FVC} = check_fitness!(
-    pop, FVC
-)
-@inline check_fitness!(pop::AbstractPopulation, ::Val{false}) = nothing
-function check_fitness!(pop::AbstractPopulation, ::Val{true})
+@inline function check_fitness!(
+    pop::AbstractPopulation,
+    options::GeneralOptions{D,FVC},
+) where {D,FVC}
+    return check_fitness!(pop, FVC)
+end
+@inline check_fitness!(pop::AbstractPopulation, ::Type{Val{false}}) = nothing
+function check_fitness!(pop::AbstractPopulation, ::Type{Val{true}})
     @unpack candidates_fitness = pop
     @inbounds for (i, fitness) in enumerate(candidates_fitness)
         isfinite(fitness) || error("Candidate $i has an invalid fitness.")
