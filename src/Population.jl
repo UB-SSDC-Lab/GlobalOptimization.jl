@@ -50,7 +50,7 @@ Sets the fitness of the candidates from a population. If `i` is specified, sets 
 function set_fitness!(pop::AbstractPopulation, fitness::Vector)
     length(fitness) == length(candidates(pop)) ||
         throw(DimensionMismatch("fitness must be the same length as candidates."))
-    fitness(pop) .= fitness
+    GlobalOptimization.fitness(pop) .= fitness
     return nothing
 end
 @inline function set_fitness!(pop::AbstractPopulation, fitness::Real, i::Integer)
