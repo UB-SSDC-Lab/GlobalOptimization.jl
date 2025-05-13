@@ -13,6 +13,7 @@ function construct_default_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size, m
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -25,6 +26,7 @@ function construct_uniform_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size, m
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -37,6 +39,7 @@ function construct_rl_default_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -52,6 +55,7 @@ function construct_rl_uniform_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -68,6 +72,7 @@ function construct_rs_default_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -83,6 +88,7 @@ function construct_rs_uniform_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -99,6 +105,7 @@ function construct_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -115,6 +122,7 @@ function construct_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -132,6 +140,7 @@ function construct_rl_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -151,6 +160,7 @@ function construct_rl_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -172,6 +182,7 @@ function construct_rs_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
@@ -191,6 +202,7 @@ function construct_rs_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     return SerialDE(
         prob;
         display=false,
+        population_init_method=LatinHypercubeInitialization(),
         num_candidates=pop_size,
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
