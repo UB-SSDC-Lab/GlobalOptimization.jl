@@ -48,9 +48,9 @@ function main()
 
     # Get intersection of problems in benchmarks
     probs = innerjoin(
-        unique(data_a[!, [:ProblemName, :NumDims, :PopSize]]),
-        unique(data_b[!, [:ProblemName, :NumDims, :PopSize]]);
-        on = [:ProblemName, :NumDims, :PopSize],
+        unique(data_a[!, [:ProblemName, :NumDims]]),
+        unique(data_b[!, [:ProblemName, :NumDims]]);
+        on = [:ProblemName, :NumDims],
     )
 
     # For all algorithm/problem combos, check if the mean fitness is statistically different
