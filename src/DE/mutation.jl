@@ -277,7 +277,7 @@ mutable struct MutationParameters{
     @doc """
         MutationParameters(F1, F2, F3, F4; sel=SimpleSelector())
 
-    Creates a MutationParameters object with the specified (constant) mutation parameters.
+    Creates a `MutationParameters` object with the specified (constant) mutation parameters.
     These constant mutation parameters are used for all candidates in the population and
     define a unified mutation strategy as defined in Ji Qiang and Chad Mitchell "A Unified
     Differential Evolution Algorithm for Global Optimization," 2014,

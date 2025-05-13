@@ -80,8 +80,12 @@ RandomSubsetSelector
 
 
 #### DE Crossover Strategies
-```@autodocs
-Modules = [GlobalOptimization]
-Pages = ["crossover.jl"]
-Private = false
+```@docs
+BinomialCrossoverParameters
+BinomialCrossoverParameters(::Float64; transform=::Any)
+BinomialCrossoverParameters(; dist=::Any, transform=::Any)
+SelfBinomialCrossoverParameters
+SelfBinomialCrossoverParameters(; dist=::Any, transform=::Any)
+CovarianceTransformation
+CovarianceTransformation(::Any,::Any,::Any)
 ```
