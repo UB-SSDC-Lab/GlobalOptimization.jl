@@ -7,6 +7,6 @@ using GlobalOptimization, Test
         include("base.jl")
     end
     @testset showtiming = true "PSO" begin
-        include("pso_test.jl")
+        include("pso.jl")
     end
 end

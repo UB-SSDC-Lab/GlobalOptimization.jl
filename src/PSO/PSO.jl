@@ -337,25 +337,21 @@ function PolyesterPSO(
     )
 end
 
-function SerialPSO(prob::AbstractOptimizationProblem{SS}; kwargs...) where {SS<:SearchSpace}
+function SerialPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     throw(
         ArgumentError(
             "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
         ),
     )
 end
-function ThreadedPSO(
-    prob::AbstractOptimizationProblem{SS}; kwargs...
-) where {SS<:SearchSpace}
+function ThreadedPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     throw(
         ArgumentError(
             "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
         ),
     )
 end
-function PolyesterPSO(
-    prob::AbstractOptimizationProblem{SS}; kwargs...
-) where {SS<:SearchSpace}
+function PolyesterPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     throw(
         ArgumentError(
             "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",

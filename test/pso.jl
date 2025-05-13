@@ -66,3 +66,10 @@ end
 # Check for correct answer
 @test sres.fbest ≈ 0.0 atol = 1e-6
 @test sres.xbest ≈ fill(1.0, N) atol = 1e-6
+
+# Check for expected errors
+struct InvalidSearchSpace <: GlobalOptimization.SearchSpace{Float64} end
+prob = GlobalOptimization.OptimizationProblem(layeb_1, InvalidSearchSpace())
+@test_throws ArgumentError GlobalOptimization.SerialPSO(prob)
+@test_throws ArgumentError GlobalOptimization.ThreadedPSO(prob)
+@test_throws ArgumentError GlobalOptimization.PolyesterPSO(prob)
