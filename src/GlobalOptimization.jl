@@ -2,6 +2,7 @@ module GlobalOptimization
 
 using ChunkSplitters
 using Distributions
+using LatinHypercubeSampling: LHCoptim, scaleLHC
 using LinearAlgebra
 using Format
 using Polyester: @batch
@@ -11,7 +12,7 @@ using Statistics: cov
 using Random: shuffle!
 using UnPack
 
-import Random: rand, rand!, shuffle!
+import Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using Base: Base
 using Optim: Optim
 using LineSearches: LineSearches
@@ -48,6 +49,7 @@ include("MBH/LocalSearch.jl")
 include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
+export LatinHypercubeInitialization
 export OptimizationProblem
 export optimize!
 

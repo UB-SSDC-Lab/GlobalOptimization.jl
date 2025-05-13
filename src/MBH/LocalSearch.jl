@@ -125,7 +125,7 @@ end
 
 function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
     res = Optim.optimize(
-        get_scalar_function(prob), prob.ss.dimmin, prob.ss.dimmax, x0, alg, options;
+        get_scalar_function(prob), prob.ss.dim_min, prob.ss.dim_max, x0, alg, options;
     )
     cache.x .= Optim.minimizer(res)
     cache.cost = Optim.minimum(res)
@@ -138,7 +138,7 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     @unpack percent_decrease_tolerance, alg, options, max_solve_time, cache = ls
 
     # Initialize cache if necessary
-    is_initialized(cache) || initialize!(cache, numdims(prob))
+    is_initialized(cache) || initialize!(cache, num_dims(prob))
 
     # Create solve call
     solve! = let cache = cache, prob = prob, alg = alg, options = options

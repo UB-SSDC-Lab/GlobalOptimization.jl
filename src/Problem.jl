@@ -229,7 +229,7 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearProblem{has_penalty}(
         f::F, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function}
-        N = numdims(ss)
+        N = num_dims(ss)
         fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
         frettypes = if has_penalty isa Val{false}
             (Vector{T}, SVector{N,T})
@@ -243,7 +243,7 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function,G<:Function}
-        N = numdims(ss)
+        N = num_dims(ss)
         fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
         frettypes = if has_penalty isa Val{false}
             (Vector{T}, SVector{N,T})
@@ -263,7 +263,7 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     ) where {has_penalty,F<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
 
-        N = numdims(ss)
+        N = num_dims(ss)
         fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
         frettypes = if has_penalty isa Val{false}
             (Vector{T}, SVector{N,T})
@@ -279,7 +279,7 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     ) where {has_penalty,F<:Function,G<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
 
-        N = numdims(ss)
+        N = num_dims(ss)
         fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
         frettypes = if has_penalty isa Val{false}
             (Vector{T}, SVector{N,T})
@@ -570,11 +570,11 @@ Returns the search space of the optimization problem `prob`.
 search_space(prob::AbstractProblem) = prob.ss
 
 """
-    numdims(prob::AbstractProblem)
+    num_dims(prob::AbstractProblem)
 
 Returns the number of dimensions of the decision vector of the optimization problem `prob`.
 """
-numdims(prob::AbstractProblem) = numdims(search_space(prob))
+num_dims(prob::AbstractProblem) = num_dims(search_space(prob))
 
 """
     scalar_function(prob::OptimizationProblem, x::AbstractArray)
