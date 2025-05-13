@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ myCommit }}
+          ref: ${{ inputs.myCommit }}
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
