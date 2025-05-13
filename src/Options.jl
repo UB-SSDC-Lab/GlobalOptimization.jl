@@ -27,7 +27,7 @@ struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
         max_time,
         min_cost,
     )
-        return new{display,function_value_check}(display_interval, max_time, min_cost)
+        return new{Val{true},Val{true}}(display_interval, max_time, min_cost)
     end
     function GeneralOptions(
         function_value_check::Val{true},
@@ -36,7 +36,7 @@ struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
         max_time,
         min_cost,
     )
-        return new{display,function_value_check}(display_interval, max_time, min_cost)
+        return new{Val{false},Val{true}}(display_interval, max_time, min_cost)
     end
     function GeneralOptions(
         function_value_check::Val{false},
@@ -45,7 +45,7 @@ struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
         max_time,
         min_cost,
     )
-        return new{display,function_value_check}(display_interval, max_time, min_cost)
+        return new{Val{true},Val{false}}(display_interval, max_time, min_cost)
     end
     function GeneralOptions(
         function_value_check::Val{false},
@@ -54,7 +54,7 @@ struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
         max_time,
         min_cost,
     )
-        return new{display,function_value_check}(display_interval, max_time, min_cost)
+        return new{Val{false},Val{false}}(display_interval, max_time, min_cost)
     end
 end
 
@@ -94,8 +94,10 @@ get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.disp
 
 Returns the function value check option from an algorithm options type.
 """
+get_function_value_check(opts::GeneralOptions{d,Val{true}}) where {d} = true
+get_function_value_check(opts::GeneralOptions{d,Val{false}}) where {d} = false
 function get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
-    opts.general.function_value_check
+    get_function_value_check(get_general(opts))
 end
 
 """

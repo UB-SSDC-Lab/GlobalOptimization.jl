@@ -159,11 +159,13 @@ end
 
     # Test check_fitness! with Val(false) does nothing
     pop.candidates_fitness .= [1.0, 2.0]
-    @test GlobalOptimization.check_fitness!(pop, Val(false)) === nothing
+    go_no_check = GlobalOptimization.GeneralOptions(Val(false), Val(true), 2, 5.5, -0.1)
+    @test GlobalOptimization.check_fitness!(pop, go_no_check) === nothing
 
     # Test check_fitness! with Val(true) errors on invalid fitness
     pop.candidates_fitness[2] = Inf
-    @test_throws ErrorException GlobalOptimization.check_fitness!(pop, Val(true))
+    go_check = GlobalOptimization.GeneralOptions(Val(true), Val(true), 2, 5.5, -0.1)
+    @test_throws ErrorException GlobalOptimization.check_fitness!(pop, go_check)
 end
 
 @testset showtiming = true "Population Initialization" begin
@@ -216,6 +218,34 @@ end
         col = [popvec2[i][j] for i in 1:length(popvec2)]
         @test length(unique(col)) == length(popvec2)
     end
+end
+
+@testset showtiming = true "Options" begin
+    # Test GeneralOptions constructors and accessors
+    go_tt = GlobalOptimization.GeneralOptions(Val(true), Val(true), 2, 5.5, -0.1)
+    @test go_tt.display_interval == 2
+    @test go_tt.max_time == 5.5
+    @test go_tt.min_cost == -0.1
+    @test GlobalOptimization.get_display(go_tt) == true
+
+    go_tf = GlobalOptimization.GeneralOptions(Val(true), Val(false), 3, 1.2, 0.0)
+    @test GlobalOptimization.get_display(go_tf) == false
+
+    # Define a dummy algorithm-specific options type
+    struct DummyAlgoOpts <: GlobalOptimization.AbstractAlgorithmSpecificOptions
+        general::GlobalOptimization.GeneralOptions{Val{false},Val{true}}
+    end
+    dummy = DummyAlgoOpts(go_tf)
+
+    # Test get_general and delegation methods
+    @test GlobalOptimization.get_general(dummy) === go_tf
+    @test GlobalOptimization.get_display(dummy) == GlobalOptimization.get_display(go_tf)
+    @test GlobalOptimization.get_display_interval(dummy) == go_tf.display_interval
+    @test GlobalOptimization.get_max_time(dummy) == go_tf.max_time
+    @test GlobalOptimization.get_min_cost(dummy) == go_tf.min_cost
+
+    # Test function value check retrieval
+    @test GlobalOptimization.get_function_value_check(dummy) == true
 end
 
 @testset showtiming = true "Evaluator" begin
