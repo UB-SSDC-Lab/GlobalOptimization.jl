@@ -227,9 +227,19 @@ end
     @test go_tt.max_time == 5.5
     @test go_tt.min_cost == -0.1
     @test GlobalOptimization.get_display(go_tt) == true
+    @test GlobalOptimization.get_function_value_check(go_tt) == true
 
     go_tf = GlobalOptimization.GeneralOptions(Val(true), Val(false), 3, 1.2, 0.0)
     @test GlobalOptimization.get_display(go_tf) == false
+    @test GlobalOptimization.get_function_value_check(go_tf) == true
+
+    go_ft = GlobalOptimization.GeneralOptions(Val(false), Val(true), 4, 2.5, 0.1)
+    @test GlobalOptimization.get_display(go_ft) == true
+    @test GlobalOptimization.get_function_value_check(go_ft) == false
+
+    go_ff = GlobalOptimization.GeneralOptions(Val(false), Val(false), 5, 3.0, 0.2)
+    @test GlobalOptimization.get_display(go_ff) == false
+    @test GlobalOptimization.get_function_value_check(go_ff) == false
 
     # Define a dummy algorithm-specific options type
     struct DummyAlgoOpts <: GlobalOptimization.AbstractAlgorithmSpecificOptions
@@ -244,7 +254,6 @@ end
     @test GlobalOptimization.get_max_time(dummy) == go_tf.max_time
     @test GlobalOptimization.get_min_cost(dummy) == go_tf.min_cost
 
-    # Test function value check retrieval
     @test GlobalOptimization.get_function_value_check(dummy) == true
 end
 
