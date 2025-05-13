@@ -2,7 +2,7 @@
 """
     MBHStepMemory{T}
 
-Memory about MBH accepted steps. 
+Memory about MBH accepted steps.
 """
 mutable struct MBHStepMemory{T}
     # The data (Matrix with each column corresponding to a step. In column, first N - 2 elements are the step, final two are pre- and post-step fitness)
@@ -19,7 +19,7 @@ end
 """
     step_std(step_memory::MBHStepMemory{T}, var_idx::Integer)
 
-Returns the standard deviation of the step memory. If `var_idx` is specified, then the standard deviation 
+Returns the standard deviation of the step memory. If `var_idx` is specified, then the standard deviation
 of the step memory for the variable at index `var_idx` is returned.
 """
 function step_std(step_memory::MBHStepMemory{T}, var_idx::Integer) where {T}
@@ -58,11 +58,11 @@ function push!(
     # Slide steps in memory
     last_rememvered_step = steps_in_memory
     if steps_in_memory == M
-        last_rememvered_step -= 1
+        last_remembered_step -= 1
     else
         step_memory.steps_in_memory += 1
     end
-    @inbounds for col in reverse(1:last_rememvered_step)
+    @inbounds for col in reverse(1:last_remembered_step)
         @views data[:, col + 1] .= data[:, col]
     end
 
@@ -144,9 +144,9 @@ end
 
 """
     push_accepted_step!(
-        dist::MBHAdaptiveDistribution{T}, 
-        step::AbstractVector{T}, 
-        pre_step_fitness::T, 
+        dist::MBHAdaptiveDistribution{T},
+        step::AbstractVector{T},
+        pre_step_fitness::T,
         post_step_fitness::T,
     ) where {T}
 """
@@ -190,8 +190,10 @@ function draw_step!(step::AbstractVector{T}, dist::MBHStaticDistribution{T}) whe
     # Draw step
     #k = length(step) / 2.0
     k = 1.0
+    l1 = Laplace(0.0, c * λ)
+    l2 = Laplace()
     @inbounds for i in eachindex(step)
-        step[i] = k * ((1.0 - b) * laplace(0.0, c * λ) + b * laplace(0.0, 1.0))
+        step[i] = k * ((1.0 - b) * rand(l1) + b * rand(l2))
     end
 
     return nothing
@@ -204,7 +206,9 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     #k = length(step) / 2.0
     k = 1.0
     @inbounds for i in eachindex(step)
-        step[i] = k * ((1.0 - b) * laplace(c * λhat[i]) + b * laplace(1.0))
+        step[i] = k * ((1.0 - b) *
+            rand(Laplace(0.0, c * λhat[i])) +
+            b * rand(Laplace()))
     end
 
     return nothing

@@ -40,11 +40,11 @@ end
 
 # Define pretty printing for Results
 function Base.show(io::IO, ::MIME"text/plain", r::Results)
-    println("Results:")
-    println(" - Best function value: ", r.fbest)
-    println(" - Best candidate: ", r.xbest)
-    println(" - Iterations: ", r.iters)
-    println(" - Time: ", r.time, " seconds")
-    println(" - Exit flag: ", r.exitFlag)
+    println(io, "Results:")
+    println(io, " - Best function value: ", r.fbest)
+    println(io, " - Best candidate: ", r.xbest)
+    println(io, " - Iterations: ", r.iters)
+    println(io, " - Time: ", r.time, " seconds")
+    println(io, " - Exit flag: ", r.exitFlag)
     return nothing
 end

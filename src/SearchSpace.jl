@@ -149,7 +149,7 @@ dim_delta(ss::ContinuousRectangularSearchSpace) = ss.dim_delta
 dim_delta(ss::ContinuousRectangularSearchSpace, i::Integer) = ss.dim_delta[i]
 
 """
-    dimrange(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
+    dim_range(ss::ContinuousRectangularSearchSpace{T}, [i::Integer])
 
 Returns the range of values for the `i`-th dimension of `ss`. If `i` is not specified,
 returns a vector of all ranges.
@@ -161,8 +161,8 @@ returns a vector of all ranges.
 # Returns
 - `Tuple{T, T}` or `Vector{Tuple{T, T}}`: the range of values for the `i`-th dimension of `ss` or a vector of all ranges if `i` not provided.
 """
-dimrange(ss::ContinuousRectangularSearchSpace) = tuple.(dim_min(ss), dim_max(ss))
-dimrange(ss::ContinuousRectangularSearchSpace, i::Integer) = (dim_min(ss, i), dim_max(ss, i))
+dim_range(ss::ContinuousRectangularSearchSpace) = tuple.(dim_min(ss), dim_max(ss))
+dim_range(ss::ContinuousRectangularSearchSpace, i::Integer) = (dim_min(ss, i), dim_max(ss, i))
 
 """
     intersection(
@@ -193,15 +193,15 @@ function intersection(
     T = promote_type(T1, T2)
 
     # Instaitiate new min and max vectors
-    dim_min = zeros(T, num_dims(ss1))
-    dim_max = zeros(T, num_dims(ss1))
+    new_min = zeros(T, num_dims(ss1))
+    new_max = zeros(T, num_dims(ss1))
 
     # Compute the intersection
-    @inbounds for i in eachindex(dim_min)
-        dim_min[i] = max(dim_min(ss1, i), dim_min(ss2, i))
-        dim_max[i] = min(dim_max(ss1, i), dim_max(ss2, i))
+    @inbounds for i in eachindex(new_min)
+        new_min[i] = max(dim_min(ss1, i), dim_min(ss2, i))
+        new_max[i] = min(dim_max(ss1, i), dim_max(ss2, i))
     end
-    return ContinuousRectangularSearchSpace(dim_min, dim_max)
+    return ContinuousRectangularSearchSpace(new_min, new_max)
 end
 intersection(ss1::ContinuousRectangularSearchSpace{T1}, ss2::Nothing) where {T1} = ss1
 intersection(ss1::Nothing, ss2::ContinuousRectangularSearchSpace{T2}) where {T2} = ss2

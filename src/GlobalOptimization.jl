@@ -17,9 +17,6 @@ using Base: Base
 using Optim: Optim
 using LineSearches: LineSearches
 
-# Utilities
-include("rng.jl")
-
 # Base
 include("Options.jl")
 include("SearchSpace.jl")

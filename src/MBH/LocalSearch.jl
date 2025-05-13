@@ -17,7 +17,7 @@ function timeout(f, arg, seconds, fail)
 end
 
 struct LocalStochasticSearch{T} <: AbstractLocalSearch
-    # The scale laplace distribution scale parameter
+    # The local step standard deviation
     b::T
 
     # Number of iterations
@@ -92,7 +92,6 @@ function draw_step!(
     step::AbstractVector{T}, ls::LocalStochasticSearch{T}
 ) where {T<:AbstractFloat}
     @inbounds for i in eachindex(step)
-        #step[i] = laplace(ls.b)
         step[i] = ls.b * randn(T)
     end
     return nothing
