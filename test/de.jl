@@ -1,6 +1,7 @@
 using GlobalOptimization, Test
 using Distributions
 using StaticArrays
+using Random
 
 @testset showtiming=true "Utilities" begin
 
@@ -350,4 +351,37 @@ end
     GlobalOptimization.crossover!(pop2, bp0, search_space)
     @test any(pop2.mutants.candidates[i] != SVector(3.0, 4.0) for i in 1:4)
 
+end
+
+@testset showtiming=true "Full DE Optimization" begin
+
+    # Define a simple sphere objective with known minimum at x = 1
+    sphere(x) = sum(xx -> (xx - 1.0)^2, x)
+
+    # Problem setup
+    N = 5
+    ss = GlobalOptimization.ContinuousRectangularSearchSpace(fill(-5.0, N), fill(5.0, N))
+    prob = GlobalOptimization.OptimizationProblem(sphere, ss)
+
+    # Run DE variants with fixed seed for reproducibility
+    seed = 1234
+    Random.seed!(seed)
+    res1 = GlobalOptimization.optimize!(GlobalOptimization.SerialDE(prob; num_candidates=20, max_iterations=100))
+    Random.seed!(seed)
+    res2 = GlobalOptimization.optimize!(GlobalOptimization.ThreadedDE(prob; num_candidates=20, max_iterations=100))
+    Random.seed!(seed)
+    res3 = GlobalOptimization.optimize!(GlobalOptimization.PolyesterDE(prob; num_candidates=20, max_iterations=100, max_time=1.0))
+
+    # Ensure consistent behavior across implementations
+    @test res1.exitFlag == res2.exitFlag == res3.exitFlag
+    @test isapprox(res1.fbest, res2.fbest; atol=1e-6)
+    @test isapprox(res1.fbest, res3.fbest; atol=1e-6)
+    @test isapprox(res1.xbest, res2.xbest; atol=1e-6)
+    @test isapprox(res1.xbest, res3.xbest; atol=1e-6)
+
+    # Verify solution correctness
+    @test isapprox(res1.fbest, 0.0; atol=5e-4)
+    for i in 1:N
+        @test isapprox(res1.xbest[i], 1.0; atol=1e-2)
+    end
 end

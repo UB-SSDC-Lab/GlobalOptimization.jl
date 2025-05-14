@@ -34,5 +34,5 @@ Results:
 ```
 """
 function optimize!(opt::AbstractOptimizer)
-    throw(NotImplementedError("optimize! not implemented for $(typeof(opt))."))
+    throw(ArgumentError("optimize! not implemented for $(typeof(opt))."))
 end

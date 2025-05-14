@@ -56,7 +56,7 @@ function push!(
     N, M = size(data)
 
     # Slide steps in memory
-    last_rememvered_step = steps_in_memory
+    last_remembered_step = steps_in_memory
     if steps_in_memory == M
         last_remembered_step -= 1
     else
@@ -167,11 +167,9 @@ function push_accepted_step!(
         @inbounds for i in eachindex(λhat)
             # Compute standard deviation of steps for var index i
             σ = step_std(step_memory, i)
-            display(σ)
 
             # Update scale parameter
             λhat[i] = (1.0 - a) * σ + a * λhat[i]
-            display(λhat[i])
         end
     end
 
