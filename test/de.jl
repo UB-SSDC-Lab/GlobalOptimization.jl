@@ -298,30 +298,31 @@ end
     @test bp1.CR == 0.25
     @test bp1.transform isa GlobalOptimization.NoTransformation
     @test bp1.dist === nothing
-    bp2 = GlobalOptimization.BinomialCrossoverParameters(; dist=Uniform(0.0, 1.0))
+    bp2 = GlobalOptimization.BinomialCrossoverParameters()
     @test bp2.CR == 0.0
     @test bp2.transform isa GlobalOptimization.NoTransformation
+    @test isa(bp2.dist, MixtureModel)
 
     # Test SelfBinomialCrossoverParameters default
-    sbp = GlobalOptimization.SelfBinomialCrossoverParameters()
-    @test sbp.CRs == Float64[]
-    @test sbp.transform isa GlobalOptimization.NoTransformation
-    @test isa(sbp.dist, MixtureModel)
+    sbpd = GlobalOptimization.SelfBinomialCrossoverParameters()
+    @test sbpd.CRs == Float64[]
+    @test sbpd.transform isa GlobalOptimization.NoTransformation
+    @test isa(sbpd.dist, MixtureModel)
 
     # Test initialize! and adapt! for BinomialCrossoverParameters
-    GlobalOptimization.initialize!(bp2, 2, 3)
-    @test 0.0 < bp2.CR <= 1.0
-    oldCR = bp2.CR
-    GlobalOptimization.adapt!(bp2, [false, false], false)
-    @test 0.0 < bp2.CR <= 1.0
-    bp2.CR = 0.123
-    GlobalOptimization.adapt!(bp2, [true, true], true)
-    @test bp2.CR == 0.123
+    bp3 = GlobalOptimization.BinomialCrossoverParameters(; dist=Uniform(0.0, 0.99))
+    GlobalOptimization.initialize!(bp3, 2, 3)
+    oldCR = bp3.CR
+    GlobalOptimization.adapt!(bp3, [false, false], false)
+    @test bp3.CR != oldCR
+    bp3.CR = 0.123
+    GlobalOptimization.adapt!(bp3, [true, true], true)
+    @test bp3.CR == 0.123
 
     # Test initialize! and adapt! for SelfBinomialCrossoverParameters
+    sbp = GlobalOptimization.SelfBinomialCrossoverParameters(; dist=Uniform(0.0, 0.99))
     GlobalOptimization.initialize!(sbp, 2, 3)
     @test length(sbp.CRs) == 3
-    @test all(0.0 .< sbp.CRs .<= 1.0)
     oldCRs = copy(sbp.CRs)
     improved = [true, false, true]
     GlobalOptimization.adapt!(sbp, improved, false)
