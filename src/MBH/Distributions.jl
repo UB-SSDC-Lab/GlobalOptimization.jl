@@ -8,12 +8,25 @@ mutable struct MBHStepMemory{T}
     # The data (Matrix with each column corresponding to a step. In column, first N - 2 elements are the step, final two are pre- and post-step fitness)
     data::Matrix{T}
 
+    # The memory length
+    memory_len::Int
+
     # Current steps in memory
     steps_in_memory::Int
 
     function MBHStepMemory{T}(num_dims::Integer, memory_len::Integer) where {T}
-        return new{T}(Matrix{T}(undef, num_dims + 2, memory_len), 0)
+        return new{T}(Matrix{T}(undef, num_dims + 2, memory_len), memory_len, 0)
     end
+    function MBHStepMemory{T}(num_dims::UndefInitializer, memory_len) where {T}
+        return new{T}(Matrix{T}(undef, 0, 0), memory_len, 0)
+    end
+end
+
+function initialize!(step_memory::MBHStepMemory{T}, num_dims::Integer) where {T}
+    # Unpack step memory
+    @unpack memory_len = step_memory
+    step_memory.data = Matrix{T}(undef, num_dims + 2, memory_len)
+    return nothing
 end
 
 """
@@ -121,10 +134,12 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # Estimated scale parameter of q-hat
     λhat::Vector{T}
 
+    # THe initial value of the scale parameter
+    λhat0::T
+
     # Constructor
     function MBHAdaptiveDistribution{T}(
-        num_dims::Integer,
-        memory_len::Integer,
+        memory_len::Int,
         min_memory_update::Int;
         a=0.93,
         b=0.05,
@@ -132,14 +147,35 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
         λhat0=1.0,
     ) where {T}
         return new{T}(
-            MBHStepMemory{T}(num_dims, memory_len),
+            MBHStepMemory{T}(undef, memory_len),
             min_memory_update,
             T(a),
             T(b),
             T(c),
-            fill(T(λhat0), num_dims),
+            Vector{T}(undef, 0),
+            T(λhat0),
         )
     end
+end
+
+"""
+    initialize!(dist::AbstractMBHDistribution, num_dims)
+
+Initializes the distribution `dist` with the number of dimensions `num_dims`.
+"""
+initialize!(dist::AbstractMBHDistribution, num_dims) = nothing
+function initialize!(dist::MBHAdaptiveDistribution, num_dims)
+    # Unpack distribution
+    @unpack step_memory = dist
+
+    # Initialize step memory
+    initialize!(step_memory, num_dims)
+
+    # Initialize scale parameter vector
+    resize!(dist.λhat, num_dims)
+    dist.λhat .= dist.λhat0
+
+    return nothing
 end
 
 """

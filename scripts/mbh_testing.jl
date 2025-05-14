@@ -47,20 +47,25 @@ end
 
 # Setup Problem
 N = 3
-ss = ContinuousRectangularSearchSpace([-5.0 for i in 1:N], [5.0 for i in 1:N])
-prob = OptimizationProblem(schaffer, ss)
-#prob = GlobalOptimization.NonlinearLeastSquaresProblem(simple_nonlinearleastsquares_equation, ss, 2)
+ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
+prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate MBH
 dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
-    N, 1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
+    1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
 )
 lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
     iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
 )
-lss = GlobalOptimization.LocalStochasticSearch{Float64}(N, 1e-6, 32)
+lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-6, 32)
 mbh = GlobalOptimization.MBH(
-    prob, dist, lss; display=true, display_interval=1, max_time=20.0, min_cost=1e-8
+    prob;
+    #hop_distribution=dist,
+    #local_search=lsgb,
+    display=true,
+    display_interval=10,
+    max_time=20.0,
+    min_cost=1e-20,
 )
 
 res = optimize!(mbh);

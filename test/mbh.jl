@@ -71,7 +71,8 @@ end
     @test all(isfinite, vec)
 
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
-    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(2, 21, 0; a=0.9, b=0.1, c=2.0, λhat0=1.0)
+    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(21, 0; a=0.9, b=0.1, c=2.0, λhat0=1.0)
+    GlobalOptimization.initialize!(ad, 2)
     @test ad.min_memory_update == 0
     @test length(ad.λhat) == 2
     # Push fewer than threshold => no λhat change
@@ -88,7 +89,8 @@ end
     # Test draw_step! for adaptive distribution
     vec2 = zeros(3)
     # adjust λhat length for vec2 size
-    ad2 = GlobalOptimization.MBHAdaptiveDistribution{Float64}(3, 21, 0)
+    ad2 = GlobalOptimization.MBHAdaptiveDistribution{Float64}(21, 0)
+    GlobalOptimization.initialize!(ad2, 3)
     Random.seed!(123)
     GlobalOptimization.draw_step!(vec2, ad2)
     @test all(isfinite, vec2)
@@ -102,7 +104,8 @@ end
     @test GlobalOptimization.timeout(slow, 1, 0.1, -1) == -1
 
     # Test LocalStochasticSearch constructor and draw_step!
-    ls = GlobalOptimization.LocalStochasticSearch{Float64}(3, 2.0, 5)
+    ls = GlobalOptimization.LocalStochasticSearch{Float64}(2.0, 5)
+    GlobalOptimization.initialize!(ls, 3)
     @test ls.iters == 5
     @test length(ls.step) == 3
     vec = zeros(3)
@@ -112,9 +115,7 @@ end
 
     # Test OptimSolutionCache initialization
     cache = GlobalOptimization.OptimSolutionCache{Float64}()
-    @test !GlobalOptimization.is_initialized(cache)
     GlobalOptimization.initialize!(cache, 4)
-    @test GlobalOptimization.is_initialized(cache)
     @test length(cache.x) == 4
     @test cache.cost == 0.0
 
@@ -158,14 +159,20 @@ end
     end
 
     # Dummy local search that does nothing
-    struct DummyLS <: GlobalOptimization.AbstractLocalSearch end
+    struct DummyLS <: GlobalOptimization.AbstractLocalSearch{Float64} end
+    GlobalOptimization.initialize!(::DummyLS, num_dims) = nothing
     function GlobalOptimization.local_search!(hopper, evaluator, ::DummyLS)
         # no change
         nothing
     end
 
     # Test MBH with ZeroDist and DummyLS
-    mbh1 = GlobalOptimization.MBH(prob, ZeroDist(), DummyLS(); max_time = 0.0)
+    mbh1 = GlobalOptimization.MBH(
+        prob;
+        hop_distribution=ZeroDist(),
+        local_search=DummyLS(),
+        max_time = 0.0,
+    )
     res1 = GlobalOptimization.optimize!(mbh1)
     @test res1.fbest == 0.0
     @test length(res1.xbest) == 2
@@ -173,32 +180,49 @@ end
 
     # Test MBH with static distribution
     stat = GlobalOptimization.MBHStaticDistribution{Float64}()
-    mbh2 = GlobalOptimization.MBH(prob, stat, DummyLS(); max_time = 0.0)
+    mbh2 = GlobalOptimization.MBH(
+        prob;
+        hop_distribution = stat,
+        local_search = DummyLS(),
+        max_time = 0.0,
+    )
     res2 = GlobalOptimization.optimize!(mbh2)
     @test res2.fbest == 0.0
     @test length(res2.xbest) == 2
     @test res2.exitFlag == 1
 
     # Test MBH with adaptive distribution
-    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(2, 1, 0)
-    mbh3 = GlobalOptimization.MBH(prob, ad, DummyLS(); max_time = 0.0)
+    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0)
+    mbh3 = GlobalOptimization.MBH(
+        prob;
+        hop_distribution = ad,
+        local_search = DummyLS(),
+        max_time = 0.0,
+    )
     res3 = GlobalOptimization.optimize!(mbh3)
     @test res3.fbest == 0.0
     @test length(res3.xbest) == 2
     @test res3.exitFlag == 1
 
     # Test MBH with ZeroDist and LocalStochasticSearch
-    ls = GlobalOptimization.LocalStochasticSearch{Float64}(2, 0.1, 1)
-    mbh4 = GlobalOptimization.MBH(prob, ZeroDist(), ls; max_time = 0.0)
+    ls = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 1)
+    mbh4 = GlobalOptimization.MBH(
+        prob;
+        hop_distribution = ZeroDist(),
+        local_search = ls,
+        max_time = 0.0,
+    )
     res4 = GlobalOptimization.optimize!(mbh4)
     @test res4.fbest == 0.0
     @test length(res4.xbest) == 2
     @test res4.exitFlag == 1
 
     # Test MBH with static distribution and LocalStochasticSearch
-    ls2 = GlobalOptimization.LocalStochasticSearch{Float64}(2, 0.1, 2)
+    ls2 = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2)
     mbh5 = GlobalOptimization.MBH(
-        prob, GlobalOptimization.MBHStaticDistribution{Float64}(), ls2;
+        prob;
+        hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
+        local_search = ls2,
         max_time = 2.0,
     )
     res5 = GlobalOptimization.optimize!(mbh5)
@@ -207,9 +231,11 @@ end
     @test res5.exitFlag == 1
 
     # Test MBH with adaptive distribution and LocalStochasticSearch
-    ls3 = GlobalOptimization.LocalStochasticSearch{Float64}(2, 0.1, 2)
+    ls3 = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2)
     mbh6 = GlobalOptimization.MBH(
-        prob, GlobalOptimization.MBHAdaptiveDistribution{Float64}(2, 1, 0), ls3;
+        prob;
+        hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search = ls3,
         max_time = 2.0,
     )
     res6 = GlobalOptimization.optimize!(mbh6)
@@ -220,7 +246,9 @@ end
     # Test MBH with static distribution and LBFGSLocalSearch
     ls4 = GlobalOptimization.LBFGSLocalSearch{Float64}()
     mbh7 = GlobalOptimization.MBH(
-        prob, GlobalOptimization.MBHStaticDistribution{Float64}(), ls4;
+        prob;
+        hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
+        local_search = ls4,
         max_time = 2.0,
     )
     res7 = GlobalOptimization.optimize!(mbh7)
@@ -231,7 +259,9 @@ end
     # Test MBH with adaptive distribution and LocalStochasticSearch
     ls5 = GlobalOptimization.LBFGSLocalSearch{Float64}()
     mbh8 = GlobalOptimization.MBH(
-        prob, GlobalOptimization.MBHAdaptiveDistribution{Float64}(2, 1, 0), ls5;
+        prob;
+        hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search = ls5,
         max_time = 2.0,
     )
     res8 = GlobalOptimization.optimize!(mbh8)
