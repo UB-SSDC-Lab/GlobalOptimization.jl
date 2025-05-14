@@ -36,6 +36,7 @@ end
 
 # Interface
 Base.length(h::BasicHopper) = length(h.candidate)
+num_dims(h::BasicHopper) = length(h)
 
 # Methods
 """

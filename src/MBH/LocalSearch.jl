@@ -1,6 +1,6 @@
-abstract type AbstractLocalSearch end
-abstract type GradientBasedLocalSearch <: AbstractLocalSearch end
-abstract type OptimLocalSearch <: GradientBasedLocalSearch end
+abstract type AbstractLocalSearch{T} end
+abstract type GradientBasedLocalSearch{T} <: AbstractLocalSearch{T} end
+abstract type OptimLocalSearch{T} <: GradientBasedLocalSearch{T} end
 
 # Timeout function
 function timeout(f, arg, seconds, fail)
@@ -16,7 +16,7 @@ function timeout(f, arg, seconds, fail)
     end
 end
 
-struct LocalStochasticSearch{T} <: AbstractLocalSearch
+struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     # The local step standard deviation
     b::T
 
@@ -27,31 +27,28 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch
     step::Vector{T}
 
     function LocalStochasticSearch{T}(
-        ndim::Int, b::Real, iters::Int
+        b::Real, iters::Int
     ) where {T<:AbstractFloat}
-        return new{T}(T(b), iters, Vector{T}(undef, ndim))
+        return new{T}(T(b), iters, Vector{T}(undef, 0))
     end
 end
 
 # A simple cache for storing the solution from optimization with Optim.jl
 mutable struct OptimSolutionCache{T}
-    initialized::Bool
     x::Vector{T}
     cost::T
     function OptimSolutionCache{T}() where {T}
-        return new{T}(false, Vector{T}(undef, 0), zero(T))
+        return new{T}(Vector{T}(undef, 0), zero(T))
     end
 end
 
 # Initalize optim cache
-is_initialized(cache::OptimSolutionCache) = cache.initialized
-function initialize!(cache::OptimSolutionCache{T}, ndim) where {T}
-    cache.x = Vector{T}(undef, ndim)
-    cache.initialized = true
+function initialize!(cache::OptimSolutionCache, num_dims)
+    resize!(cache.x, num_dims)
     return nothing
 end
 
-struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch
+struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -86,6 +83,15 @@ struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch
             T(percent_decrease_tol), alg, opts, max_solve_time, OptimSolutionCache{T}()
         )
     end
+end
+
+function initialize!(ls::LocalStochasticSearch, num_dims)
+    resize!(ls.step, num_dims)
+    return nothing
+end
+function initialize!(ls::LBFGSLocalSearch, num_dims)
+    initialize!(ls.cache, num_dims)
+    return nothing
 end
 
 function draw_step!(
@@ -135,9 +141,6 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
     @unpack candidate, candidate_fitness = hopper
     @unpack prob = evaluator
     @unpack percent_decrease_tolerance, alg, options, max_solve_time, cache = ls
-
-    # Initialize cache if necessary
-    is_initialized(cache) || initialize!(cache, num_dims(prob))
 
     # Create solve call
     solve! = let cache = cache, prob = prob, alg = alg, options = options

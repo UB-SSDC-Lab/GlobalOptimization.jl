@@ -53,15 +53,15 @@ end
     MBH(prob::AbstractOptimizationProblem{SS})
 """
 function MBH(
-    prob::AbstractProblem{has_penalty,SS},
-    hop_distribution::AbstractMBHDistribution{T},
-    local_search::AbstractLocalSearch;
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
     function_value_check::Bool=true,
     display::Bool=false,
     display_interval::Int=1,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
-) where {T<:Number,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
+) where {T<:Number,has_penalty}
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
@@ -95,13 +95,19 @@ end
 
 function initialize!(opt::MBH)
     # Unpack MBH
-    @unpack options, evaluator, hopper = opt
+    @unpack options, evaluator, hopper, distribution, local_search = opt
 
     # Initialize the hopper
     initialize!(hopper, options.initial_space, evaluator)
 
     # Handle fitness
     check_fitness!(hopper, get_general(options))
+
+    # Initialize the distribution
+    initialize!(distribution, num_dims(hopper))
+
+    # Initialize the local search
+    initialize!(local_search, num_dims(hopper))
 
     return nothing
 end
