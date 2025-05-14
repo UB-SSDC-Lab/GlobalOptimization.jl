@@ -78,7 +78,7 @@ function initialize!(s::RandomSubsetSelector, population_size)
         error(
             "The size specified in RandomSubsetSelector is greater than the population" *
             "size. Please increase the population size or decrease the size of the" *
-            " random selection."
+            " random selection.",
         )
     end
     resize!(s.idxs, population_size)
