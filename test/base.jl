@@ -128,6 +128,62 @@ end
     @test GlobalOptimization.scalar_function_with_penalty(nlsprob, xn) == (0.0, 0.0)
 end
 
+@testset showtiming = true "Optimizers" begin
+    # Define a dummy optimizer subtype
+    struct DummyOptimizer <: GlobalOptimization.AbstractOptimizer end
+
+    # Test default optimize! throws NotImplementedError
+    opt = DummyOptimizer()
+    @test_throws ArgumentError GlobalOptimization.optimize!(opt)
+
+    # Test error message includes the optimizer type
+    try
+        GlobalOptimization.optimize!(opt)
+    catch e
+        @test isa(e, ArgumentError)
+        @test occursin("DummyOptimizer", e.msg)
+    end
+end
+
+@testset showtiming = true "Candidate" begin
+    # Define a concrete candidate type
+    mutable struct DummyCandidate <: GlobalOptimization.AbstractCandidate
+        candidate::Vector{Float64}
+        candidate_fitness::Float64
+    end
+
+    # Test candidate and fitness accessors
+    dc = DummyCandidate([1.0, 2.0], 3.4)
+    @test GlobalOptimization.candidate(dc) == [1.0, 2.0]
+    @test GlobalOptimization.fitness(dc) == 3.4
+
+    # Test set_fitness!
+    GlobalOptimization.set_fitness!(dc, 5.6)
+    @test GlobalOptimization.fitness(dc) == 5.6
+
+    # Test check_fitness! with Val(true) on finite fitness
+    @test GlobalOptimization.check_fitness!(dc, Val{true}) === nothing
+
+    # Test check_fitness! with Val(false) on infinite fitness does nothing
+    GlobalOptimization.set_fitness!(dc, Inf)
+    @test GlobalOptimization.check_fitness!(dc, Val{false}) === nothing
+
+    # Test check_fitness! with Val(true) on invalid fitness throws error
+    @test_throws ErrorException GlobalOptimization.check_fitness!(dc, Val{true})
+
+    # Test check_fitness! delegation via GeneralOptions
+    go_true = GlobalOptimization.GeneralOptions(Val(true), Val(false), 1, 1.0, 0.0)
+    go_false = GlobalOptimization.GeneralOptions(Val(false), Val(false), 1, 1.0, 0.0)
+
+    GlobalOptimization.set_fitness!(dc, 2.2)
+    @test GlobalOptimization.check_fitness!(dc, go_true) === nothing
+    @test GlobalOptimization.check_fitness!(dc, go_false) === nothing
+
+    GlobalOptimization.set_fitness!(dc, -Inf)
+    @test_throws ErrorException GlobalOptimization.check_fitness!(dc, go_true)
+    @test GlobalOptimization.check_fitness!(dc, go_false) === nothing
+end
+
 @testset showtiming = true "Population" begin
     # Create a sample population
     cand = [[1.0, 2.0], [3.0, 4.0]]

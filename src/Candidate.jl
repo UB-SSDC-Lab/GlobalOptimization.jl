@@ -34,11 +34,13 @@ end
 Checks the fitness of the candidate `c` to ensure that it is valid
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
-@inline check_fitness!(c::AbstractCandidate, options::GeneralOptions{D,FVC}) where {D,FVC} = check_fitness!(
-    c, FVC
-)
-@inline check_fitness!(c::AbstractCandidate, ::Val{false}) = nothing
-function check_fitness!(c::AbstractCandidate, ::Val{true})
+@inline function check_fitness!(
+    c::AbstractCandidate, options::GeneralOptions{D,FVC},
+) where {D,FVC}
+    check_fitness!(c, FVC)
+end
+@inline check_fitness!(c::AbstractCandidate, ::Type{Val{false}}) = nothing
+function check_fitness!(c::AbstractCandidate, ::Type{Val{true}})
     isfinite(fitness(c)) || error("Candidate has an invalid fitness.")
     return nothing
 end

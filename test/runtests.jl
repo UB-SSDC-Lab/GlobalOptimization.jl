@@ -12,4 +12,7 @@ using GlobalOptimization, Test
     @testset showtiming = true "DE" begin
         include("de.jl")
     end
+    @testset showtiming = true "MBH" begin
+        include("mbh.jl")
+    end
 end

@@ -193,10 +193,10 @@ function display_status_mbh(
     return nothing
 end
 @inline display_status_mbh(
-    time, iteration, draw_count, fitness, display_interval, ::Val{false}
+    time, iteration, draw_count, fitness, display_interval, ::Type{Val{false}}
 ) = nothing
 function display_status_mbh(
-    time, iteration, draw_count, fitness, display_interval, ::Val{true}
+    time, iteration, draw_count, fitness, display_interval, ::Type{Val{true}}
 )
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")

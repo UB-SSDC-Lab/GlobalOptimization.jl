@@ -35,7 +35,7 @@ mutable struct BasicHopper{T} <: AbstractHopper{T}
 end
 
 # Interface
-Base.length(h::BasicHopper) = length(h.x)
+Base.length(h::BasicHopper) = length(h.candidate)
 
 # Methods
 """
