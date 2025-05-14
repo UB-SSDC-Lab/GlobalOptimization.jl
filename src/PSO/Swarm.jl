@@ -63,25 +63,22 @@ Initializes the `swarm` population with `pop_init_method` in the `search_space`.
 function initialize!(
     swarm::Swarm{T},
     pop_init_method::AbstractPopulationInitialization,
-    search_space::ContinuousRectangularSearchSpace{T}
+    search_space::ContinuousRectangularSearchSpace{T},
 ) where {T}
     # Unpack swarm
-    @unpack candidates, candidates_fitness, candidates_velocity, best_candidates,
-        best_candidates_fitness = swarm
+    @unpack candidates,
+    candidates_fitness, candidates_velocity, best_candidates,
+    best_candidates_fitness = swarm
     @unpack dim_min, dim_max, dim_delta = search_space
 
     # Initialize velocities
     vel_min = candidates[1]; # We're using the first candidate here to avoid an allocation
     vel_min .= -dim_delta
     vel_max = dim_delta
-    initialize_population_vector!(
-        candidates_velocity, vel_min, vel_max, pop_init_method,
-    )
+    initialize_population_vector!(candidates_velocity, vel_min, vel_max, pop_init_method)
 
     # Initialize the positions
-    initialize_population_vector!(
-        candidates, dim_min, dim_max, pop_init_method,
-    )
+    initialize_population_vector!(candidates, dim_min, dim_max, pop_init_method)
 
     return nothing
 end

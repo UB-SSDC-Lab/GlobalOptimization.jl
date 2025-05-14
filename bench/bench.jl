@@ -19,13 +19,13 @@ function parse_commandline()
 
     @add_arg_table! s begin
         "--problem-set", "-p"
-            help = "The problem set to run. Default is all problems."
-            arg_type = String
-            default = "all"
+        help = "The problem set to run. Default is all problems."
+        arg_type = String
+        default = "all"
         "--num-trials", "-n"
-            help = "The number of trials to run for each problem and algorithm. Default is 50."
-            arg_type = Int
-            default = 50
+        help = "The number of trials to run for each problem and algorithm. Default is 50."
+        arg_type = Int
+        default = 50
     end
 
     return parse_args(s)
@@ -57,7 +57,7 @@ function main()
         BestFitness=Float64[],
         MeanFitness=Float64[],
         MedianFitness=Float64[],
-        AllFitness=Vector{Vector{Float64}}(undef, 0)
+        AllFitness=Vector{Vector{Float64}}(undef, 0),
     )
 
     for prob in prob_set
@@ -76,8 +76,7 @@ function main()
         opt_prob = OptimizationProblem(
             test_prob.fun,
             ContinuousRectangularSearchSpace(
-                fill(test_prob.lb_per_dim, num_dims),
-                fill(test_prob.ub_per_dim, num_dims),
+                fill(test_prob.lb_per_dim, num_dims), fill(test_prob.ub_per_dim, num_dims)
             ),
         )
 
@@ -164,11 +163,7 @@ function main()
         "benchmark_data_$(parsed_args["problem-set"])_$(short_hash).jld2"
     end
     mkpath(data_dir)
-    jldsave(
-        joinpath(data_dir, file_name);
-        df=data,
-        commit_hash=full_hash,
-    )
+    jldsave(joinpath(data_dir, file_name); df=data, commit_hash=full_hash)
 
     return data, short_hash
 end

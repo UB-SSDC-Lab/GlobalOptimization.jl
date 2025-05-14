@@ -34,52 +34,46 @@ function main()
 
     # Load the data
     data_a = JLD2.load(
-        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash-a"]).jld2"),
+        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash-a"]).jld2")
     )["df"]
     data_b = JLD2.load(
-        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash-b"]).jld2"),
+        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash-b"]).jld2")
     )["df"]
 
     # Get intersection of algorithms in benchmarks
-    algs = intersect(
-        unique(data_a.AlgorithmName),
-        unique(data_b.AlgorithmName),
-    )
+    algs = intersect(unique(data_a.AlgorithmName), unique(data_b.AlgorithmName))
 
     # Get intersection of problems in benchmarks
     probs = innerjoin(
         unique(data_a[!, [:ProblemName, :NumDims, :PopSize]]),
         unique(data_b[!, [:ProblemName, :NumDims, :PopSize]]);
-        on = [:ProblemName, :NumDims, :PopSize],
+        on=[:ProblemName, :NumDims, :PopSize],
     )
 
     # For all algorithm/problem combos, check if the mean fitness is statistically different
-    a_versus_b = DataFrame(
-        ProblemName = String[],
-        NumDims = Int[],
-        PopSize = Int[],
-        AlgorithmName = String[],
-        PValue = Float64[],
-        Change = Char[],
+    a_versus_b = DataFrame(;
+        ProblemName=String[],
+        NumDims=Int[],
+        PopSize=Int[],
+        AlgorithmName=String[],
+        PValue=Float64[],
+        Change=Char[],
     )
     for alg in algs
         for prob in eachrow(probs)
             # Get the data for the algorithm and problem
             filter_fun(row) = begin
                 row.AlgorithmName == alg &&
-                row.ProblemName == prob.ProblemName &&
-                row.NumDims == prob.NumDims &&
-                row.PopSize == prob.PopSize
+                    row.ProblemName == prob.ProblemName &&
+                    row.NumDims == prob.NumDims &&
+                    row.PopSize == prob.PopSize
             end
             alg_prob_a = filter(filter_fun, data_a)
             alg_prob_b = filter(filter_fun, data_b)
 
             # Perform Mann Whitney U test
             pval = pvalue(
-                MannWhitneyUTest(
-                    alg_prob_a.AllFitness[1],
-                    alg_prob_b.AllFitness[1]
-                )
+                MannWhitneyUTest(alg_prob_a.AllFitness[1], alg_prob_b.AllFitness[1])
             )
 
             # Append to the results
@@ -93,14 +87,7 @@ function main()
             end
             push!(
                 a_versus_b,
-                (
-                    prob.ProblemName,
-                    prob.NumDims,
-                    prob.PopSize,
-                    alg,
-                    pval,
-                    change,
-                )
+                (prob.ProblemName, prob.NumDims, prob.PopSize, alg, pval, change),
             )
         end
     end
@@ -115,24 +102,17 @@ function main()
     n_improved = sum(c -> ifelse(c == '-', 1, 0), sig_diffs.Change)
     n_worse = sum(c -> ifelse(c == '+', 1, 0), sig_diffs.Change)
 
-    println(
-        "Found $(n_diffs) different experiments out of $(total) ($(percent)%)."
-    )
+    println("Found $(n_diffs) different experiments out of $(total) ($(percent)%).")
     println(
         " - Improved:\t$(n_improved) ($(round(Int, n_improved / n_diffs * 100.0))% of diffs)",
     )
-    println(
-        " - Worse:\t$(n_worse) ($(round(Int, n_worse / n_diffs * 100.0))% of diffs)",
-    )
+    println(" - Worse:\t$(n_worse) ($(round(Int, n_worse / n_diffs * 100.0))% of diffs)")
 
     # Write differences to CSV
     file_name = "$(parsed_args["hash-a"])_vs_$(parsed_args["hash-b"]).csv"
     CSV.write(
         joinpath(@__DIR__, "data", "diffs", file_name),
-        filter(
-            row -> row.Change != '0',
-            a_versus_b
-        )
+        filter(row -> row.Change != '0', a_versus_b),
     )
 end
 

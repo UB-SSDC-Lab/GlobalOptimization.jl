@@ -65,8 +65,7 @@ Checks the fitness of each candidate in the population `pop` to ensure that it i
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
 @inline function check_fitness!(
-    pop::AbstractPopulation,
-    options::GeneralOptions{D,FVC},
+    pop::AbstractPopulation, options::GeneralOptions{D,FVC}
 ) where {D,FVC}
     return check_fitness!(pop, FVC)
 end
@@ -139,17 +138,17 @@ struct LatinHypercubeInitialization{U<:AbstractRNG} <: AbstractPopulationInitial
     - `ae_power::Float64`: Power of the adaptive evolution in the GA. Defaults to 2.0.
     """
     function LatinHypercubeInitialization(
-        gens::Int = 10;
-        rng::U = GLOBAL_RNG,
-        pop_size::Int = 100,
-        n_tour::Int = 2,
-        p_tour::Float64 = 0.8,
-        inter_sample_weight::Float64 = 1.0,
-        periodic_ae::Bool = false,
-        ae_power::Float64 = 2.0,
-    ) where U<:AbstractRNG
+        gens::Int=10;
+        rng::U=GLOBAL_RNG,
+        pop_size::Int=100,
+        n_tour::Int=2,
+        p_tour::Float64=0.8,
+        inter_sample_weight::Float64=1.0,
+        periodic_ae::Bool=false,
+        ae_power::Float64=2.0,
+    ) where {U<:AbstractRNG}
         return new{U}(
-            gens,rng,pop_size,n_tour,p_tour,inter_sample_weight,periodic_ae,ae_power,
+            gens, rng, pop_size, n_tour, p_tour, inter_sample_weight, periodic_ae, ae_power
         )
     end
 end
@@ -158,8 +157,8 @@ function initialize_population_vector!(
     pop_vec::Vector{<:AbstractVector{T}},
     min::AbstractVector,
     max::AbstractVector,
-    method::UniformInitialization
-) where T
+    method::UniformInitialization,
+) where {T}
     @inbounds for i in eachindex(pop_vec)
         vec = pop_vec[i]
         for j in eachindex(vec)
@@ -173,29 +172,29 @@ function initialize_population_vector!(
     pop_vec::Vector{<:AbstractVector{T}},
     min::AbstractVector,
     max::AbstractVector,
-    method::LatinHypercubeInitialization
-) where T
+    method::LatinHypercubeInitialization,
+) where {T}
     # Generate the optimal Latin hypercube samples
     scaled_plan = begin
         plan, _ = LHCoptim(
             length(pop_vec),
             length(pop_vec[1]),
             method.gens;
-            rng = method.rng,
-            ntour = method.n_tour,
-            ptour = method.p_tour,
-            interSampleWeight = method.inter_sample_weight,
-            periodic_ae = method.periodic_ae,
-            ae_power = method.ae_power,
+            rng=method.rng,
+            ntour=method.n_tour,
+            ptour=method.p_tour,
+            interSampleWeight=method.inter_sample_weight,
+            periodic_ae=method.periodic_ae,
+            ae_power=method.ae_power,
         )
-        scaleLHC(plan, map(identity, zip(min,max)))
+        scaleLHC(plan, map(identity, zip(min, max)))
     end
 
     # Initialize the population vector with the samples
     for i in eachindex(pop_vec)
         vec = pop_vec[i]
         for j in eachindex(vec)
-            vec[j] = scaled_plan[i,j]
+            vec[j] = scaled_plan[i, j]
         end
     end
 

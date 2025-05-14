@@ -7,7 +7,7 @@ Options for the PSO algorithm.
 struct PSOOptions{
     ISS<:Union{Nothing,ContinuousRectangularSearchSpace},
     PI<:AbstractPopulationInitialization,
-    GO<:GeneralOptions
+    GO<:GeneralOptions,
 } <: AbstractAlgorithmSpecificOptions
     # The general options
     general::GO
@@ -209,25 +209,25 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 """
 function ThreadedPSO(
     prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int = 100,
+    num_particles::Int=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing,
-    max_iterations::Int = 1000,
-    function_tolerence::AbstractFloat = 1e-6,
-    max_stall_time::Real = Inf,
-    max_stall_iterations::Int = 25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat = 0.25,
-    self_adjustment_weight::Real = 1.49,
-    social_adjustment_weight::Real = 1.49,
-    display::Bool = false,
-    display_interval::Int = 1,
-    function_value_check::Bool = true,
-    max_time::Real = 60.0,
-    min_cost::Real = -Inf,
-    batch_n::Int = Threads.nthreads(),
-    batch_split = ChunkSplitters.RoundRobin(),
-) where {T <: AbstractFloat, SS <: ContinuousRectangularSearchSpace{T}, has_penalty}
+    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    max_iterations::Int=1000,
+    function_tolerence::AbstractFloat=1e-6,
+    max_stall_time::Real=Inf,
+    max_stall_iterations::Int=25,
+    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+    minimum_neighborhood_fraction::AbstractFloat=0.25,
+    self_adjustment_weight::Real=1.49,
+    social_adjustment_weight::Real=1.49,
+    display::Bool=false,
+    display_interval::Int=1,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    batch_n::Int=Threads.nthreads(),
+    batch_split=ChunkSplitters.RoundRobin(),
+) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
@@ -533,10 +533,10 @@ Displays the status of the PSO algorithm.
     return nothing
 end
 @inline display_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}},
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}}
 ) = nothing
 function display_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}},
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}}
 )
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")

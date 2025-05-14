@@ -162,7 +162,9 @@ returns a vector of all ranges.
 - `Tuple{T, T}` or `Vector{Tuple{T, T}}`: the range of values for the `i`-th dimension of `ss` or a vector of all ranges if `i` not provided.
 """
 dim_range(ss::ContinuousRectangularSearchSpace) = tuple.(dim_min(ss), dim_max(ss))
-dim_range(ss::ContinuousRectangularSearchSpace, i::Integer) = (dim_min(ss, i), dim_max(ss, i))
+function dim_range(ss::ContinuousRectangularSearchSpace, i::Integer)
+    (dim_min(ss, i), dim_max(ss, i))
+end
 
 """
     intersection(
