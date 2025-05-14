@@ -39,7 +39,6 @@ end
     # Test constructor error conditions
     @test_throws DimensionMismatch ContinuousRectangularSearchSpace([0.0, 1.0], [0.0])
     @test_throws ArgumentError ContinuousRectangularSearchSpace([1.0, 0.0], [0.0, 2.0])
-
 end
 
 @testset showtiming = true "Results" begin

@@ -206,9 +206,7 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     #k = length(step) / 2.0
     k = 1.0
     @inbounds for i in eachindex(step)
-        step[i] = k * ((1.0 - b) *
-            rand(Laplace(0.0, c * λhat[i])) +
-            b * rand(Laplace()))
+        step[i] = k * ((1.0 - b) * rand(Laplace(0.0, c * λhat[i])) + b * rand(Laplace()))
     end
 
     return nothing

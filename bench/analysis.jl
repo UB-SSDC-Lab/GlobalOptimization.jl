@@ -30,7 +30,7 @@ function main()
 
     # Load the data
     data = JLD2.load(
-        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash"]).jld2"),
+        joinpath(@__DIR__, "data", "benchmark_data_$(parsed_args["hash"]).jld2")
     )["df"]
 
     # Get unique algorithms in benchmark data
@@ -56,21 +56,20 @@ function main()
 
         # ==== Mean fitness ranks
         mean_fitness_rank_idxs = sortperm(group.MeanFitnessRank)
-        for i in 1:length(mean_fitness_rank_idxs) - 1
+        for i in 1:(length(mean_fitness_rank_idxs) - 1)
             # Perform Mann Whitney U test between the two groups
             pval = pvalue(
                 MannWhitneyUTest(
                     group.AllFitness[mean_fitness_rank_idxs[i]],
-                    group.AllFitness[mean_fitness_rank_idxs[i + 1]]
-                )
+                    group.AllFitness[mean_fitness_rank_idxs[i + 1]],
+                ),
             )
 
             # If distributions are statistically similar, assign the same rank and adjust
             # the remaining ranks
             if pval >= 0.05
                 # Assign the same rank to both groups
-                group.MeanFitnessRank[mean_fitness_rank_idxs[i + 1]] =
-                    group.MeanFitnessRank[mean_fitness_rank_idxs[i]]
+                group.MeanFitnessRank[mean_fitness_rank_idxs[i + 1]] = group.MeanFitnessRank[mean_fitness_rank_idxs[i]]
 
                 # Adjust the remaining ranks
                 for j in (i + 2):length(mean_fitness_rank_idxs)
@@ -81,21 +80,20 @@ function main()
 
         # ==== Median fitness ranks
         median_fitness_rank_idxs = sortperm(group.MedianFitnessRank)
-        for i in 1:length(median_fitness_rank_idxs) - 1
+        for i in 1:(length(median_fitness_rank_idxs) - 1)
             # Perform Mann Whitney U test between the two groups
             pval = pvalue(
                 MannWhitneyUTest(
                     group.AllFitness[median_fitness_rank_idxs[i]],
-                    group.AllFitness[median_fitness_rank_idxs[i + 1]]
-                )
+                    group.AllFitness[median_fitness_rank_idxs[i + 1]],
+                ),
             )
 
             # If distributions are statistically similar, assign the same rank and adjust
             # the remaining ranks
             if pval >= 0.05
                 # Assign the same rank to both groups
-                group.MedianFitnessRank[median_fitness_rank_idxs[i + 1]] =
-                    group.MedianFitnessRank[median_fitness_rank_idxs[i]]
+                group.MedianFitnessRank[median_fitness_rank_idxs[i + 1]] = group.MedianFitnessRank[median_fitness_rank_idxs[i]]
 
                 # Adjust the remaining ranks
                 for j in (i + 2):length(median_fitness_rank_idxs)
@@ -107,21 +105,16 @@ function main()
 
     # ==== Summary statistics for each algorithm
     num_rank_1s(x) = sum(xx -> ifelse(xx==1, 1, 0), x)
-    alg_summary_data =
-        combine(
-            groupby(data, :AlgorithmName),
-            :MeanFitnessRank => mean => :MeanRankByMeanFitness,
-            :MeanFitnessRank => num_rank_1s => :NumRank1ByMeanFitness,
-            :MedianFitnessRank => mean => :MeanRankByMedianFitness,
-            :MedianFitnessRank => num_rank_1s => :NumRank1ByMedianFitness,
-        )
-
+    alg_summary_data = combine(
+        groupby(data, :AlgorithmName),
+        :MeanFitnessRank => mean => :MeanRankByMeanFitness,
+        :MeanFitnessRank => num_rank_1s => :NumRank1ByMeanFitness,
+        :MedianFitnessRank => mean => :MeanRankByMedianFitness,
+        :MedianFitnessRank => num_rank_1s => :NumRank1ByMedianFitness,
+    )
 
     file = joinpath(@__DIR__, "data", "benchmark_summary_$(parsed_args["hash"]).csv")
-    CSV.write(
-        file,
-        alg_summary_data,
-    )
+    CSV.write(file, alg_summary_data)
 end
 
 main()

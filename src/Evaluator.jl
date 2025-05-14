@@ -65,7 +65,7 @@ end
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
 struct ThreadedBatchEvaluator{
-    T, has_penalty, SS <: SearchSpace{T}, F, G, S <: ChunkSplitters.Split
+    T,has_penalty,SS<:SearchSpace{T},F,G,S<:ChunkSplitters.Split
 } <: BatchEvaluator{T}
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
@@ -76,9 +76,9 @@ struct ThreadedBatchEvaluator{
 
     function ThreadedBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G},
-        n::Int = Threads.nthreads(),
-        split::S = ChunkSplitters.RoundRobin(),
-    ) where {T, has_penalty, SS <: SearchSpace{T}, F, G, S <: ChunkSplitters.Split}
+        n::Int=Threads.nthreads(),
+        split::S=ChunkSplitters.RoundRobin(),
+    ) where {T,has_penalty,SS<:SearchSpace{T},F,G,S<:ChunkSplitters.Split}
         return new{T,has_penalty,SS,F,G,S}(prob, n, split)
     end
 end
@@ -121,11 +121,7 @@ function evaluate!(pop::AbstractPopulation, evaluator::SerialBatchEvaluator)
     return nothing
 end
 function evaluate!(pop::AbstractPopulation, evaluator::ThreadedBatchEvaluator)
-    citer = ChunkSplitters.chunks(
-        eachindex(pop);
-        n = evaluator.n,
-        split = evaluator.split,
-    )
+    citer = ChunkSplitters.chunks(eachindex(pop); n=evaluator.n, split=evaluator.split)
 
     cs = candidates(pop)
     @sync for idxs in citer

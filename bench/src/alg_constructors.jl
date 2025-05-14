@@ -41,8 +41,7 @@ function construct_rl_default_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
         mutation_params=SelfMutationParameters(
-            mut_strat;
-            sel=GlobalOptimization.RadiusLimitedSelector(8),
+            mut_strat; sel=GlobalOptimization.RadiusLimitedSelector(8)
         ),
         crossover_params=SelfBinomialCrossoverParameters(),
     )
@@ -72,8 +71,7 @@ function construct_rs_default_adaptive_de_mutstrat_bin(prob, mut_strat, pop_size
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
         mutation_params=SelfMutationParameters(
-            mut_strat;
-            sel=GlobalOptimization.RandomSubsetSelector(8),
+            mut_strat; sel=GlobalOptimization.RandomSubsetSelector(8)
         ),
         crossover_params=SelfBinomialCrossoverParameters(),
     )
@@ -128,7 +126,9 @@ function construct_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size
     )
 end
 
-function construct_rl_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
+function construct_rl_default_adaptive_de_mutstrat_covbin(
+    prob, mut_strat, pop_size, max_iters
+)
     return SerialDE(
         prob;
         display=false,
@@ -136,8 +136,7 @@ function construct_rl_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
         mutation_params=SelfMutationParameters(
-            mut_strat;
-            sel=GlobalOptimization.RadiusLimitedSelector(8),
+            mut_strat; sel=GlobalOptimization.RadiusLimitedSelector(8)
         ),
         crossover_params=SelfBinomialCrossoverParameters(;
             transform=GlobalOptimization.CovarianceTransformation(
@@ -147,7 +146,9 @@ function construct_rl_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     )
 end
 
-function construct_rl_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
+function construct_rl_uniform_adaptive_de_mutstrat_covbin(
+    prob, mut_strat, pop_size, max_iters
+)
     return SerialDE(
         prob;
         display=false,
@@ -168,7 +169,9 @@ function construct_rl_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
     )
 end
 
-function construct_rs_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
+function construct_rs_default_adaptive_de_mutstrat_covbin(
+    prob, mut_strat, pop_size, max_iters
+)
     return SerialDE(
         prob;
         display=false,
@@ -176,18 +179,19 @@ function construct_rs_default_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
         max_iterations=max_iters,
         max_stall_iterations=max_iters,
         mutation_params=SelfMutationParameters(
-            mut_strat;
-            sel=GlobalOptimization.RandomSubsetSelector(8),
+            mut_strat; sel=GlobalOptimization.RandomSubsetSelector(8)
         ),
         crossover_params=SelfBinomialCrossoverParameters(;
             transform=GlobalOptimization.CovarianceTransformation(
                 0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
-            )
+            ),
         ),
     )
 end
 
-function construct_rs_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_size, max_iters)
+function construct_rs_uniform_adaptive_de_mutstrat_covbin(
+    prob, mut_strat, pop_size, max_iters
+)
     return SerialDE(
         prob;
         display=false,
@@ -203,7 +207,7 @@ function construct_rs_uniform_adaptive_de_mutstrat_covbin(prob, mut_strat, pop_s
             dist=Uniform(0.0, 1.0),
             transform=GlobalOptimization.CovarianceTransformation(
                 0.1, 0.5, GlobalOptimization.num_dims(prob.ss)
-            )
+            ),
         ),
     )
 end
