@@ -9,4 +9,7 @@ using GlobalOptimization, Test
     @testset showtiming = true "PSO" begin
         include("pso.jl")
     end
+    @testset showtiming = true "DE" begin
+        include("de.jl")
+    end
 end
