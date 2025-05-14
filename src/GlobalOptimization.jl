@@ -32,7 +32,6 @@ include("PSO/Swarm.jl")
 include("PSO/PSO.jl")
 
 # DE
-#include("DE/bimodal_cauchy.jl")
 include("DE/util.jl")
 include("DE/Population.jl")
 include("DE/mutation.jl")
