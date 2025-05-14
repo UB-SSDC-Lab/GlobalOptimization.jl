@@ -60,6 +60,50 @@ using StaticArrays
     @test_throws ArgumentError GlobalOptimization.one_clamped_rand(AlwaysZeroDist())
 end
 
+@testset showtiming=true "Population" begin
+
+    # Test DEBasePopulation constructor
+    bp = GlobalOptimization.DEBasePopulation{Float64}(3, 2)
+    @test length(bp.candidates) == 3
+    @test all(length(v) == 2 for v in bp.candidates)
+    @test bp.candidates_fitness == zeros(3)
+
+    # Test DEPopulation default constructor
+    pop = GlobalOptimization.DEPopulation(4, 3)
+    @test length(pop) == 4
+    @test length(pop.current_generation.candidates) == 4
+    @test length(pop.improved) == 4
+
+    # Test error conditions for DEPopulation
+    @test_throws ArgumentError GlobalOptimization.DEPopulation(0, 2)
+    @test_throws ArgumentError GlobalOptimization.DEPopulation(2, 0)
+
+    # Test initialize! populates candidates within bounds
+    lb = [-1.0, 0.0, 2.0]
+    ub = [1.0, 2.0, 3.0]
+    ss = GlobalOptimization.ContinuousRectangularSearchSpace(lb, ub)
+    init = GlobalOptimization.UniformInitialization()
+    GlobalOptimization.initialize!(pop, init, ss)
+    for v in pop.current_generation.candidates
+        for j in eachindex(v)
+            @test v[j] ≥ lb[j] && v[j] ≤ ub[j]
+        end
+    end
+
+    # Test selection! replaces improved candidates and sets flags
+    pop2 = GlobalOptimization.DEPopulation(3, 2)
+    pop2.current_generation.candidates .= [[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]]
+    pop2.current_generation.candidates_fitness .= [3.0, 1.0, 2.0]
+    pop2.mutants.candidates .= [[1.0, 1.0], [0.0, 0.0], [3.0, 3.0]]
+    pop2.mutants.candidates_fitness .= [2.0, 2.0, 1.0]
+    GlobalOptimization.selection!(pop2)
+    # Check replacements
+    @test pop2.current_generation.candidates[1] == [1.0, 1.0]
+    @test pop2.current_generation.candidates[2] == [1.0, 1.0]
+    @test pop2.current_generation.candidates[3] == [3.0, 3.0]
+    @test pop2.improved == [true, false, true]
+end
+
 @testset showtiming=true "Mutation" begin
     # Define a constant distribution for testing
     struct ConstDist{T} <: Distribution{Univariate, Continuous}
@@ -200,5 +244,109 @@ end
     for i in 1:10
         @test pop2.mutants.candidates[i] != pop2.current_generation.candidates[i]
     end
+end
+
+@testset showtiming=true "Crossover" begin
+
+    # Test NoTransformation: to_transformed and from_transformed!
+    nt = GlobalOptimization.NoTransformation()
+    c = SVector(1.0, 2.0)
+    m = SVector(3.0, 4.0)
+    ct, mt, flag = GlobalOptimization.to_transformed(nt, c, m)
+    @test ct === c && mt === m && flag == false
+    mcopy = deepcopy(m)
+    GlobalOptimization.from_transformed!(nt, mt, mcopy)
+    @test mcopy == m
+
+    # Test CovarianceTransformation constructor errors
+    @test_throws ArgumentError GlobalOptimization.CovarianceTransformation(0.0, 0.5, 2)
+    @test_throws ArgumentError GlobalOptimization.CovarianceTransformation(0.5, 0.0, 2)
+
+    # Test valid CovarianceTransformation initialization and update
+    ct2 = GlobalOptimization.CovarianceTransformation(1.0, 1.0, 2)
+    GlobalOptimization.initialize!(ct2, 3)
+    @test ct2.idxs == UInt16[1, 2, 3]
+    pop = GlobalOptimization.DEPopulation(3, 2)
+    # Make all candidates identical so covariance is zero matrix
+    for i in 1:3
+        pop.current_generation.candidates[i] = SVector(5.0, 6.0)
+        pop.current_generation.candidates_fitness[i] = 0.0
+        pop.mutants.candidates[i] = SVector(7.0, 8.0)
+    end
+    GlobalOptimization.update_transformation!(ct2, pop)
+    @test any([
+        isapprox(ct2.B, [1.0 0.0; 0.0 1.0]; atol=1e-8),
+        isapprox(ct2.B, [1.0 0.0; 0.0 -1.0]; atol=1e-8),
+        isapprox(ct2.B, [-1.0 0.0; 0.0 1.0]; atol=1e-8),
+        isapprox(ct2.B, [-1.0 0.0; 0.0 -1.0]; atol=1e-8),
+    ])
+
+    # Test to_transformed always transforms when pb=1.0
+    orig_c = pop.current_generation.candidates[1]
+    orig_m = pop.mutants.candidates[1]
+    ctvec, mtvec, flag2 = GlobalOptimization.to_transformed(ct2, orig_c, orig_m)
+    @test flag2 == true
+    @test ctvec == transpose(ct2.B)*orig_c
+    @test mtvec == transpose(ct2.B)*orig_m
+    # Test from_transformed! maps back correctly
+    newm = copy(ctvec)
+    GlobalOptimization.from_transformed!(ct2, ctvec, newm)
+    @test newm == collect(orig_c)
+
+    # Test BinomialCrossoverParameters constructors
+    bp1 = GlobalOptimization.BinomialCrossoverParameters(0.25)
+    @test bp1.CR == 0.25
+    @test bp1.transform isa GlobalOptimization.NoTransformation
+    @test bp1.dist === nothing
+    bp2 = GlobalOptimization.BinomialCrossoverParameters(; dist=Uniform(0.0, 1.0))
+    @test bp2.CR == 0.0
+    @test bp2.transform isa GlobalOptimization.NoTransformation
+
+    # Test SelfBinomialCrossoverParameters default
+    sbp = GlobalOptimization.SelfBinomialCrossoverParameters()
+    @test sbp.CRs == Float64[]
+    @test sbp.transform isa GlobalOptimization.NoTransformation
+    @test isa(sbp.dist, MixtureModel)
+
+    # Test initialize! and adapt! for BinomialCrossoverParameters
+    GlobalOptimization.initialize!(bp2, 2, 3)
+    @test 0.0 < bp2.CR <= 1.0
+    oldCR = bp2.CR
+    GlobalOptimization.adapt!(bp2, [false, false], false)
+    @test 0.0 < bp2.CR <= 1.0
+    bp2.CR = 0.123
+    GlobalOptimization.adapt!(bp2, [true, true], true)
+    @test bp2.CR == 0.123
+
+    # Test initialize! and adapt! for SelfBinomialCrossoverParameters
+    GlobalOptimization.initialize!(sbp, 2, 3)
+    @test length(sbp.CRs) == 3
+    @test all(0.0 .< sbp.CRs .<= 1.0)
+    oldCRs = copy(sbp.CRs)
+    improved = [true, false, true]
+    GlobalOptimization.adapt!(sbp, improved, false)
+    @test sbp.CRs[1] == oldCRs[1]
+    @test sbp.CRs[2] != oldCRs[2]
+    @test sbp.CRs[3] == oldCRs[3]
+
+    # Test crossover! with CR=1.0 (no change)
+    pop2 = GlobalOptimization.DEPopulation(4, 2)
+    search_space = GlobalOptimization.ContinuousRectangularSearchSpace([0.0, 0.0], [10.0, 10.0])
+    for i in 1:4
+        pop2.current_generation.candidates[i] = SVector(1.0, 2.0)
+        pop2.mutants.candidates[i] = SVector(3.0, 4.0)
+    end
+    bp_fixed = GlobalOptimization.BinomialCrossoverParameters(1.0; transform=GlobalOptimization.NoTransformation())
+    GlobalOptimization.crossover!(pop2, bp_fixed, search_space)
+    @test pop2.mutants.candidates == [SVector(3.0, 4.0) for _ in 1:4]
+
+    # Test crossover! with CR=0.0 (some crossover occurs)
+    bp0 = GlobalOptimization.BinomialCrossoverParameters(0.0; transform=GlobalOptimization.NoTransformation())
+    # Reset mutants
+    for i in 1:4
+        pop2.mutants.candidates[i] = SVector(3.0, 4.0)
+    end
+    GlobalOptimization.crossover!(pop2, bp0, search_space)
+    @test any(pop2.mutants.candidates[i] != SVector(3.0, 4.0) for i in 1:4)
 
 end
