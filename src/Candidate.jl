@@ -4,7 +4,7 @@
 
 Abstract type for a candidate
 """
-abstract type AbstractCandidate end
+abstract type AbstractCandidate{T} end
 
 """
     candidate(c::AbstractCandidate)

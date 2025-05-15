@@ -4,15 +4,15 @@ using Optim, LineSearches
 
 @testset showtiming = true "Hopper" begin
 
-    # Test BasicHopper constructor with dimensions
-    h = GlobalOptimization.BasicHopper{Float64}(3)
+    # Test Hopper constructor with dimensions
+    h = GlobalOptimization.Hopper{Float64}(3)
     @test length(h) == 3
     @test all(x -> x == 0.0, h.candidate)
     @test h.candidate_fitness == Inf
     @test h.best_candidate_fitness == Inf
 
-    # Test BasicHopper undef initializer constructor
-    hu = GlobalOptimization.BasicHopper{Float64}(undef)
+    # Test Hopper undef initializer constructor
+    hu = GlobalOptimization.Hopper{Float64}(undef)
     @test length(hu) == 0
     @test hu.candidate_fitness == Inf
     @test length(hu.best_candidate) == 0
@@ -26,7 +26,7 @@ using Optim, LineSearches
         nothing
     end
 
-    hd = GlobalOptimization.BasicHopper{Float64}(2)
+    hd = GlobalOptimization.Hopper{Float64}(2)
     # Set best_candidate to known values
     hd.best_candidate .= [2.0, 3.0]
     # Ensure candidate_step is zeroed
@@ -147,7 +147,7 @@ end
         nothing
     end
     function GlobalOptimization.update_fitness!(
-        hopper::GlobalOptimization.BasicHopper{Float64}, ::ZeroDist
+        hopper::GlobalOptimization.Hopper{Float64}, ::ZeroDist
     )
         # The same as for MBHStaticDistribution
         if hopper.candidate_fitness < hopper.best_candidate_fitness

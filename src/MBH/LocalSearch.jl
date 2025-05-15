@@ -93,6 +93,14 @@ function initialize!(ls::LBFGSLocalSearch, num_dims)
     initialize!(ls.cache, num_dims)
     return nothing
 end
+function initialize!(
+    ls_vec::Vector{<:AbstractLocalSearch}, num_dims
+)
+    for ls in ls_vec
+        initialize!(ls, num_dims)
+    end
+    return nothing
+end
 
 function draw_step!(
     step::AbstractVector{T}, ls::LocalStochasticSearch{T}
@@ -105,7 +113,6 @@ end
 
 function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     @unpack b, iters, step = ls
-    better_candidate_found = false
     for _ in 1:iters
         # Draw step
         draw_step!(step, ls)
@@ -115,15 +122,11 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
         if feasible(step, evaluator.prob.ss)
             fitness, penalty = evaluate_with_penalty(evaluator, step)
             if abs(penalty) - eps() <= 0.0 && fitness < hopper.candidate_fitness
-                better_candidate_found = true
+                hopper.candidate_step .+= step .- hopper.candidate
                 hopper.candidate .= step
                 hopper.candidate_fitness = fitness
             end
         end
-    end
-    # Update candidate step if necessary
-    if better_candidate_found
-        hopper.candidate_step .= hopper.candidate .- hopper.best_candidate
     end
     return nothing
 end
@@ -159,9 +162,9 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
             new_fitness = cache.cost
             if new_fitness < current_fitness
                 # Update hopper candidate since we've improved some
+                hopper.candidate_step .+= cache.x .- hopper.candidate
                 hopper.candidate .= cache.x
                 hopper.candidate_fitness = new_fitness
-                hopper.candidate_step .= hopper.candidate .- hopper.best_candidate
 
                 # Check if we should continue local search
                 perc_decrease =

@@ -57,11 +57,11 @@ dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
 lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
     iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
 )
-lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-6, 32)
-mbh = GlobalOptimization.MBH(
+lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-8, 100)
+mbh = GlobalOptimization.SerialCMBH(
     prob;
     #hop_distribution=dist,
-    #local_search=lsgb,
+    local_search=lss,
     display=true,
     display_interval=10,
     max_time=20.0,
