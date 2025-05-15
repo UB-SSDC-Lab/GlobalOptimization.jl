@@ -60,6 +60,7 @@ function MBH(
     prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
     hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
     display::Bool=false,
     display_interval::Int=1,
@@ -75,7 +76,7 @@ function MBH(
             max_time,
             min_cost,
         ),
-        search_space(prob),
+        intersection(search_space(prob), initial_space),
     )
 
     # Construct MBH
@@ -112,7 +113,7 @@ function SerialCMBH(
             max_time,
             min_cost,
         ),
-        search_space(prob),
+        intersection(search_space(prob), initial_space),
     )
 
     # Construct MBH

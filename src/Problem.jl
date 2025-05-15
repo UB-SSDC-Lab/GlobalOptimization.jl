@@ -33,7 +33,7 @@ An optimization problem. Contains the objective function and search space.
 struct OptimizationProblem{has_penalty,SS<:SearchSpace,F,G} <:
        AbstractOptimizationProblem{has_penalty,SS}
     f::F    # Objective function
-    g!::G    # Gradient of the objective function
+    g!::G   # Gradient of the objective function
     ss::SS  # Search space
 
     @doc """

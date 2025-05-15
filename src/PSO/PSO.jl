@@ -112,7 +112,7 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
 - `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
 - `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
@@ -133,7 +133,7 @@ function SerialPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Int=1000,
     function_tolerence::AbstractFloat=1e-6,
     max_stall_time::Real=Inf,
@@ -159,7 +159,7 @@ function SerialPSO(
         ),
         num_particles,
         population_init_method,
-        intersection(search_space(prob), initial_bounds),
+        intersection(search_space(prob), initial_space),
         max_iterations,
         function_tolerence,
         max_stall_time,
@@ -190,7 +190,7 @@ Constructs a PSO algorithm with the given options that will employ a `ThreadedBa
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
 - `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
 - `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
@@ -211,7 +211,7 @@ function ThreadedPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Int=1000,
     function_tolerence::AbstractFloat=1e-6,
     max_stall_time::Real=Inf,
@@ -239,7 +239,7 @@ function ThreadedPSO(
         ),
         num_particles,
         population_init_method,
-        intersection(search_space(prob), initial_bounds),
+        intersection(search_space(prob), initial_space),
         max_iterations,
         function_tolerence,
         max_stall_time,
@@ -270,7 +270,7 @@ Constructs a PSO algorithm with the given options that will employ a `PolyesterB
 # Keyword Arguments
 - `num_particles::Int = 100`: The number of particles to use.
 - `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
 - `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
@@ -291,7 +291,7 @@ function PolyesterPSO(
     prob::AbstractProblem{has_penalty,SS};
     num_particles::Int=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Int=1000,
     function_tolerence::AbstractFloat=1e-6,
     max_stall_time::Real=Inf,
@@ -317,7 +317,7 @@ function PolyesterPSO(
         ),
         num_particles,
         population_init_method,
-        intersection(search_space(prob), initial_bounds),
+        intersection(search_space(prob), initial_space),
         max_iterations,
         function_tolerence,
         max_stall_time,

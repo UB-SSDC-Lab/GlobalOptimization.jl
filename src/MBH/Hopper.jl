@@ -14,15 +14,6 @@ mutable struct Hopper{T} <: AbstractCandidate{T}
             candidate_fitness,
         )
     end
-    function Hopper{T}(::UndefInitializer) where {T}
-        candidate = Vector{T}(undef, 0)
-        candidate_fitness = T(Inf)
-        return new{T}(
-            candidate,
-            copy(candidate),
-            candidate_fitness,
-        )
-    end
 end
 
 abstract type AbstractHopperSet{T} end
@@ -38,13 +29,6 @@ mutable struct SingleHopper{T} <: AbstractHopperSet{T}
         new{T}(
             Hopper{T}(nDims),
             zeros(T, nDims),
-            T(Inf),
-        )
-    end
-    function SingleHopper{T}(::UndefInitializer) where T
-        new{T}(
-            Hopper{T}(undef),
-            Vector{T}(undef, 0),
             T(Inf),
         )
     end
@@ -159,7 +143,7 @@ function initialize!(
     evaluate!(job!, hoppers, bhe)
 
     # Initialize best candidate
-    best_hopper = argmin(hpr -> hpr.candidate_fitness, hoppers)
+    best_hopper = argmin(fitness, hoppers)
     best_candidate .= candidate(best_hopper)
     mch.best_candidate_fitness = fitness(best_hopper)
 
@@ -214,12 +198,12 @@ function update_fitness!(
     hopper_set::MultipleCommunicatingHoppers{T}, distribution::MBHStaticDistribution{T}
 ) where {T}
     # Get best candidate index
-    best_hopper = argmin(hpr -> hpr.candidate_fitness, hoppers)
+    best_hopper = argmin(fitness, hopper_set.hoppers)
 
     if fitness(best_hopper) < hopper_set.best_candidate_fitness
         # Update hopper
         hopper_set.best_candidate .= candidate(best_hopper)
-        hopper_set.best_candidate_fitness = fitness(candidate_fitness)
+        hopper_set.best_candidate_fitness = fitness(best_hopper)
     end
 
     # Reset hoppers
@@ -258,7 +242,7 @@ function update_fitness!(
     hopper_set::MultipleCommunicatingHoppers{T}, distribution::MBHAdaptiveDistribution{T}
 ) where {T}
     # Get best candidate index
-    best_hopper = argmin(hpr -> hpr.candidate_fitness, hopper_set.hoppers)
+    best_hopper = argmin(fitness, hopper_set.hoppers)
 
     if fitness(best_hopper) < hopper_set.best_candidate_fitness
         # Update distribution

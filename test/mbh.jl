@@ -4,16 +4,57 @@ using Optim, LineSearches
 
 @testset showtiming = true "Hopper" begin
 
-    # Test Hopper constructor with dimensions
+    # Test Hopper constructor
     h = GlobalOptimization.Hopper{Float64}(3)
     @test length(h) == 3
+    @test GlobalOptimization.num_dims(h) == 3
     @test all(x -> x == 0.0, GlobalOptimization.candidate(h))
     @test GlobalOptimization.fitness(h) == Inf
 
-    # Test Hopper undef initializer constructor
-    hu = GlobalOptimization.Hopper{Float64}(undef)
-    @test length(hu) == 0
-    @test GlobalOptimization.fitness(hu) == Inf
+    # Test SingleHopper constructor
+    sh = GlobalOptimization.SingleHopper{Float64}(3)
+    @test length(sh) == 3
+    @test GlobalOptimization.num_dims(sh) == 3
+    @test all(x -> x == 0.0, GlobalOptimization.candidate(sh.hopper))
+    @test GlobalOptimization.fitness(sh.hopper) == Inf
+
+    # Test MultipleCommunicatingHoppers constructor
+    mh = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(3, 5)
+    @test length(mh) == 5
+    @test eachindex(mh) == 1:5
+    @test GlobalOptimization.num_dims(mh) == 3
+
+    # Test initialization of SingleHopper and MultipleCommunicatingHoppers
+    search_space = GlobalOptimization.ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
+    initial_space = GlobalOptimization.ContinuousRectangularSearchSpace([0.0, 0.0], [2.0, 2.0])
+    evaluator = GlobalOptimization.FeasibilityHandlingEvaluator(
+        GlobalOptimization.OptimizationProblem(sum, search_space),
+    )
+
+    # SingleHopper
+    sh2 = GlobalOptimization.SingleHopper{Float64}(2)
+    GlobalOptimization.initialize!(
+        sh2, GlobalOptimization.intersection(search_space, initial_space), evaluator, nothing,
+    )
+    @test GlobalOptimization.candidate(sh2.hopper) != [0.0, 0.0]
+    @test GlobalOptimization.candidate(sh2.hopper) == sh2.best_candidate
+    @test isfinite(GlobalOptimization.fitness(sh2.hopper))
+    @test GlobalOptimization.fitness(sh2.hopper) == sh2.best_candidate_fitness
+    @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), search_space)
+    @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), initial_space)
+
+    # MultipleCommunicatingHoppers
+    mh2 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+    GlobalOptimization.initialize!(
+        mh2, GlobalOptimization.intersection(search_space, initial_space), evaluator,
+        GlobalOptimization.SerialBatchJobEvaluator(),
+    )
+    @test all(h -> GlobalOptimization.candidate(h) == mh2.best_candidate, mh2.hoppers)
+    @test mh2.best_candidate != [0.0, 0.0]
+    @test all(h -> GlobalOptimization.fitness(h) == mh2.best_candidate_fitness, mh2.hoppers)
+    @test isfinite(mh2.best_candidate_fitness)
+    @test GlobalOptimization.feasible(mh2.best_candidate, search_space)
+    @test GlobalOptimization.feasible(mh2.best_candidate, initial_space)
 
     # Test draw_update! with dummy distribution
     struct DummyDist <: GlobalOptimization.AbstractMBHDistribution{Float64} end
@@ -24,13 +65,121 @@ using Optim, LineSearches
         nothing
     end
 
+    # draw_update! for Hopper
     hd = GlobalOptimization.Hopper{Float64}(2)
-    # Set candidate
     GlobalOptimization.set_candidate!(hd, [2.0, 3.0])
-    # Invoke draw_update!
     GlobalOptimization.draw_update!(hd, DummyDist())
     @test hd.candidate_step == [1.5, 1.5]
     @test GlobalOptimization.candidate(hd) == [3.5, 4.5]
+
+    # Test update_fitness! with SingleHopper and MBHStaticDistribution
+    sd = GlobalOptimization.MBHStaticDistribution{Float64}()
+    sh3 = GlobalOptimization.SingleHopper{Float64}(2)
+
+    # Test for improved fitness
+    GlobalOptimization.set_candidate!(sh3.hopper, [2.0, 3.0])
+    GlobalOptimization.set_fitness!(sh3.hopper, 5.0)
+    GlobalOptimization.update_fitness!(sh3, sd)
+    @test sh3.best_candidate == [2.0, 3.0]
+    @test sh3.best_candidate_fitness == 5.0
+
+    # Test for worse fitness
+    GlobalOptimization.set_candidate!(sh3.hopper, [1.0, 2.0])
+    GlobalOptimization.set_fitness!(sh3.hopper, 10.0)
+    GlobalOptimization.update_fitness!(sh3, sd)
+    @test sh3.best_candidate == [2.0, 3.0]
+    @test sh3.best_candidate_fitness == 5.0
+
+    # Test update_fitness! with MultipleCommunicatingHoppers and MBHStaticDistribution
+    mh3 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+
+    # Test for improved fitness
+    for i in 1:3
+        GlobalOptimization.set_candidate!(mh3.hoppers[i], [i, i])
+        GlobalOptimization.set_fitness!(mh3.hoppers[i], i * 10.0)
+    end
+    GlobalOptimization.update_fitness!(mh3, sd)
+    @test mh3.best_candidate == [1.0, 1.0]
+    @test mh3.best_candidate_fitness == 10.0
+    @test all(h -> GlobalOptimization.candidate(h) == mh3.best_candidate, mh3.hoppers)
+    @test all(h -> GlobalOptimization.fitness(h) == mh3.best_candidate_fitness, mh3.hoppers)
+
+    # Test for worse fitness
+    for i in 1:3
+        GlobalOptimization.set_candidate!(mh3.hoppers[i], [-i, -i])
+        GlobalOptimization.set_fitness!(mh3.hoppers[i], i * 100.0)
+    end
+    GlobalOptimization.update_fitness!(mh3, sd)
+    @test mh3.best_candidate == [1.0, 1.0]
+    @test mh3.best_candidate_fitness == 10.0
+    @test all(h -> GlobalOptimization.candidate(h) == mh3.best_candidate, mh3.hoppers)
+    @test all(h -> GlobalOptimization.fitness(h) == mh3.best_candidate_fitness, mh3.hoppers)
+
+    # Test update_fitness! with SingleHopper and MBHAdaptiveDistribution
+    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(4, 0)
+    sh4 = GlobalOptimization.SingleHopper{Float64}(2)
+    GlobalOptimization.initialize!(ad, GlobalOptimization.num_dims(sh3))
+
+    # Test for improved fitness
+    GlobalOptimization.set_candidate!(sh4.hopper, [2.0, 3.0])
+    GlobalOptimization.set_fitness!(sh4.hopper, 5.0)
+    sh4.hopper.candidate_step .= [1.0, 1.0]
+    sh4.best_candidate_fitness = 100.0
+    GlobalOptimization.update_fitness!(sh4, ad)
+    @test sh3.best_candidate == [2.0, 3.0]
+    @test sh3.best_candidate_fitness == 5.0
+    @test ad.step_memory.steps_in_memory == 1
+    @test ad.step_memory.data[1:2, 1] == [1.0, 1.0]
+    @test ad.step_memory.data[3, 1] == 100.0
+    @test ad.step_memory.data[4, 1] == 5.0
+
+    # Test for worse fitness
+    GlobalOptimization.set_candidate!(sh4.hopper, [1.0, 2.0])
+    GlobalOptimization.set_fitness!(sh4.hopper, 10.0)
+    GlobalOptimization.update_fitness!(sh4, ad)
+    @test sh4.best_candidate == [2.0, 3.0]
+    @test sh4.best_candidate_fitness == 5.0
+    @test ad.step_memory.steps_in_memory == 1
+    @test ad.step_memory.data[1:2, 1] == [1.0, 1.0]
+    @test ad.step_memory.data[3, 1] == 100.0
+    @test ad.step_memory.data[4, 1] == 5.0
+
+    # Test update_fitness! with MultipleCommunicatingHoppers and MBHStaticDistribution
+    ad2 = GlobalOptimization.MBHAdaptiveDistribution{Float64}(4, 0)
+    mh4 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+    GlobalOptimization.initialize!(ad2, GlobalOptimization.num_dims(mh4))
+
+    # Test for improved fitness
+    for i in 1:3
+        GlobalOptimization.set_candidate!(mh4.hoppers[i], [i, i])
+        GlobalOptimization.set_fitness!(mh4.hoppers[i], i * 10.0)
+        mh4.hoppers[i].candidate_step .= [2.0*i, 2.0*i]
+    end
+    mh4.best_candidate_fitness = 100.0
+    GlobalOptimization.update_fitness!(mh4, ad2)
+    @test mh4.best_candidate == [1.0, 1.0]
+    @test mh4.best_candidate_fitness == 10.0
+    @test all(h -> GlobalOptimization.candidate(h) == mh4.best_candidate, mh4.hoppers)
+    @test all(h -> GlobalOptimization.fitness(h) == mh4.best_candidate_fitness, mh4.hoppers)
+    @test ad2.step_memory.steps_in_memory == 1
+    @test ad2.step_memory.data[1:2, 1] == [2.0, 2.0]
+    @test ad2.step_memory.data[3, 1] == 100.0
+    @test ad2.step_memory.data[4, 1] == 10.0
+
+    # Test for worse fitness
+    for i in 1:3
+        GlobalOptimization.set_candidate!(mh3.hoppers[i], [-i, -i])
+        GlobalOptimization.set_fitness!(mh3.hoppers[i], i * 100.0)
+    end
+    GlobalOptimization.update_fitness!(mh3, sd)
+    @test mh3.best_candidate == [1.0, 1.0]
+    @test mh3.best_candidate_fitness == 10.0
+    @test all(h -> GlobalOptimization.candidate(h) == mh3.best_candidate, mh3.hoppers)
+    @test all(h -> GlobalOptimization.fitness(h) == mh3.best_candidate_fitness, mh3.hoppers)
+    @test ad2.step_memory.steps_in_memory == 1
+    @test ad2.step_memory.data[1:2, 1] == [2.0, 2.0]
+    @test ad2.step_memory.data[3, 1] == 100.0
+    @test ad2.step_memory.data[4, 1] == 10.0
 end
 
 @testset showtiming = true "Distributions" begin
