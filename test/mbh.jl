@@ -275,6 +275,40 @@ end
     res = GlobalOptimization.optim_solve!(cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2))
     @test res == true
     @test isapprox(cache2.cost, sphere(cache2.x); atol=1e-6)
+
+    # Test local_search!
+    fhe = GlobalOptimization.FeasibilityHandlingEvaluator(prob)
+
+    # With LocalStochasticSearch
+    h2 = GlobalOptimization.Hopper{Float64}(2)
+    ls2 = GlobalOptimization.LocalStochasticSearch{Float64}(1e-1, 1000)
+    GlobalOptimization.initialize!(ls2, GlobalOptimization.num_dims(h2))
+    start_point = [-4.0, -4.0]
+    after_large_hop_point = [-4.5, -4.5]
+    after_large_hop_fitness = sphere(after_large_hop_point)
+    h2.candidate .= after_large_hop_point
+    h2.candidate_fitness = after_large_hop_fitness
+    h2.candidate_step .= after_large_hop_point .- start_point
+    GlobalOptimization.local_search!(h2, fhe, ls2)
+    @test h2.candidate != after_large_hop_point
+    @test h2.candidate_fitness < after_large_hop_fitness
+    for i in 1:GlobalOptimization.num_dims(h2)
+        @test isapprox(h2.candidate_step[i], h2.candidate[i] - start_point[i]; atol=1e-12)
+    end
+
+    # With LBFGSLocalSearch
+    h3 = GlobalOptimization.Hopper{Float64}(2)
+    ls3 = GlobalOptimization.LBFGSLocalSearch{Float64}()
+    GlobalOptimization.initialize!(ls3, GlobalOptimization.num_dims(h3))
+    h3.candidate .= after_large_hop_point
+    h3.candidate_fitness = after_large_hop_fitness
+    h3.candidate_step .= after_large_hop_point .- start_point
+    GlobalOptimization.local_search!(h3, fhe, ls3)
+    @test h3.candidate != after_large_hop_point
+    @test h3.candidate_fitness < after_large_hop_fitness
+    for i in 1:GlobalOptimization.num_dims(h3)
+        @test isapprox(h3.candidate_step[i], h3.candidate[i] - start_point[i]; atol=1e-12)
+    end
 end
 
 @testset showtiming = true "Full MBH Optimization" begin
