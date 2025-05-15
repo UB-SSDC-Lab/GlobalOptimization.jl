@@ -7,15 +7,13 @@ using Optim, LineSearches
     # Test Hopper constructor with dimensions
     h = GlobalOptimization.Hopper{Float64}(3)
     @test length(h) == 3
-    @test all(x -> x == 0.0, h.candidate)
-    @test h.candidate_fitness == Inf
-    @test h.best_candidate_fitness == Inf
+    @test all(x -> x == 0.0, GlobalOptimization.candidate(h))
+    @test GlobalOptimization.fitness(h) == Inf
 
     # Test Hopper undef initializer constructor
     hu = GlobalOptimization.Hopper{Float64}(undef)
     @test length(hu) == 0
-    @test hu.candidate_fitness == Inf
-    @test length(hu.best_candidate) == 0
+    @test GlobalOptimization.fitness(hu) == Inf
 
     # Test draw_update! with dummy distribution
     struct DummyDist <: GlobalOptimization.AbstractMBHDistribution{Float64} end
@@ -27,14 +25,12 @@ using Optim, LineSearches
     end
 
     hd = GlobalOptimization.Hopper{Float64}(2)
-    # Set best_candidate to known values
-    hd.best_candidate .= [2.0, 3.0]
-    # Ensure candidate_step is zeroed
-    hd.candidate_step .= zero.(hd.best_candidate)
+    # Set candidate
+    GlobalOptimization.set_candidate!(hd, [2.0, 3.0])
     # Invoke draw_update!
     GlobalOptimization.draw_update!(hd, DummyDist())
     @test hd.candidate_step == [1.5, 1.5]
-    @test hd.candidate == [3.5, 4.5]
+    @test GlobalOptimization.candidate(hd) == [3.5, 4.5]
 end
 
 @testset showtiming = true "Distributions" begin
@@ -147,13 +143,17 @@ end
         nothing
     end
     function GlobalOptimization.update_fitness!(
-        hopper::GlobalOptimization.Hopper{Float64}, ::ZeroDist
+        hopper_set::GlobalOptimization.SingleHopper{Float64}, ::ZeroDist
     )
         # The same as for MBHStaticDistribution
-        if hopper.candidate_fitness < hopper.best_candidate_fitness
-            # Update hopper
-            hopper.best_candidate .= hopper.candidate
-            hopper.best_candidate_fitness = hopper.candidate_fitness
+        if GlobalOptimization.fitness(hopper_set.hopper) < hopper_set.best_candidate_fitness
+            # Update hopper set
+            hopper_set.best_candidate .= GlobalOptimization.candidate(hopper_set.hopper)
+            hopper_set.best_candidate_fitness = GlobalOptimization.fitness(hopper_set.hopper)
+        else
+            # Reset hopper
+            GlobalOptimization.set_candidate!(hopper_set.hopper, hopper_set.best_candidate)
+            GlobalOptimization.set_fitness!(hopper_set.hopper, hopper_set.best_candidate_fitness)
         end
         return nothing
     end

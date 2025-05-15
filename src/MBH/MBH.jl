@@ -213,30 +213,38 @@ function iterate!(opt::MBH)
 end
 
 function hop!(hopper::Hopper, ss, eval, dist, ls)
+
     step_accepted = false
     draw_count = 0
     while !step_accepted
         # Draw update
+        # This perturbs the candidate by a realization from dist
         draw_update!(hopper, dist)
 
         # Update counter
         draw_count += 1
 
-        # Check if we're in feasable search space
-        if feasible(hopper.candidate, ss)
+        # Check if we're in feasible search space
+        if feasible(candidate(hopper), ss)
             # We're in the search space, so we're about to accept the step,
             # but we need to check if we're also
-            # in the feasible reagion defined by the penalty parameter
-            fitness, penalty = evaluate_with_penalty(eval, hopper.candidate)
+            # in the feasible region defined by the penalty parameter
+            fitness, penalty = evaluate_with_penalty(eval, candidate(hopper))
 
             if abs(penalty) - eps() <= 0.0
                 # We're in the feasible region, so we can accept the step
                 step_accepted = true
 
                 # Set fitness of candidate
-                hopper.candidate_fitness = fitness
+                set_fitness!(hopper, fitness)
+
+                # Break from the loop
+                break
             end
         end
+
+        # If we get here, we need to reject the step by calling reset!
+        reset!(hopper)
     end
 
     # Perform local search
@@ -251,10 +259,10 @@ function hop!(hopper_set::MultipleCommunicatingHoppers, ss, eval, bhe, dist, ls)
     # Unpack the hoppers
     @unpack hoppers = hopper_set
 
-    job! = let hs=hoppers, ss=ss, eval=eval, dist=dist, ls=ls
-        i -> hop!(hs[i], ss, eval, dist, ls[i])
+    job! = let hs=hopper_set, ss=ss, eval=eval, dist=dist, ls=ls
+        i -> hop!(hs.hoppers[i], ss, eval, dist, ls[i])
     end
-    evaluate!(job!, eachindex(hoppers), bhe)
+    evaluate!(job!, eachindex(hopper_set), bhe)
 
     return 0
 end

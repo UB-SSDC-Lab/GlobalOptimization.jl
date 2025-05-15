@@ -28,6 +28,11 @@ fitness(c::AbstractCandidate) = c.candidate_fitness
     return nothing
 end
 
+@inline function set_candidate!(c::AbstractCandidate, candidate)
+    c.candidate .= candidate
+    return nothing
+end
+
 """
     check_fitness!(c::AbstractCandidate, options::Union{GeneralOptions,Val{true},Val{false}})
 

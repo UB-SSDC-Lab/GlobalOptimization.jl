@@ -61,7 +61,7 @@ lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-8, 100)
 mbh = GlobalOptimization.SerialCMBH(
     prob;
     #hop_distribution=dist,
-    local_search=lss,
+    #local_search=lss,
     display=true,
     display_interval=10,
     max_time=20.0,
