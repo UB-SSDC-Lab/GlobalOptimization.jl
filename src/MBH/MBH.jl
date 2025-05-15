@@ -62,10 +62,10 @@ function MBH(
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Int=1,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
 ) where {T<:Number,has_penalty}
     # Construct the options
     options = MBHOptions(
@@ -100,10 +100,10 @@ function SerialCMBH(
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Int=1,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
 ) where {T<:Number,has_penalty}
     # Construct the options
     options = MBHOptions(
@@ -123,6 +123,84 @@ function SerialCMBH(
         FeasibilityHandlingEvaluator(prob),
         MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
         SerialBatchJobEvaluator(),
+        hop_distribution,
+        [deepcopy(local_search) for _ in 1:num_hoppers],
+    )
+end
+
+"""
+    ThreadedCMCH(prob::AbstractOptimizationProblem{SS})
+"""
+function ThreadedCMBH(
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    num_hoppers::Integer = Threads.nthreads(),
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    batch_n::Int=Threads.nthreads(),
+    batch_split::ChunkSplitters.Split=ChunkSplitters.RoundRobin(),
+    display::Bool=false,
+    display_interval::Int=1,
+) where {T<:Number,has_penalty}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+            min_cost,
+        ),
+        intersection(search_space(prob), initial_space),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        FeasibilityHandlingEvaluator(prob),
+        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
+        ThreadedBatchJobEvaluator(batch_n, batch_split),
+        hop_distribution,
+        [deepcopy(local_search) for _ in 1:num_hoppers],
+    )
+end
+
+"""
+    PolyesterCMCH(prob::AbstractOptimizationProblem{SS})
+"""
+function PolyesterCMBH(
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    num_hoppers::Integer = Threads.nthreads(),
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
+) where {T<:Number,has_penalty}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+            min_cost,
+        ),
+        intersection(search_space(prob), initial_space),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        FeasibilityHandlingEvaluator(prob),
+        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
+        PolyesterBatchJobEvaluator(),
         hop_distribution,
         [deepcopy(local_search) for _ in 1:num_hoppers],
     )

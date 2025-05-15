@@ -46,7 +46,7 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 3
+N = 5
 ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 
@@ -57,15 +57,16 @@ dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
 lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
     iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
 )
-lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-8, 100)
-mbh = GlobalOptimization.SerialCMBH(
+lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-2, 100)
+mbh = GlobalOptimization.PolyesterCMBH(
     prob;
     #hop_distribution=dist,
     #local_search=lss,
-    display=true,
-    display_interval=10,
+    num_hoppers=30,
     max_time=20.0,
     min_cost=1e-20,
+    display=true,
+    display_interval=10,
 )
 
 res = optimize!(mbh);

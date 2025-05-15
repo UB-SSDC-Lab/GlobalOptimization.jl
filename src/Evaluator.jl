@@ -74,6 +74,31 @@ An evaluator that evaluates a batch of jobs in serial.
 struct SerialBatchJobEvaluator <: BatchJobEvaluator end
 
 """
+    ThreadedBatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs in parallel using Threads.jl and
+ChunkSplitters.jl.
+"""
+struct ThreadedBatchJobEvaluator{S<:ChunkSplitters.Split} <: BatchJobEvaluator
+    # Chunk splitting args
+    n::Int
+    split::S
+    function ThreadedBatchJobEvaluator(
+        n=Threads.nthreads(),
+        split::S=ChunkSplitters.RoundRobin(),
+    ) where {S<:ChunkSplitters.Split}
+        return new{S}(n, split)
+    end
+end
+
+"""
+    PolyesterBatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs in parallel using Polyester.jl.
+"""
+struct PolyesterBatchJobEvaluator <: BatchJobEvaluator end
+
+"""
     ThreadedBatchEvaluator
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
@@ -175,6 +200,29 @@ function evaluate!(
     job::Function, job_args::AbstractVector, evaluator::SerialBatchJobEvaluator
 )
     @inbounds for arg in job_args
+        job(arg)
+    end
+    return nothing
+end
+function evaluate!(
+    job::Function, job_args::AbstractVector, evaluator::ThreadedBatchJobEvaluator
+)
+    batched_args = ChunkSplitters.chunks(
+        job_args; n=evaluator.n, split=evaluator.split
+    )
+    @sync for args in batched_args
+        Threads.@spawn begin
+            for arg in args
+                job(arg)
+            end
+        end
+    end
+    return nothing
+end
+function evaluate!(
+    job::Function, job_args::AbstractVector, evaluator::PolyesterBatchJobEvaluator
+)
+    @batch for arg in job_args
         job(arg)
     end
     return nothing
