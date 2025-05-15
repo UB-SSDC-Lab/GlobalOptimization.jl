@@ -98,6 +98,7 @@ function SerialCMBH(
     num_hoppers::Integer = Threads.nthreads(),
     hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
     display::Bool=false,
     display_interval::Int=1,

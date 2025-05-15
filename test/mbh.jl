@@ -417,4 +417,59 @@ end
     @test res8.fbest == 0.0
     @test length(res8.xbest) == 2
     @test res8.exitFlag == 1
+
+    # Test CMBH with static distribution and LocalStochasticSearch
+    CMBH_algorithms = [
+        :(GlobalOptimization.SerialCMBH),
+    ]
+    for alg in CMBH_algorithms
+        ac = eval(alg)
+
+        cmbh1 = ac(
+            prob;
+            hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
+            local_search = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2),
+            max_time = 2.0,
+        )
+        cres1 = GlobalOptimization.optimize!(cmbh1)
+        @test cres1.fbest == 0.0
+        @test length(cres1.xbest) == 2
+        @test cres1.exitFlag == 1
+
+        # Test MBH with adaptive distribution and LocalStochasticSearch
+        cmbh2 = ac(
+            prob;
+            hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+            local_search = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2),
+            max_time = 2.0,
+        )
+        cres2 = GlobalOptimization.optimize!(cmbh2)
+        @test cres2.fbest == 0.0
+        @test length(cres2.xbest) == 2
+        @test cres2.exitFlag == 1
+
+        # Test MBH with static distribution and LBFGSLocalSearch
+        cmbh3 = ac(
+            prob;
+            hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
+            local_search = GlobalOptimization.LBFGSLocalSearch{Float64}(),
+            max_time = 2.0,
+        )
+        cres3 = GlobalOptimization.optimize!(cmbh3)
+        @test cres3.fbest == 0.0
+        @test length(cres3.xbest) == 2
+        @test cres3.exitFlag == 1
+
+        # Test MBH with adaptive distribution and LocalStochasticSearch
+        cmbh4 = ac(
+            prob;
+            hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+            local_search = GlobalOptimization.LBFGSLocalSearch{Float64}(),
+            max_time = 2.0,
+        )
+        cres4 = GlobalOptimization.optimize!(cmbh4)
+        @test cres4.fbest == 0.0
+        @test length(cres4.xbest) == 2
+        @test cres4.exitFlag == 1
+    end
 end
