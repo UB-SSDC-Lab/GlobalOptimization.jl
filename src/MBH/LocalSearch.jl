@@ -26,9 +26,7 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     # Candidate step and candidate storage
     step::Vector{T}
 
-    function LocalStochasticSearch{T}(
-        b::Real, iters::Int
-    ) where {T<:AbstractFloat}
+    function LocalStochasticSearch{T}(b::Real, iters::Int) where {T<:AbstractFloat}
         return new{T}(T(b), iters, Vector{T}(undef, 0))
     end
 end

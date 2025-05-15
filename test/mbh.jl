@@ -71,7 +71,9 @@ end
     @test all(isfinite, vec)
 
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
-    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(21, 0; a=0.9, b=0.1, c=2.0, λhat0=1.0)
+    ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
+        21, 0; a=0.9, b=0.1, c=2.0, λhat0=1.0
+    )
     GlobalOptimization.initialize!(ad, 2)
     @test ad.min_memory_update == 0
     @test length(ad.λhat) == 2
@@ -127,7 +129,9 @@ end
     cache2 = GlobalOptimization.OptimSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache2, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2))
+    res = GlobalOptimization.optim_solve!(
+        cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2)
+    )
     @test res == true
     @test isapprox(cache2.cost, sphere(cache2.x); atol=1e-6)
 end
@@ -168,10 +172,7 @@ end
 
     # Test MBH with ZeroDist and DummyLS
     mbh1 = GlobalOptimization.MBH(
-        prob;
-        hop_distribution=ZeroDist(),
-        local_search=DummyLS(),
-        max_time = 0.0,
+        prob; hop_distribution=ZeroDist(), local_search=DummyLS(), max_time=0.0
     )
     res1 = GlobalOptimization.optimize!(mbh1)
     @test res1.fbest == 0.0
@@ -181,10 +182,7 @@ end
     # Test MBH with static distribution
     stat = GlobalOptimization.MBHStaticDistribution{Float64}()
     mbh2 = GlobalOptimization.MBH(
-        prob;
-        hop_distribution = stat,
-        local_search = DummyLS(),
-        max_time = 0.0,
+        prob; hop_distribution=stat, local_search=DummyLS(), max_time=0.0
     )
     res2 = GlobalOptimization.optimize!(mbh2)
     @test res2.fbest == 0.0
@@ -194,10 +192,7 @@ end
     # Test MBH with adaptive distribution
     ad = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0)
     mbh3 = GlobalOptimization.MBH(
-        prob;
-        hop_distribution = ad,
-        local_search = DummyLS(),
-        max_time = 0.0,
+        prob; hop_distribution=ad, local_search=DummyLS(), max_time=0.0
     )
     res3 = GlobalOptimization.optimize!(mbh3)
     @test res3.fbest == 0.0
@@ -207,10 +202,7 @@ end
     # Test MBH with ZeroDist and LocalStochasticSearch
     ls = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 1)
     mbh4 = GlobalOptimization.MBH(
-        prob;
-        hop_distribution = ZeroDist(),
-        local_search = ls,
-        max_time = 0.0,
+        prob; hop_distribution=ZeroDist(), local_search=ls, max_time=0.0
     )
     res4 = GlobalOptimization.optimize!(mbh4)
     @test res4.fbest == 0.0
@@ -221,9 +213,9 @@ end
     ls2 = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2)
     mbh5 = GlobalOptimization.MBH(
         prob;
-        hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
-        local_search = ls2,
-        max_time = 2.0,
+        hop_distribution=GlobalOptimization.MBHStaticDistribution{Float64}(),
+        local_search=ls2,
+        max_time=2.0,
     )
     res5 = GlobalOptimization.optimize!(mbh5)
     @test res5.fbest == 0.0
@@ -234,9 +226,9 @@ end
     ls3 = GlobalOptimization.LocalStochasticSearch{Float64}(0.1, 2)
     mbh6 = GlobalOptimization.MBH(
         prob;
-        hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
-        local_search = ls3,
-        max_time = 2.0,
+        hop_distribution=GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search=ls3,
+        max_time=2.0,
     )
     res6 = GlobalOptimization.optimize!(mbh6)
     @test res6.fbest == 0.0
@@ -247,9 +239,9 @@ end
     ls4 = GlobalOptimization.LBFGSLocalSearch{Float64}()
     mbh7 = GlobalOptimization.MBH(
         prob;
-        hop_distribution = GlobalOptimization.MBHStaticDistribution{Float64}(),
-        local_search = ls4,
-        max_time = 2.0,
+        hop_distribution=GlobalOptimization.MBHStaticDistribution{Float64}(),
+        local_search=ls4,
+        max_time=2.0,
     )
     res7 = GlobalOptimization.optimize!(mbh7)
     @test res7.fbest == 0.0
@@ -260,9 +252,9 @@ end
     ls5 = GlobalOptimization.LBFGSLocalSearch{Float64}()
     mbh8 = GlobalOptimization.MBH(
         prob;
-        hop_distribution = GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
-        local_search = ls5,
-        max_time = 2.0,
+        hop_distribution=GlobalOptimization.MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search=ls5,
+        max_time=2.0,
     )
     res8 = GlobalOptimization.optimize!(mbh8)
     @test res8.fbest == 0.0

@@ -139,12 +139,7 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
 
     # Constructor
     function MBHAdaptiveDistribution{T}(
-        memory_len::Int,
-        min_memory_update::Int;
-        a=0.93,
-        b=0.05,
-        c=1.0,
-        λhat0=1.0,
+        memory_len::Int, min_memory_update::Int; a=0.93, b=0.05, c=1.0, λhat0=1.0
     ) where {T}
         return new{T}(
             MBHStepMemory{T}(undef, memory_len),
