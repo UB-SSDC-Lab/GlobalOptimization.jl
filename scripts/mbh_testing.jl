@@ -51,13 +51,13 @@ ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N
 prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate MBH
-dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
+dist = MBHAdaptiveDistribution{Float64}(
     1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
 )
-lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
+lsgb = LBFGSLocalSearch{Float64}(;
     iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
 )
-lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-2, 100)
+lss = LocalStochasticSearch{Float64}(1e-2, 100)
 mbh = GlobalOptimization.PolyesterCMBH(
     prob;
     #hop_distribution=dist,
