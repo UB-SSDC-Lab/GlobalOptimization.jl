@@ -65,49 +65,25 @@ struct OptimizationProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function OptimizationProblem{has_penalty}(
         f::F, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function}
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function,G<:Function}
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Vector{T},Vector{T}},)
-        grettypes = (Nothing)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,G<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Vector{T},Vector{T}},)
-        grettypes = (Nothing)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
-            fwrap, gwrap, ContinuousRectangularSearchSpace(LB, UB)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(
+            f, g, ContinuousRectangularSearchSpace(LB, UB)
         )
     end
 end
@@ -229,70 +205,24 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearProblem{has_penalty}(
         f::F, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function}
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function,G<:Function}
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,G<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
 end
 
@@ -419,72 +349,30 @@ struct NonlinearLeastSquaresProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
-            fwrap, nothing, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
+            f, nothing, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function,G<:Function}
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
-            fwrap, gwrap, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(
+            f, g, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
-            fwrap, nothing, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
+            f, nothing, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function,G<:Function}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(f, g, ss, num_resid)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss, num_resid)
     end
 end
 

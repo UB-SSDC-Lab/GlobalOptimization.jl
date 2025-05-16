@@ -1,12 +1,12 @@
 module GlobalOptimization
 
+using ADTypes
 using ChunkSplitters
 using Distributions
 using LatinHypercubeSampling: LHCoptim, scaleLHC
 using LinearAlgebra
 using Format
 using Polyester: @batch
-using FunctionWrappersWrappers
 using StaticArrays
 using Statistics: cov
 using Random: shuffle!

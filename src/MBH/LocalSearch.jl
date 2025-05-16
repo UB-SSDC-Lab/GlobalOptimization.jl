@@ -1,6 +1,6 @@
 abstract type AbstractLocalSearch{T} end
 abstract type GradientBasedLocalSearch{T} <: AbstractLocalSearch{T} end
-abstract type OptimLocalSearch{T} <: GradientBasedLocalSearch{T} end
+abstract type OptimLocalSearch{T,AD} <: GradientBasedLocalSearch{T} end
 
 # Timeout function
 function timeout(f, arg, seconds, fail)
@@ -48,7 +48,10 @@ function initialize!(cache::OptimSolutionCache, num_dims)
     return nothing
 end
 
-struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch{T}
+struct LBFGSLocalSearch{
+    T,AT,OT,AD<:Union{ADTypes.AbstractADType, Nothing},
+} <: OptimLocalSearch{T,AD}
+
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -64,6 +67,9 @@ struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch{T}
     # Solution cache
     cache::OptimSolutionCache{T}
 
+    # Autodiff method
+    ad::AD
+
     function LBFGSLocalSearch{T}(;
         iters_per_solve::Int=5,
         percent_decrease_tol::Number=50.0,
@@ -72,6 +78,7 @@ struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch{T}
         linesearch=LineSearches.HagerZhang(),
         manifold=Optim.Flat(),
         max_solve_time=0.1,
+        ad=nothing,
     ) where {T<:AbstractFloat}
         alg = Optim.Fminbox(
             Optim.LBFGS(;
@@ -79,8 +86,8 @@ struct LBFGSLocalSearch{T,AT,OT} <: OptimLocalSearch{T}
             ),
         )
         opts = Optim.Options(; iterations=iters_per_solve)
-        return new{T,typeof(alg),typeof(opts)}(
-            T(percent_decrease_tol), alg, opts, max_solve_time, OptimSolutionCache{T}()
+        return new{T,typeof(alg),typeof(opts),typeof(ad)}(
+            T(percent_decrease_tol), alg, opts, max_solve_time, OptimSolutionCache{T}(), ad,
         )
     end
 end
@@ -133,22 +140,61 @@ end
 
 function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
     res = Optim.optimize(
-        get_scalar_function(prob), prob.ss.dim_min, prob.ss.dim_max, x0, alg, options;
+        get_scalar_function(prob),
+        prob.ss.dim_min,
+        prob.ss.dim_max,
+        x0,
+        alg,
+        options;
+    )
+    cache.x .= Optim.minimizer(res)
+    cache.cost = Optim.minimum(res)
+    return true
+end
+function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, ad, options)
+    res = Optim.optimize(
+        get_scalar_function(prob),
+        prob.ss.dim_min,
+        prob.ss.dim_max,
+        x0,
+        alg,
+        options;
+        autodiff = ad,
     )
     cache.x .= Optim.minimizer(res)
     cache.cost = Optim.minimum(res)
     return true
 end
 
-function local_search!(hopper, evaluator, ls::OptimLocalSearch)
-    @unpack candidate, candidate_fitness = hopper
+function get_optim_solve(
+    evaluator,
+    ls::OptimLocalSearch{T,Nothing},
+) where T
     @unpack prob = evaluator
-    @unpack percent_decrease_tolerance, alg, options, max_solve_time, cache = ls
-
-    # Create solve call
+    @unpack alg, options, cache = ls
     solve! = let cache = cache, prob = prob, alg = alg, options = options
         x -> optim_solve!(cache, prob, x, alg, options)
     end
+    return solve!
+end
+function get_optim_solve(
+    evaluator,
+    ls::OptimLocalSearch{T,AD},
+) where {T,AD<:ADTypes.AbstractADType}
+    @unpack prob = evaluator
+    @unpack alg, options, cache, ad = ls
+    solve! = let cache = cache, prob = prob, alg = alg, options = options, ad = ad
+        x -> optim_solve!(cache, prob, x, alg, ad, options)
+    end
+    return solve!
+end
+
+function local_search!(hopper, evaluator, ls::OptimLocalSearch)
+    @unpack candidate, candidate_fitness = hopper
+    @unpack percent_decrease_tolerance, max_solve_time, cache = ls
+
+    # Create solve call
+    solve! = get_optim_solve(evaluator, ls)
 
     # Perform local search
     current_fitness = candidate_fitness

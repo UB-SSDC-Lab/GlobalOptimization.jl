@@ -10,6 +10,8 @@ using StaticArrays
 using Infiltrator
 #Random.seed!(1234)
 
+using ADTypes
+
 # Schwefel Function
 function schaffer(x::AbstractArray{T})::Tuple{T,T} where {T}
     obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5) / (1 + 0.001 * (x[1]^2 + x[2]^2))^2
@@ -55,13 +57,13 @@ dist = MBHAdaptiveDistribution{Float64}(
     1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
 )
 lsgb = LBFGSLocalSearch{Float64}(;
-    iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
+    iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1, ad=AutoForwardDiff()
 )
 lss = LocalStochasticSearch{Float64}(1e-2, 100)
 mbh = GlobalOptimization.PolyesterCMBH(
     prob;
     #hop_distribution=dist,
-    #local_search=lss,
+    local_search=lsgb,
     num_hoppers=30,
     max_time=20.0,
     min_cost=1e-20,
