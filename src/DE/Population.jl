@@ -68,7 +68,6 @@ function initialize!(
     search_space::ContinuousRectangularSearchSpace{T},
 ) where {T}
     # Unpack population
-    candidates = population.current_generation.candidates
     @unpack candidates = population.current_generation
     @unpack dim_min, dim_max = search_space
 
@@ -78,21 +77,21 @@ function initialize!(
 end
 
 function initialize_fitness!(
-    population::DEPopulation{T}, evaluator::BatchEvaluator{T}
+    population::DEPopulation{T}, evaluator::BatchEvaluator
 ) where {T}
     # Evaluate the cost function for each candidate
     return evaluate!(population.current_generation, evaluator)
 end
 
 function evaluate_mutant_fitness!(
-    population::DEPopulation{T}, evaluator::BatchEvaluator{T}
+    population::DEPopulation{T}, evaluator::BatchEvaluator
 ) where {T}
     # Evaluate the cost function for each mutant
     return evaluate!(population.mutants, evaluator)
 end
 
 """
-    selection!(population::DEPopulation{T}, evaluator::BatchEvaluator{T})
+    selection!(population::DEPopulation{T}, evaluator::BatchEvaluator)
 
 Replace candidates with mutants if they have a better fitness.
 """

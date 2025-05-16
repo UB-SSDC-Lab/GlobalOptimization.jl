@@ -147,7 +147,7 @@ end
 
 @testset showtiming = true "Candidate" begin
     # Define a concrete candidate type
-    mutable struct DummyCandidate <: GlobalOptimization.AbstractCandidate
+    mutable struct DummyCandidate <: GlobalOptimization.AbstractCandidate{Float64}
         candidate::Vector{Float64}
         candidate_fitness::Float64
     end

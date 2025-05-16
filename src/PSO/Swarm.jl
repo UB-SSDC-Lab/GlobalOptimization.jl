@@ -84,11 +84,11 @@ function initialize!(
 end
 
 """
-    initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T})
+    initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator)
 
 Initializes the fitness of each candidate in the swarm `swarm` using the `evaluator`.
 """
-function initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T}) where {T}
+function initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator) where {T}
     # Evaluate the cost function for each candidate
     evaluate!(swarm, evaluator)
 
@@ -104,12 +104,12 @@ function initialize_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T}) wher
 end
 
 """
-    evaluate_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T})
+    evaluate_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator)
 
 Evaluates the fitness of each candidate in the swarm `swarm` using the `evaluator`.
 Updates the swarms best candidates if any are found.
 """
-function evaluate_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator{T}) where {T}
+function evaluate_fitness!(swarm::Swarm{T}, evaluator::BatchEvaluator) where {T}
     # Evaluate the cost function for each candidate
     evaluate!(swarm, evaluator)
 

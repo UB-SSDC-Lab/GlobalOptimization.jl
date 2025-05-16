@@ -27,20 +27,24 @@ This implementation employs a single candidate rather than a population.
 """
 struct MBH{
     T<:Number,
-    H<:AbstractHopper{T},
-    E<:SingleEvaluator{T},
+    H<:AbstractHopperSet{T},
+    E<:FeasibilityHandlingEvaluator,
+    BHE<:Union{Nothing,BatchJobEvaluator},
     D<:AbstractMBHDistribution,
-    LS<:AbstractLocalSearch,
+    LS<:Union{AbstractLocalSearch, Vector{<:AbstractLocalSearch}},
 } <: AbstractOptimizer
 
     # Monotonic Basin Hopping Options
     options::MBHOptions
 
-    # The MBH evaluator
+    # The base evaluator
     evaluator::E
 
-    # The hopper
-    hopper::H
+    # The hopper set
+    hopper_set::H
+
+    # The batch hop evaluator (nothing if single hopper)
+    bhe::BHE
 
     # The MBH distribution
     distribution::D
@@ -56,11 +60,12 @@ function MBH(
     prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
     hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Int=1,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
 ) where {T<:Number,has_penalty}
     # Construct the options
     options = MBHOptions(
@@ -71,16 +76,133 @@ function MBH(
             max_time,
             min_cost,
         ),
-        search_space(prob),
+        intersection(search_space(prob), initial_space),
     )
 
     # Construct MBH
     return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
-        BasicHopper{T}(num_dims(prob)),
+        SingleHopper{T}(num_dims(prob)),
+        nothing,
         hop_distribution,
         local_search,
+    )
+end
+
+"""
+    SerialCMCH(prob::AbstractOptimizationProblem{SS})
+"""
+function SerialCMBH(
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    num_hoppers::Integer = Threads.nthreads(),
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
+) where {T<:Number,has_penalty}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+            min_cost,
+        ),
+        intersection(search_space(prob), initial_space),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        FeasibilityHandlingEvaluator(prob),
+        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
+        SerialBatchJobEvaluator(),
+        hop_distribution,
+        [deepcopy(local_search) for _ in 1:num_hoppers],
+    )
+end
+
+"""
+    ThreadedCMCH(prob::AbstractOptimizationProblem{SS})
+"""
+function ThreadedCMBH(
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    num_hoppers::Integer = Threads.nthreads(),
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    batch_n::Int=Threads.nthreads(),
+    batch_split::ChunkSplitters.Split=ChunkSplitters.RoundRobin(),
+    display::Bool=false,
+    display_interval::Int=1,
+) where {T<:Number,has_penalty}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+            min_cost,
+        ),
+        intersection(search_space(prob), initial_space),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        FeasibilityHandlingEvaluator(prob),
+        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
+        ThreadedBatchJobEvaluator(batch_n, batch_split),
+        hop_distribution,
+        [deepcopy(local_search) for _ in 1:num_hoppers],
+    )
+end
+
+"""
+    PolyesterCMCH(prob::AbstractOptimizationProblem{SS})
+"""
+function PolyesterCMBH(
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
+    num_hoppers::Integer = Threads.nthreads(),
+    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
+    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    function_value_check::Bool=true,
+    max_time::Real=60.0,
+    min_cost::Real=(-Inf),
+    display::Bool=false,
+    display_interval::Int=1,
+) where {T<:Number,has_penalty}
+    # Construct the options
+    options = MBHOptions(
+        GeneralOptions(
+            function_value_check ? Val(true) : Val(false),
+            display ? Val(true) : Val(false),
+            display_interval,
+            max_time,
+            min_cost,
+        ),
+        intersection(search_space(prob), initial_space),
+    )
+
+    # Construct MBH
+    return MBH(
+        options,
+        FeasibilityHandlingEvaluator(prob),
+        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
+        PolyesterBatchJobEvaluator(),
+        hop_distribution,
+        [deepcopy(local_search) for _ in 1:num_hoppers],
     )
 end
 
@@ -95,26 +217,26 @@ end
 
 function initialize!(opt::MBH)
     # Unpack MBH
-    @unpack options, evaluator, hopper, distribution, local_search = opt
+    @unpack options, evaluator, bhe, hopper_set, distribution, local_search = opt
 
     # Initialize the hopper
-    initialize!(hopper, options.initial_space, evaluator)
+    initialize!(hopper_set, options.initial_space, evaluator, bhe)
 
     # Handle fitness
-    check_fitness!(hopper, get_general(options))
+    check_fitness!(hopper_set, get_general(options))
 
     # Initialize the distribution
-    initialize!(distribution, num_dims(hopper))
+    initialize!(distribution, num_dims(hopper_set))
 
     # Initialize the local search
-    initialize!(local_search, num_dims(hopper))
+    initialize!(local_search, num_dims(hopper_set))
 
     return nothing
 end
 
 function iterate!(opt::MBH)
     # Unpack MBH
-    @unpack options, evaluator, hopper, distribution, local_search = opt
+    @unpack options, evaluator, bhe, hopper_set, distribution, local_search = opt
     search_space = evaluator.prob.ss
 
     # Initialize algorithm stopping criteria requrements
@@ -129,44 +251,24 @@ function iterate!(opt::MBH)
         # Update iteration counter
         iteration += 1
 
-        # Begin search for feasible step
-        step_accepted = false
-        draw_count = 0
-        while !step_accepted
-            # Draw update
-            draw_update!(hopper, distribution)
-
-            # Update counter
-            draw_count += 1
-
-            # Check if we're in feasable search space
-            if feasible(hopper.candidate, search_space)
-                # We're in the search space, so we're about to accept the step,
-                # but we need to check if we're also
-                # in the feasible reagion defined by the penalty parameter
-                fitness, penalty = evaluate_with_penalty(evaluator, hopper.candidate)
-
-                if abs(penalty) - eps() <= 0.0
-                    # We're in the feasible region, so we can accept the step
-                    step_accepted = true
-
-                    # Set fitness of candidate
-                    hopper.candidate_fitness = fitness
-                end
-            end
-        end
-
-        # Perform local search (performing local search after checkng feasibility but before updating hopper fitness)
-        local_search!(hopper, evaluator, local_search)
+        # Take a hop
+        draw_count = hop!(
+            hopper_set,
+            search_space,
+            evaluator,
+            bhe,
+            distribution,
+            local_search,
+        )
 
         # Update fitness
-        update_fitness!(hopper, distribution)
+        update_fitness!(hopper_set, distribution)
 
         # Stopping criteria
         current_time = time()
         if current_time - start_time >= options.general.max_time
             exit_flag = 1
-        elseif hopper.best_candidate_fitness <= get_min_cost(options)
+        elseif hopper_set.best_candidate_fitness <= get_min_cost(options)
             exit_flag = 2
         end
 
@@ -175,19 +277,74 @@ function iterate!(opt::MBH)
             current_time - start_time,
             iteration,
             draw_count,
-            hopper.best_candidate_fitness,
+            hopper_set.best_candidate_fitness,
             get_general(options),
         )
     end
 
     # Return results
     return Results(
-        hopper.best_candidate_fitness,
-        hopper.best_candidate,
+        hopper_set.best_candidate_fitness,
+        hopper_set.best_candidate,
         iteration,
         current_time - start_time,
         exit_flag,
     )
+end
+
+function hop!(hopper::Hopper, ss, eval, dist, ls)
+
+    step_accepted = false
+    draw_count = 0
+    while !step_accepted
+        # Draw update
+        # This perturbs the candidate by a realization from dist
+        draw_update!(hopper, dist)
+
+        # Update counter
+        draw_count += 1
+
+        # Check if we're in feasible search space
+        if feasible(candidate(hopper), ss)
+            # We're in the search space, so we're about to accept the step,
+            # but we need to check if we're also
+            # in the feasible region defined by the penalty parameter
+            fitness, penalty = evaluate_with_penalty(eval, candidate(hopper))
+
+            if abs(penalty) - eps() <= 0.0
+                # We're in the feasible region, so we can accept the step
+                step_accepted = true
+
+                # Set fitness of candidate
+                set_fitness!(hopper, fitness)
+
+                # Break from the loop
+                break
+            end
+        end
+
+        # If we get here, we need to reject the step by calling reset!
+        reset!(hopper)
+    end
+
+    # Perform local search
+    local_search!(hopper, eval, ls)
+
+    return draw_count
+end
+function hop!(hopper_set::SingleHopper, ss, eval, bhe, dist, ls)
+    return hop!(hopper_set.hopper, ss, eval, dist, ls)
+end
+function hop!(hopper_set::MultipleCommunicatingHoppers, ss, eval, bhe, dist, ls)
+    # Unpack the hoppers
+    @unpack hoppers = hopper_set
+
+    job! = let hs=hopper_set, ss=ss, eval=eval, dist=dist, ls=ls
+        i -> hop!(hs.hoppers[i], ss, eval, dist, ls[i])
+    end
+    evaluate!(job!, eachindex(hopper_set), bhe)
+
+    return 0
 end
 
 function display_status_mbh(

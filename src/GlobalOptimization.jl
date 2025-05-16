@@ -1,12 +1,12 @@
 module GlobalOptimization
 
+using ADTypes
 using ChunkSplitters
 using Distributions
 using LatinHypercubeSampling: LHCoptim, scaleLHC
 using LinearAlgebra
 using Format
 using Polyester: @batch
-using FunctionWrappersWrappers
 using StaticArrays
 using Statistics: cov
 using Random: shuffle!
@@ -50,17 +50,17 @@ export OptimizationProblem
 export optimize!
 
 export SerialPSO, ThreadedPSO, PolyesterPSO
+
 export SerialDE, ThreadedDE, PolyesterDE
-
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
-
 export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
 export CurrentToRand1, CurrentToRand2, RandToBest1, RandToBest2, Unified
 export MutationParameters, SelfMutationParameters
-
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
 export CovarianceTransformation
 
-#export MBH
+export MBH, SerialCMBH, ThreadedCMBH, PolyesterCMBH
+export MBHStaticDistribution, MBHAdaptiveDistribution
+export LocalStochasticSearch, LBFGSLocalSearch
 
 end

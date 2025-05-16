@@ -142,7 +142,7 @@ employ a `SerialBatchEvaluator` to evaluate the objective function each iteratio
 - `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
 - `max_iterations::Integer=1000`: The maximum number of iterations.
 - `max_time::Real=60.0`: The maximum time to run the algorithm.
 - `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
@@ -159,7 +159,7 @@ function SerialDE(
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Integer=1000,
     max_time::Real=60.0,
     function_tolerance::Real=1e-6,
@@ -184,7 +184,7 @@ function SerialDE(
         population_init_method,
         mutation_params,
         crossover_params,
-        initial_bounds,
+        initial_space,
         max_iterations,
         max_time,
         function_tolerance,
@@ -211,7 +211,7 @@ employ a `ThreadedBatchEvaluator` to evaluate the objective function each iterat
 - `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
 - `max_iterations::Integer=1000`: The maximum number of iterations.
 - `max_time::Real=60.0`: The maximum time to run the algorithm.
 - `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
@@ -228,7 +228,7 @@ function ThreadedDE(
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Integer=1000,
     max_time::Real=60.0,
     function_tolerance::Real=1e-6,
@@ -255,7 +255,7 @@ function ThreadedDE(
         population_init_method,
         mutation_params,
         crossover_params,
-        initial_bounds,
+        initial_space,
         max_iterations,
         max_time,
         function_tolerance,
@@ -282,7 +282,7 @@ employ a `PolyesterBatchEvaluator` to evaluate the objective function each itera
 - `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
-- `initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
 - `max_iterations::Integer=1000`: The maximum number of iterations.
 - `max_time::Real=60.0`: The maximum time to run the algorithm.
 - `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
@@ -299,7 +299,7 @@ function PolyesterDE(
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Integer=1000,
     max_time::Real=60.0,
     function_tolerance::Real=1e-6,
@@ -324,7 +324,7 @@ function PolyesterDE(
         population_init_method,
         mutation_params,
         crossover_params,
-        initial_bounds,
+        initial_space,
         max_iterations,
         max_time,
         function_tolerance,
@@ -344,7 +344,7 @@ function BuildDE(
     population_init_method::PI,
     mutation_params::MP,
     crossover_params::CP,
-    initial_bounds::Union{Nothing,ContinuousRectangularSearchSpace},
+    initial_space::Union{Nothing,ContinuousRectangularSearchSpace},
     max_iterations::Integer,
     max_time::Real,
     function_tolerance::Real,
@@ -374,7 +374,7 @@ function BuildDE(
         population_init_method,
         mutation_params,
         crossover_params,
-        intersection(search_space(prob), initial_bounds),
+        intersection(search_space(prob), initial_space),
         max_iterations,
         function_tolerance,
         max_stall_time,
