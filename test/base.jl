@@ -1,4 +1,5 @@
 using GlobalOptimization, Test
+import ChunkSplitters
 
 # Define a concrete simple population type
 struct SimplePopulation <: GlobalOptimization.AbstractPopulation{Float64}
@@ -325,7 +326,9 @@ end
     tpop = deepcopy(spop)
     ppop = deepcopy(spop)
     seval = GlobalOptimization.SerialBatchEvaluator(prob)
-    teval = GlobalOptimization.ThreadedBatchEvaluator(prob)
+    teval = GlobalOptimization.ThreadedBatchEvaluator(
+        prob, Threads.nthreads(), ChunkSplitters.RoundRobin(),
+    )
     peval = GlobalOptimization.PolyesterBatchEvaluator(prob)
 
     GlobalOptimization.evaluate!(spop, seval)

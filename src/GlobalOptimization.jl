@@ -49,8 +49,9 @@ export LatinHypercubeInitialization
 export OptimizationProblem
 export optimize!
 
-export SerialPSO, ThreadedPSO, PolyesterPSO
-export SerialDE, ThreadedDE, PolyesterDE
+export SerialFunctionEvaluation, ThreadedFunctionEvaluation, PolyesterFunctionEvaluation
+
+export PSO, DE
 
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
 

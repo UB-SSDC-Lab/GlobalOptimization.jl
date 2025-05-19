@@ -40,19 +40,25 @@ Private = false
     LatinHypercubeInitialization(::Int)
 ```
 
+## Function Evaluation Methods
+```@docs
+SerialFunctionEvaluation
+SerialFunctionEvaluation()
+ThreadedFunctionEvaluation
+ThreadedFunctionEvaluation()
+PolyesterFunctionEvaluation
+PolyesterFunctionEvaluation()
+```
+
 ## Algorithms
 ### Particle Swarm Optimization
 ```@docs
-SerialPSO
-ThreadedPSO
-PolyesterPSO
+PSO
 ```
 
 ### Differential Evolution
 ```@docs
-SerialDE
-ThreadedDE
-PolyesterDE
+DE
 ```
 
 #### Mutation Parameters

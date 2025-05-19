@@ -44,11 +44,24 @@ ss = ContinuousRectangularSearchSpace([-5.0 for i in 1:N], [5.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 
 # Instantiate PSO
-spso = SerialPSO(prob; population_init_method=LatinHypercubeInitialization(), max_time=20.0)
-# tpso = ThreadedPSO(prob; max_time = 20.0)
-ppso = PolyesterPSO(prob; max_time=20.0)
+spso = PSO(
+    prob;
+    eval_method=SerialFunctionEvaluation(),
+    population_init_method=LatinHypercubeInitialization(),
+    max_time=20.0,
+)
+tpso = PSO(
+    prob;
+    eval_method=ThreadedFunctionEvaluation(),
+    max_time = 20.0,
+)
+ppso = PSO(
+    prob;
+    eval_method=PolyesterFunctionEvaluation(),
+    max_time=20.0,
+)
 
-res = optimize!(spso)
+res = optimize!(ppso)
 # res = optimize!(spso); display(res)
 # res = optimize!(tpso); display(res)
 # res = optimize!(ppso); display(res)
