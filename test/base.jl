@@ -101,8 +101,8 @@ end
     fpen = x -> (sum(x), sum(x))
     prob2 = GlobalOptimization.OptimizationProblem(fpen, ss)
     @test GlobalOptimization.num_dims(prob2) == 2
-    # scalar_function: f + 0.5*g^2 = 3.0 + 0.5*(3.0^2) = 3.0 + 4.5 = 7.5
-    @test isapprox(GlobalOptimization.scalar_function(prob2, x), 7.5; atol=1e-8)
+    # scalar_function: f + max(0.0,g) = 3.0 + max(0.0,3.0) = 3.0 + 6.0 = 6.0
+    @test isapprox(GlobalOptimization.scalar_function(prob2, x), 6.0; atol=1e-8)
     vp, gp = GlobalOptimization.scalar_function_with_penalty(prob2, x)
     @test vp == 3.0
     @test gp == 3.0

@@ -51,8 +51,8 @@ end
 # Setup Problem
 N = 2
 ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
-#prob = OptimizationProblem(rastrigin, ss)
-prob = NonlinearProblem(simple_nonlinear_equation, ss)
+prob = OptimizationProblem(rastrigin, ss)
+#prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
 dist = MBHAdaptiveDistribution{Float64}(
@@ -69,11 +69,16 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
     percent_decrease_tol=50.0,
     abs_tol=1e-14,
 )
-mbh = GlobalOptimization.PolyesterCMBH(
+mbh = MBH(
     prob;
-    #hop_distribution=dist,
-    local_search=nls,
-    num_hoppers=30,
+    hopper_type=MCH(;
+        num_hoppers=50,
+        eval_method=ThreadedFunctionEvaluation(;
+            n=4*Threads.nthreads(),
+        ),
+    ),
+    hop_distribution=dist,
+    #local_search=nls,
     max_time=20.0,
     min_cost=1e-20,
     display=true,

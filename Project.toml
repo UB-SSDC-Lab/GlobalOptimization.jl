@@ -32,6 +32,7 @@ NonlinearSolve = "4.8.0"
 Optim = "1"
 Polyester = "0.7"
 Random = "1"
+ReverseDiff = "1.16.1"
 StaticArrays = "1"
 Statistics = "1.9 - 1.11"
 Test = "1"
@@ -40,7 +41,8 @@ julia = "1.9 - 1.11"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test"]
+test = ["Aqua", "ReverseDiff", "Test"]

@@ -468,7 +468,7 @@ num_dims(prob::AbstractProblem) = num_dims(search_space(prob))
     scalar_function(prob::OptimizationProblem, x::AbstractArray)
 
 Evaluates the objective function `f` of the optimization problem `prob` at `x`
-and returns the cost function plus half the infeasibility squared.
+and returns the cost function plus the infeasibility.
 """
 @inline function scalar_function(
     prob::OptimizationProblem{has_penalty,SS,F,G}, x::AbstractArray
@@ -477,7 +477,7 @@ and returns the cost function plus half the infeasibility squared.
 end
 @inline function scalar_function(prob::OptimizationProblem, x::AbstractArray, ::Val{true})
     f, g = prob.f(x)
-    return f + 0.5 * g * g
+    return f + max(0.0, g)
 end
 @inline function scalar_function(prob::OptimizationProblem, x::AbstractArray, ::Val{false})
     return prob.f(x)
@@ -498,7 +498,7 @@ end
     prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{true}
 )
     f, g = prob.f(x)
-    return 0.5 * (dot(f, f) + g * g)
+    return 0.5 * dot(f, f) + max(0.0, g)
 end
 @inline function scalar_function(
     prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{false}

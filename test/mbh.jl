@@ -1,6 +1,8 @@
 using GlobalOptimization, Test
 using Distributions, Random
-using Optim, LineSearches
+using Optim, LineSearches, ADTypes
+import NonlinearSolve
+import ReverseDiff
 
 @testset showtiming = true "Hopper" begin
 
@@ -278,6 +280,36 @@ end
     @test res == true
     @test isapprox(cache2.cost, sphere(cache2.x); atol=1e-6)
 
+    cache3 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
+    GlobalOptimization.initialize!(cache3, N)
+    x0 = fill(0.0, N)
+    res = GlobalOptimization.optim_solve!(
+        cache3,
+        prob,
+        x0,
+        Optim.Fminbox(Optim.LBFGS()),
+        ADTypes.AutoReverseDiff(),
+        Optim.Options(iterations=2),
+    )
+    @test res == true
+    @test isapprox(cache3.cost, sphere(cache3.x); atol=1e-6)
+
+    # Test nonlinear problem solve
+    nonlinear_eq(x) = [x[1]^2 - 1.0, x[2]^2 - 1.0]
+    prob2 = GlobalOptimization.NonlinearProblem(nonlinear_eq, ss)
+    cache4 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
+    GlobalOptimization.initialize!(cache4, N)
+    x0 = fill(2.0, N)
+    res = GlobalOptimization.nonlinear_solve!(
+        cache4, prob2, x0, NonlinearSolve.NewtonRaphson(), 1e-8, 10
+    )
+    @test res == true
+    @test isapprox(
+        cache4.cost,
+        GlobalOptimization.scalar_function(prob2,cache4.x),
+        atol=1e-6
+    )
+
     # Test local_search!
     fhe = GlobalOptimization.FeasibilityHandlingEvaluator(prob)
 
@@ -298,7 +330,7 @@ end
         @test isapprox(h2.candidate_step[i], h2.candidate[i] - start_point[i]; atol=1e-12)
     end
 
-    # With LBFGSLocalSearch
+    # With LBFGSLocalSearch and default AD
     h3 = GlobalOptimization.Hopper{Float64}(2)
     ls3 = LBFGSLocalSearch{Float64}()
     GlobalOptimization.initialize!(ls3, GlobalOptimization.num_dims(h3))
@@ -310,6 +342,35 @@ end
     @test h3.candidate_fitness < after_large_hop_fitness
     for i in 1:GlobalOptimization.num_dims(h3)
         @test isapprox(h3.candidate_step[i], h3.candidate[i] - start_point[i]; atol=1e-12)
+    end
+
+    # With LBFGSLocalSearch and ReverseDiff
+    h4 = GlobalOptimization.Hopper{Float64}(2)
+    ls4 = LBFGSLocalSearch{Float64}(; ad=ADTypes.AutoReverseDiff())
+    GlobalOptimization.initialize!(ls4, GlobalOptimization.num_dims(h4))
+    h4.candidate .= after_large_hop_point
+    h4.candidate_fitness = after_large_hop_fitness
+    h4.candidate_step .= after_large_hop_point .- start_point
+    GlobalOptimization.local_search!(h4, fhe, ls4)
+    @test h4.candidate != after_large_hop_point
+    @test h4.candidate_fitness < after_large_hop_fitness
+    for i in 1:GlobalOptimization.num_dims(h4)
+        @test isapprox(h4.candidate_step[i], h4.candidate[i] - start_point[i]; atol=1e-12)
+    end
+
+    # With NonlinearSolveLocalSearch
+    fhe2 = GlobalOptimization.FeasibilityHandlingEvaluator(prob2)
+    h5 = GlobalOptimization.Hopper{Float64}(2)
+    nls = NonlinearSolveLocalSearch{Float64}(NonlinearSolve.NewtonRaphson())
+    GlobalOptimization.initialize!(nls, GlobalOptimization.num_dims(h5))
+    h5.candidate .= after_large_hop_point
+    h5.candidate_fitness = after_large_hop_fitness
+    h5.candidate_step .= after_large_hop_point .- start_point
+    GlobalOptimization.local_search!(h5, fhe2, nls)
+    @test h5.candidate != after_large_hop_point
+    @test h5.candidate_fitness < after_large_hop_fitness
+    for i in 1:GlobalOptimization.num_dims(h5)
+        @test isapprox(h5.candidate_step[i], h5.candidate[i] - start_point[i]; atol=1e-12)
     end
 end
 
