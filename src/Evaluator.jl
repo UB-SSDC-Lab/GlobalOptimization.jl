@@ -11,17 +11,46 @@ abstract type AbstractFunctionEvaluationMethod end
 
 A function evaluation method that evaluates the fitness of a candidate in serial.
 """
-struct SerialFunctionEvaluation <: AbstractFunctionEvaluationMethod end
+struct SerialFunctionEvaluation <: AbstractFunctionEvaluationMethod
+    @doc """
+        SerialFunctionEvaluation()
+
+    Construct a `SerialFunctionEvaluation` object.
+    """
+    function SerialFunctionEvaluation()
+        return new()
+    end
+end
 
 """
-    ThreadedFunctionEvaluation
+    ThreadedFunctionEvaluation{S <: ChunkSplitters.Split}
 
 A function evaluation method that evaluates the fitness of a candidate in parallel using
-    multi-threading from Threads.jl.
+    multi-threading from Base.Threads.jl.
+
+# Fields
+- `n::Int`: The number of batch jobs to split the workload into using
+    [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl).
+- `split::S`: The chunk splitter to use. See [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl)
+    for more information.
 """
 struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <: AbstractFunctionEvaluationMethod
     n::Int
     split::S
+    @doc """
+        ThreadedFunctionEvaluation(
+            n::Int=Threads.nthreads(),
+            split::S=ChunkSplitters.RoundRobin(),
+        )
+
+    Construct a `ThreadedFunctionEvaluation` object.
+
+    # Keyword Arguments
+    - `n::Int`: The number of batch jobs to split the workload into using
+        [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl).
+    - `split::S`: The chunk splitter to use. See [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl)
+        for more information.
+    """
     function ThreadedFunctionEvaluation(;
         n::Int=Threads.nthreads(),
         split::S=ChunkSplitters.RoundRobin(),
@@ -34,9 +63,18 @@ end
     PolyesterFunctionEvaluation
 
 A function evaluation method that evaluates the fitness of a candidate in parallel using
-    Polyester.jl.
+    [Polyester.jl](https://github.com/JuliaSIMD/Polyester.jl).
 """
-struct PolyesterFunctionEvaluation <: AbstractFunctionEvaluationMethod end
+struct PolyesterFunctionEvaluation <: AbstractFunctionEvaluationMethod
+    @doc """
+        PolyesterFunctionEvaluation()
+
+    Construct a `PolyesterFunctionEvaluation` object.
+    """
+    function PolyesterFunctionEvaluation()
+        return new()
+    end
+end
 
 """
     AbstractEvaluator
