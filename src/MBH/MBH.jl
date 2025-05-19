@@ -54,97 +54,93 @@ struct MBH{
 end
 
 """
-    MBH(prob::AbstractOptimizationProblem{SS})
-"""
-function MBH(
-    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
-    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
-    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-    display::Bool=false,
-    display_interval::Int=1,
-) where {T<:Number,has_penalty}
-    # Construct the options
-    options = MBHOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-            min_cost,
-        ),
-        intersection(search_space(prob), initial_space),
-    )
+    _MBH(args...)
 
-    # Construct MBH
-    return MBH(
+Internal constructor for the Monotonic Basin Hopping (MBH) algorithm.
+"""
+function _MBH(
+    hopper_type::SingleHopper,
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}},
+    hop_distribution,
+    local_search,
+    options,
+) where {has_penalty,T}
+ return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
-        SingleHopper{T}(num_dims(prob)),
+        SingleHopperSet{T}(num_dims(prob)),
         nothing,
         hop_distribution,
         local_search,
     )
 end
-
-"""
-    SerialCMCH(prob::AbstractOptimizationProblem{SS})
-"""
-function SerialCMBH(
-    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
-    num_hoppers::Integer = Threads.nthreads(),
-    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
-    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-    display::Bool=false,
-    display_interval::Int=1,
-) where {T<:Number,has_penalty}
-    # Construct the options
-    options = MBHOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-            min_cost,
-        ),
-        intersection(search_space(prob), initial_space),
-    )
-
-    # Construct MBH
-    return MBH(
+function _MBH(
+    hopper_type::MCH,
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}},
+    hop_distribution,
+    local_search,
+    options,
+) where {has_penalty,T}
+ return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
-        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
-        SerialBatchJobEvaluator(),
+        MCHSet{T}(num_dims(prob), hopper_type.num_hoppers),
+        construct_batch_job_evaluator(hopper_type.eval_method),
         hop_distribution,
-        [deepcopy(local_search) for _ in 1:num_hoppers],
+        [deepcopy(local_search) for _ in 1:hopper_type.num_hoppers],
     )
 end
 
 """
-    ThreadedCMCH(prob::AbstractOptimizationProblem{SS})
+    MBH(prob::AbstractOptimizationProblem{SS}; kwargs...)
+
+Construct the standard Monotonic Basin Hopping (MBJ) algorithm with the specified options.
+
+# Keyword Arguments
+- `hopper_type::AbstractHopperType`: The type of hopper to use. Default is
+    `SingleHopper()`.
+- `hop_distribution::AbstractMBHDistribution{T}`: The distribution from which hops are
+    drawn. Default is `MBHAdaptiveDistribution{T}(100, 5)`.
+- `local_search::AbstractLocalSearch{T}`: The local search algorithm to use. Default is
+    `LBFGSLocalSearch{T}()`.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}`: The initial search space
+    to use. Default is `nothing`.
+- `function_value_check::Bool`: Whether to check the function value. Default is `true`.
+- `max_time::Real`: The maximum time to run the algorithm in seconds. Default is `60.0`.
+- `min_cost::Real`: The minimum cost to reach. Default is `-Inf`.
+- `display::Bool`: Whether to display the status of the algorithm. Default is `false`.
+- `display_interval::Int`: The interval at which to display the status of the algorithm.
+    Default is `1`.
 """
-function ThreadedCMBH(
+function MBH(
     prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
-    num_hoppers::Integer = Threads.nthreads(),
+    hopper_type::AbstractHopperType=SingleHopper(),
     hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
     local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     function_value_check::Bool=true,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
-    batch_n::Int=Threads.nthreads(),
-    batch_split::ChunkSplitters.Split=ChunkSplitters.RoundRobin(),
     display::Bool=false,
     display_interval::Int=1,
 ) where {T<:Number,has_penalty}
+    # Check arguments
+    if isa(prob, OptimizationProblem) && isa(local_search, NonlinearSolveLocalSearch)
+        throw(ArgumentError(
+            "NonlinearSolveLocalSearch is not supported for OptimizationProblem! " *
+            "Please consider using LBFGSLocalSearch or LocalStochasticSearch instead."
+        ))
+    end
+    if max_time < 0.0
+        throw(ArgumentError("max_time must be greater than 0.0!"))
+    end
+    if min_cost < -Inf
+        throw(ArgumentError("min_cost must be greater than -Inf!"))
+    end
+    if display_interval < 1
+        throw(ArgumentError("display_interval must be greater than 0!"))
+    end
+
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
@@ -158,52 +154,7 @@ function ThreadedCMBH(
     )
 
     # Construct MBH
-    return MBH(
-        options,
-        FeasibilityHandlingEvaluator(prob),
-        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
-        ThreadedBatchJobEvaluator(batch_n, batch_split),
-        hop_distribution,
-        [deepcopy(local_search) for _ in 1:num_hoppers],
-    )
-end
-
-"""
-    PolyesterCMCH(prob::AbstractOptimizationProblem{SS})
-"""
-function PolyesterCMBH(
-    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
-    num_hoppers::Integer = Threads.nthreads(),
-    hop_distribution::AbstractMBHDistribution{T}=MBHAdaptiveDistribution{T}(100, 5),
-    local_search::AbstractLocalSearch{T}=LBFGSLocalSearch{T}(),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-    display::Bool=false,
-    display_interval::Int=1,
-) where {T<:Number,has_penalty}
-    # Construct the options
-    options = MBHOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-            min_cost,
-        ),
-        intersection(search_space(prob), initial_space),
-    )
-
-    # Construct MBH
-    return MBH(
-        options,
-        FeasibilityHandlingEvaluator(prob),
-        MultipleCommunicatingHoppers{T}(num_dims(prob), num_hoppers),
-        PolyesterBatchJobEvaluator(),
-        hop_distribution,
-        [deepcopy(local_search) for _ in 1:num_hoppers],
-    )
+    return _MBH(hopper_type, prob, hop_distribution, local_search, options)
 end
 
 # Methods
@@ -332,10 +283,10 @@ function hop!(hopper::Hopper, ss, eval, dist, ls)
 
     return draw_count
 end
-function hop!(hopper_set::SingleHopper, ss, eval, bhe, dist, ls)
+function hop!(hopper_set::SingleHopperSet, ss, eval, bhe, dist, ls)
     return hop!(hopper_set.hopper, ss, eval, dist, ls)
 end
-function hop!(hopper_set::MultipleCommunicatingHoppers, ss, eval, bhe, dist, ls)
+function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
     # Unpack the hoppers
     @unpack hoppers = hopper_set
 

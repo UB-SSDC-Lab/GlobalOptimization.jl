@@ -11,28 +11,28 @@ using Optim, LineSearches
     @test all(x -> x == 0.0, GlobalOptimization.candidate(h))
     @test GlobalOptimization.fitness(h) == Inf
 
-    # Test SingleHopper constructor
-    sh = GlobalOptimization.SingleHopper{Float64}(3)
+    # Test SingleHopperSet constructor
+    sh = GlobalOptimization.SingleHopperSet{Float64}(3)
     @test length(sh) == 3
     @test GlobalOptimization.num_dims(sh) == 3
     @test all(x -> x == 0.0, GlobalOptimization.candidate(sh.hopper))
     @test GlobalOptimization.fitness(sh.hopper) == Inf
 
-    # Test MultipleCommunicatingHoppers constructor
-    mh = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(3, 5)
+    # Test MCHSet constructor
+    mh = GlobalOptimization.MCHSet{Float64}(3, 5)
     @test length(mh) == 5
     @test eachindex(mh) == 1:5
     @test GlobalOptimization.num_dims(mh) == 3
 
-    # Test initialization of SingleHopper and MultipleCommunicatingHoppers
+    # Test initialization of SingleHopperSet and MCHSet
     search_space = GlobalOptimization.ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
     initial_space = GlobalOptimization.ContinuousRectangularSearchSpace([0.0, 0.0], [2.0, 2.0])
     evaluator = GlobalOptimization.FeasibilityHandlingEvaluator(
         GlobalOptimization.OptimizationProblem(sum, search_space),
     )
 
-    # SingleHopper
-    sh2 = GlobalOptimization.SingleHopper{Float64}(2)
+    # SingleHopperSet
+    sh2 = GlobalOptimization.SingleHopperSet{Float64}(2)
     GlobalOptimization.initialize!(
         sh2, GlobalOptimization.intersection(search_space, initial_space), evaluator, nothing,
     )
@@ -43,8 +43,8 @@ using Optim, LineSearches
     @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), search_space)
     @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), initial_space)
 
-    # MultipleCommunicatingHoppers
-    mh2 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+    # MCHSet
+    mh2 = GlobalOptimization.MCHSet{Float64}(2, 3)
     GlobalOptimization.initialize!(
         mh2, GlobalOptimization.intersection(search_space, initial_space), evaluator,
         GlobalOptimization.SerialBatchJobEvaluator(),
@@ -72,9 +72,9 @@ using Optim, LineSearches
     @test hd.candidate_step == [1.5, 1.5]
     @test GlobalOptimization.candidate(hd) == [3.5, 4.5]
 
-    # Test update_fitness! with SingleHopper and MBHStaticDistribution
+    # Test update_fitness! with SingleHopperSet and MBHStaticDistribution
     sd = MBHStaticDistribution{Float64}()
-    sh3 = GlobalOptimization.SingleHopper{Float64}(2)
+    sh3 = GlobalOptimization.SingleHopperSet{Float64}(2)
 
     # Test for improved fitness
     GlobalOptimization.set_candidate!(sh3.hopper, [2.0, 3.0])
@@ -90,8 +90,8 @@ using Optim, LineSearches
     @test sh3.best_candidate == [2.0, 3.0]
     @test sh3.best_candidate_fitness == 5.0
 
-    # Test update_fitness! with MultipleCommunicatingHoppers and MBHStaticDistribution
-    mh3 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+    # Test update_fitness! with MCHSet and MBHStaticDistribution
+    mh3 = GlobalOptimization.MCHSet{Float64}(2, 3)
 
     # Test for improved fitness
     for i in 1:3
@@ -115,9 +115,9 @@ using Optim, LineSearches
     @test all(h -> GlobalOptimization.candidate(h) == mh3.best_candidate, mh3.hoppers)
     @test all(h -> GlobalOptimization.fitness(h) == mh3.best_candidate_fitness, mh3.hoppers)
 
-    # Test update_fitness! with SingleHopper and MBHAdaptiveDistribution
+    # Test update_fitness! with SingleHopperSet and MBHAdaptiveDistribution
     ad = MBHAdaptiveDistribution{Float64}(4, 0)
-    sh4 = GlobalOptimization.SingleHopper{Float64}(2)
+    sh4 = GlobalOptimization.SingleHopperSet{Float64}(2)
     GlobalOptimization.initialize!(ad, GlobalOptimization.num_dims(sh3))
 
     # Test for improved fitness
@@ -144,9 +144,9 @@ using Optim, LineSearches
     @test ad.step_memory.data[3, 1] == 100.0
     @test ad.step_memory.data[4, 1] == 5.0
 
-    # Test update_fitness! with MultipleCommunicatingHoppers and MBHStaticDistribution
+    # Test update_fitness! with MCHSet and MBHStaticDistribution
     ad2 = MBHAdaptiveDistribution{Float64}(4, 0)
-    mh4 = GlobalOptimization.MultipleCommunicatingHoppers{Float64}(2, 3)
+    mh4 = GlobalOptimization.MCHSet{Float64}(2, 3)
     GlobalOptimization.initialize!(ad2, GlobalOptimization.num_dims(mh4))
 
     # Test for improved fitness
@@ -247,6 +247,8 @@ end
     @test GlobalOptimization.timeout(f, 1, 0.1, -1) == 2
     slow(x) = (sleep(0.2); x)
     @test GlobalOptimization.timeout(slow, 1, 0.1, -1) == -1
+    err(x) = (sleep(0.01); throw(InterruptException()))
+    @test_throws InterruptException GlobalOptimization.timeout(err, 1, 0.1, -1)
 
     # Test LocalStochasticSearch constructor and draw_step!
     ls = LocalStochasticSearch{Float64}(2.0, 5)
@@ -326,7 +328,7 @@ end
         nothing
     end
     function GlobalOptimization.update_fitness!(
-        hopper_set::GlobalOptimization.SingleHopper{Float64}, ::ZeroDist
+        hopper_set::GlobalOptimization.SingleHopperSet{Float64}, ::ZeroDist
     )
         # The same as for MBHStaticDistribution
         if GlobalOptimization.fitness(hopper_set.hopper) < hopper_set.best_candidate_fitness
@@ -452,15 +454,16 @@ end
     @test length(res8.xbest) == 2
     @test res8.exitFlag == 1
 
-    # Test CMBH with static distribution and LocalStochasticSearch
-    CMBH_algorithms = [
-        :(SerialCMBH),
+    # Test MBH with MCH and each eval method for static distribution and LocalStochasticSearch
+    eval_methods = [
+        SerialFunctionEvaluation(),
+        ThreadedFunctionEvaluation(),
+        PolyesterFunctionEvaluation(),
     ]
-    for alg in CMBH_algorithms
-        ac = eval(alg)
-
-        cmbh1 = ac(
+    for eval_method in eval_methods
+        cmbh1 = MBH(
             prob;
+            hopper_type = MCH(; eval_method=eval_method),
             hop_distribution = MBHStaticDistribution{Float64}(),
             local_search = LocalStochasticSearch{Float64}(0.1, 2),
             max_time = 2.0,
@@ -471,8 +474,9 @@ end
         @test cres1.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
-        cmbh2 = ac(
+        cmbh2 = MBH(
             prob;
+            hopper_type = MCH(; eval_method=eval_method),
             hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
             local_search = LocalStochasticSearch{Float64}(0.1, 2),
             max_time = 2.0,
@@ -483,8 +487,9 @@ end
         @test cres2.exitFlag == 1
 
         # Test MBH with static distribution and LBFGSLocalSearch
-        cmbh3 = ac(
+        cmbh3 = MBH(
             prob;
+            hopper_type = MCH(; eval_method=eval_method),
             hop_distribution = MBHStaticDistribution{Float64}(),
             local_search = LBFGSLocalSearch{Float64}(),
             max_time = 2.0,
@@ -495,8 +500,9 @@ end
         @test cres3.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
-        cmbh4 = ac(
+        cmbh4 = MBH(
             prob;
+            hopper_type = MCH(; eval_method=eval_method),
             hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
             local_search = LBFGSLocalSearch{Float64}(),
             max_time = 2.0,

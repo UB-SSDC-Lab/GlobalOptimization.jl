@@ -3,20 +3,24 @@ abstract type DerivativeBasedLocalSearch{T} <: AbstractLocalSearch{T} end
 abstract type OptimLocalSearch{T,AD} <: DerivativeBasedLocalSearch{T} end
 
 # Timeout function
+struct TimeOutInterruptException <: Exception end
 function timeout(f, arg, seconds, fail)
     tsk = @task f(arg)
     schedule(tsk)
     Timer(seconds) do timer
-        istaskdone(tsk) || Base.throwto(tsk, InterruptException())
+        istaskdone(tsk) || Base.throwto(tsk, TimeOutInterruptException())
     end
     try
         return fetch(tsk)
     catch e
-        rethrow(e)
-        if e isa InterruptException
-            rethrow(e)
+        if isa(e, TaskFailedException)
+            if isa(e.task.exception, TimeOutInterruptException)
+                return fail
+            else
+                rethrow(e.task.exception)
+            end
         else
-            return fail
+            rethrow(e)
         end
     end
 end

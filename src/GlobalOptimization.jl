@@ -51,7 +51,7 @@ export LatinHypercubeInitialization
 export OptimizationProblem, NonlinearProblem, NonlinearLeastSquaresProblem
 export optimize!
 
-export PSO, DE
+export PSO, DE, MBH
 
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
 export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
@@ -60,8 +60,8 @@ export MutationParameters, SelfMutationParameters
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
 export CovarianceTransformation
 
-export MBH, SerialCMBH, ThreadedCMBH, PolyesterCMBH
+export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
-export LocalStochasticSearch, LBFGSLocalSearch
+export LocalStochasticSearch, LBFGSLocalSearch, NonlinearSolveLocalSearch
 
 end

@@ -219,6 +219,8 @@ end
         method::AbstractFunctionEvaluationMethod,
         prob::OptimizationProblem,
     )
+
+Constructs a batch evaluator for the given `method` and `prob`.
 """
 function construct_batch_evaluator(method::SerialFunctionEvaluation, prob)
     return SerialBatchEvaluator(prob)
@@ -229,6 +231,17 @@ end
 function construct_batch_evaluator(method::PolyesterFunctionEvaluation, prob)
     return PolyesterBatchEvaluator(prob)
 end
+
+"""
+    construct_batch_job_evaluator(method::AbstractFunctionEvaluationMethod)
+
+Constructs a batch job evaluator for the given `method`.
+"""
+construct_batch_job_evaluator(method::SerialFunctionEvaluation) = SerialBatchJobEvaluator()
+construct_batch_job_evaluator(method::ThreadedFunctionEvaluation) =
+    ThreadedBatchJobEvaluator(method.n, method.split)
+construct_batch_job_evaluator(method::PolyesterFunctionEvaluation) =
+    PolyesterBatchJobEvaluator()
 
 """
     has_gradient(evaluator::AbstractEvaluator)

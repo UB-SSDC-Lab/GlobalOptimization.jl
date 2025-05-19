@@ -16,8 +16,21 @@ mutable struct Hopper{T} <: AbstractCandidate{T}
     end
 end
 
+abstract type AbstractHopperType end
+struct SingleHopper <: AbstractHopperType end
+struct MCH{EM<:AbstractFunctionEvaluationMethod} <: AbstractHopperType
+    num_hoppers::Int
+    eval_method::EM
+    function MCH(;
+        num_hoppers::Integer=4,
+        eval_method::EM=SerialFunctionEvaluation(),
+    ) where {EM<:AbstractFunctionEvaluationMethod}
+        return new{EM}(num_hoppers,eval_method)
+    end
+end
+
 abstract type AbstractHopperSet{T} end
-mutable struct SingleHopper{T} <: AbstractHopperSet{T}
+mutable struct SingleHopperSet{T} <: AbstractHopperSet{T}
     # The single hopper
     hopper::Hopper{T}
 
@@ -25,7 +38,7 @@ mutable struct SingleHopper{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
-    function SingleHopper{T}(nDims::Integer) where T
+    function SingleHopperSet{T}(nDims::Integer) where T
         new{T}(
             Hopper{T}(nDims),
             zeros(T, nDims),
@@ -34,7 +47,7 @@ mutable struct SingleHopper{T} <: AbstractHopperSet{T}
     end
 end
 
-mutable struct MultipleCommunicatingHoppers{T} <: AbstractHopperSet{T}
+mutable struct MCHSet{T} <: AbstractHopperSet{T}
     # The communicating hoppers
     hoppers::Vector{Hopper{T}}
 
@@ -42,7 +55,7 @@ mutable struct MultipleCommunicatingHoppers{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
-    function MultipleCommunicatingHoppers{T}(nDims::Integer, nHoppers::Integer) where T
+    function MCHSet{T}(nDims::Integer, nHoppers::Integer) where T
         hoppers = [Hopper{T}(nDims) for _ in 1:nHoppers]
         best_candidate = Vector{T}(undef, nDims)
         best_candidate_fitness = T(Inf)
@@ -54,12 +67,12 @@ end
 Base.length(h::Hopper) = length(h.candidate)
 num_dims(h::Hopper) = length(h)
 
-Base.length(h::SingleHopper) = length(h.hopper)
-num_dims(h::SingleHopper) = length(h.hopper)
+Base.length(h::SingleHopperSet) = length(h.hopper)
+num_dims(h::SingleHopperSet) = length(h.hopper)
 
-Base.length(cm::MultipleCommunicatingHoppers) = length(cm.hoppers)
-Base.eachindex(cm::MultipleCommunicatingHoppers) = eachindex(cm.hoppers)
-num_dims(cm::MultipleCommunicatingHoppers) = num_dims(cm.hoppers[1])
+Base.length(cm::MCHSet) = length(cm.hoppers)
+Base.eachindex(cm::MCHSet) = eachindex(cm.hoppers)
+num_dims(cm::MCHSet) = num_dims(cm.hoppers[1])
 
 # Methods
 """
@@ -109,7 +122,7 @@ function initialize!(
 end
 
 function initialize!(
-    shopper::SingleHopper{T},
+    shopper::SingleHopperSet{T},
     search_space::ContinuousRectangularSearchSpace{T},
     evaluator::FeasibilityHandlingEvaluator,
     bhe::Nothing
@@ -129,7 +142,7 @@ function initialize!(
 end
 
 function initialize!(
-    mch::MultipleCommunicatingHoppers{T},
+    mch::MCHSet{T},
     search_space::ContinuousRectangularSearchSpace{T},
     evaluator::FeasibilityHandlingEvaluator,
     bhe::BatchJobEvaluator
@@ -181,7 +194,7 @@ end
 Updates the hopper fitness information after previously evaluating the fitness of the hopper.
 """
 function update_fitness!(
-    hopper_set::SingleHopper{T}, distribution::MBHStaticDistribution{T}
+    hopper_set::SingleHopperSet{T}, distribution::MBHStaticDistribution{T}
 ) where {T}
     if fitness(hopper_set.hopper) < hopper_set.best_candidate_fitness
         # Update hopper set
@@ -195,7 +208,7 @@ function update_fitness!(
     return nothing
 end
 function update_fitness!(
-    hopper_set::MultipleCommunicatingHoppers{T}, distribution::MBHStaticDistribution{T}
+    hopper_set::MCHSet{T}, distribution::MBHStaticDistribution{T}
 ) where {T}
     # Get best candidate index
     best_hopper = argmin(fitness, hopper_set.hoppers)
@@ -217,7 +230,7 @@ end
 
 
 function update_fitness!(
-    hopper_set::SingleHopper{T}, distribution::MBHAdaptiveDistribution{T}
+    hopper_set::SingleHopperSet{T}, distribution::MBHAdaptiveDistribution{T}
 ) where {T}
     if fitness(hopper_set.hopper) < hopper_set.best_candidate_fitness
         # Update distribution
@@ -239,7 +252,7 @@ function update_fitness!(
     return nothing
 end
 function update_fitness!(
-    hopper_set::MultipleCommunicatingHoppers{T}, distribution::MBHAdaptiveDistribution{T}
+    hopper_set::MCHSet{T}, distribution::MBHAdaptiveDistribution{T}
 ) where {T}
     # Get best candidate index
     best_hopper = argmin(fitness, hopper_set.hoppers)
