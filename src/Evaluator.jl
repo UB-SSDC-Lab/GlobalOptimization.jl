@@ -1,4 +1,82 @@
 """
+    AbstractFunctionEvaluationMethod
+
+A function evaluation method is a strategy for evaluating the fitness/objective, as well as
+    possibly other algorithm specific things.
+"""
+abstract type AbstractFunctionEvaluationMethod end
+
+"""
+    SerialFunctionEvaluation
+
+A function evaluation method that evaluates the fitness of a candidate in serial.
+"""
+struct SerialFunctionEvaluation <: AbstractFunctionEvaluationMethod
+    @doc """
+        SerialFunctionEvaluation()
+
+    Construct a `SerialFunctionEvaluation` object.
+    """
+    function SerialFunctionEvaluation()
+        return new()
+    end
+end
+
+"""
+    ThreadedFunctionEvaluation{S <: ChunkSplitters.Split}
+
+A function evaluation method that evaluates the fitness of a candidate in parallel using
+    multi-threading from Base.Threads.jl.
+
+# Fields
+- `n::Int`: The number of batch jobs to split the workload into using
+    [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl).
+- `split::S`: The chunk splitter to use. See [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl)
+    for more information.
+"""
+struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <: AbstractFunctionEvaluationMethod
+    n::Int
+    split::S
+    @doc """
+        ThreadedFunctionEvaluation(
+            n::Int=Threads.nthreads(),
+            split::S=ChunkSplitters.RoundRobin(),
+        )
+
+    Construct a `ThreadedFunctionEvaluation` object.
+
+    # Keyword Arguments
+    - `n::Int`: The number of batch jobs to split the workload into using
+        [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl).
+    - `split::S`: The chunk splitter to use. See [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl)
+        for more information.
+    """
+    function ThreadedFunctionEvaluation(;
+        n::Int=Threads.nthreads(),
+        split::S=ChunkSplitters.RoundRobin(),
+    ) where {S<:ChunkSplitters.Split}
+        return new{S}(n, split)
+    end
+end
+
+"""
+    PolyesterFunctionEvaluation
+
+A function evaluation method that evaluates the fitness of a candidate in parallel using
+    [Polyester.jl](https://github.com/JuliaSIMD/Polyester.jl).
+"""
+struct PolyesterFunctionEvaluation <: AbstractFunctionEvaluationMethod
+    @doc """
+        PolyesterFunctionEvaluation()
+
+    Construct a `PolyesterFunctionEvaluation` object.
+    """
+    function PolyesterFunctionEvaluation()
+        return new()
+    end
+end
+
+"""
     AbstractEvaluator
 
 Abstract type for an evaluator. An evaluator is responsible for evaluating the fitness
@@ -114,9 +192,7 @@ struct ThreadedBatchEvaluator{
     split::S
 
     function ThreadedBatchEvaluator(
-        prob::OptimizationProblem{has_penalty,SS,F,G},
-        n::Int=Threads.nthreads(),
-        split::S=ChunkSplitters.RoundRobin(),
+        prob::OptimizationProblem{has_penalty,SS,F,G}, n::Int, split::S,
     ) where {has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split}
         return new{has_penalty,SS,F,G,S}(prob, n, split)
     end
@@ -136,6 +212,22 @@ struct PolyesterBatchEvaluator{has_penalty,SS<:SearchSpace,F,G} <: BatchEvaluato
     ) where {has_penalty,SS<:SearchSpace,F,G}
         return new{has_penalty,SS,F,G}(prob)
     end
+end
+
+"""
+    construct_batch_evaluator(
+        method::AbstractFunctionEvaluationMethod,
+        prob::OptimizationProblem,
+    )
+"""
+function construct_batch_evaluator(method::SerialFunctionEvaluation, prob)
+    return SerialBatchEvaluator(prob)
+end
+function construct_batch_evaluator(method::ThreadedFunctionEvaluation, prob)
+    return ThreadedBatchEvaluator(prob, method.n, method.split)
+end
+function construct_batch_evaluator(method::PolyesterFunctionEvaluation, prob)
+    return PolyesterBatchEvaluator(prob)
 end
 
 """

@@ -102,14 +102,15 @@ struct PSO{T<:AbstractFloat,E<:BatchEvaluator,IBSS,PI,GO} <: AbstractOptimizer
 end
 
 """
-    SerialPSO(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+    PSO(prob::AbstractProblem{has_penalty,SS}; kwargs...)
 
-Constructs a PSO algorithm with the given options that will employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
+Constructs a PSO algorithm with the given options.
 
 # Arguments
 - `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
 
 # Keyword Arguments
+- `eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation()`: The method to use for evaluating the objective function.
 - `num_particles::Int = 100`: The number of particles to use.
 - `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
 - `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
@@ -129,8 +130,9 @@ Constructs a PSO algorithm with the given options that will employ a `SerialBatc
 # Returns
 - `PSO`: The PSO algorithm.
 """
-function SerialPSO(
+function PSO(
     prob::AbstractProblem{has_penalty,SS};
+    eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation(),
     num_particles::Int=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
@@ -173,185 +175,12 @@ function SerialPSO(
     # Construct PSO
     return PSO(
         options,
-        SerialBatchEvaluator(prob),
+        construct_batch_evaluator(eval_method, prob),
         Swarm{T}(num_particles, num_dims(prob)),
         PSOCache{T}(num_particles, num_dims(prob)),
     )
 end
-
-"""
-    ThreadedPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
-
-Constructs a PSO algorithm with the given options that will employ a `ThreadedBatchEvaluator` to evaluate the objective function each iteration.
-
-# Arguments
-- `prob::AbstractOptimizationProblem{SS}`: The optimization problem to solve.
-
-# Keyword Arguments
-- `num_particles::Int = 100`: The number of particles to use.
-- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
-- `max_iterations::Int = 1000`: The maximum number of iterations to perform.
-- `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
-- `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
-- `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
-- `inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0)`: The range of allowable inertia weights.
-- `minimum_neighborhood_fraction::AbstractFloat = 0.25`: The minimum neighborhood fraction to use.
-- `self_adjustment_weight::Real = 1.49`: The self adjustment weight to use.
-- `social_adjustment_weight::Real = 1.49`: The social adjustment weight to use.
-- `display::Bool = false`: Whether or not to display the status of the algorithm.
-- `display_interval::Int = 1`: The display interval to use.
-- `function_value_check::Bool = true`: Whether or not to check for bad function values (Inf or NaN).
-- `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
-
-# Returns
-- `PSO`: The PSO algorithm.
-"""
-function ThreadedPSO(
-    prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int=100,
-    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    max_iterations::Int=1000,
-    function_tolerence::AbstractFloat=1e-6,
-    max_stall_time::Real=Inf,
-    max_stall_iterations::Int=25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat=0.25,
-    self_adjustment_weight::Real=1.49,
-    social_adjustment_weight::Real=1.49,
-    display::Bool=false,
-    display_interval::Int=1,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-    batch_n::Int=Threads.nthreads(),
-    batch_split=ChunkSplitters.RoundRobin(),
-) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
-    # Construct the options
-    options = PSOOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-            min_cost,
-        ),
-        num_particles,
-        population_init_method,
-        intersection(search_space(prob), initial_space),
-        max_iterations,
-        function_tolerence,
-        max_stall_time,
-        max_stall_iterations,
-        inertia_range,
-        minimum_neighborhood_fraction,
-        self_adjustment_weight,
-        social_adjustment_weight,
-    )
-
-    # Construct PSO
-    return PSO(
-        options,
-        ThreadedBatchEvaluator(prob, batch_n, batch_split),
-        Swarm{T}(num_particles, num_dims(prob)),
-        PSOCache{T}(num_particles, num_dims(prob)),
-    )
-end
-
-"""
-    PolyesterPSO(prob::AbstractOptimizationProblem{SS}; kwargs...)
-
-Constructs a PSO algorithm with the given options that will employ a `PolyesterBatchEvaluator` to evaluate the objective function each iteration.
-
-# Arguments
-- `prob::AbstractOptimizationProblem{SS}`: The optimization problem to solve.
-
-# Keyword Arguments
-- `num_particles::Int = 100`: The number of particles to use.
-- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
-- `max_iterations::Int = 1000`: The maximum number of iterations to perform.
-- `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
-- `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
-- `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
-- `inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0)`: The range of allowable inertia weights.
-- `minimum_neighborhood_fraction::AbstractFloat = 0.25`: The minimum neighborhood fraction to use.
-- `self_adjustment_weight::Real = 1.49`: The self adjustment weight to use.
-- `social_adjustment_weight::Real = 1.49`: The social adjustment weight to use.
-- `display::Bool = false`: Whether or not to display the status of the algorithm.
-- `display_interval::Int = 1`: The display interval to use.
-- `function_value_check::Bool = true`: Whether or not to check for bad function values (Inf or NaN).
-- `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
-
-# Returns
-- `PSO`: The PSO algorithm.
-"""
-function PolyesterPSO(
-    prob::AbstractProblem{has_penalty,SS};
-    num_particles::Int=100,
-    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    max_iterations::Int=1000,
-    function_tolerence::AbstractFloat=1e-6,
-    max_stall_time::Real=Inf,
-    max_stall_iterations::Int=25,
-    inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
-    minimum_neighborhood_fraction::AbstractFloat=0.25,
-    self_adjustment_weight::Real=1.49,
-    social_adjustment_weight::Real=1.49,
-    display::Bool=false,
-    display_interval::Int=1,
-    function_value_check::Bool=true,
-    max_time::Real=60.0,
-    min_cost::Real=(-Inf),
-) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
-    # Construct the options
-    options = PSOOptions(
-        GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
-            max_time,
-            min_cost,
-        ),
-        num_particles,
-        population_init_method,
-        intersection(search_space(prob), initial_space),
-        max_iterations,
-        function_tolerence,
-        max_stall_time,
-        max_stall_iterations,
-        inertia_range,
-        minimum_neighborhood_fraction,
-        self_adjustment_weight,
-        social_adjustment_weight,
-    )
-
-    # Construct PSO
-    return PSO(
-        options,
-        PolyesterBatchEvaluator(prob),
-        Swarm{T}(num_particles, num_dims(prob)),
-        PSOCache{T}(num_particles, num_dims(prob)),
-    )
-end
-
-function SerialPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
-    throw(
-        ArgumentError(
-            "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
-        ),
-    )
-end
-function ThreadedPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
-    throw(
-        ArgumentError(
-            "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",
-        ),
-    )
-end
-function PolyesterPSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
+function PSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     throw(
         ArgumentError(
             "PSO only supports OptimizationProblem defined with a ContinuousRectangularSearchSpace.",

@@ -131,13 +131,13 @@ end
 """
     SerialDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
 
-Construct a serial Differential Evolution (DE) algorithm with the given options that will
-employ a `SerialBatchEvaluator` to evaluate the objective function each iteration.
+Construct a serial Differential Evolution (DE) algorithm with the given options.
 
 # Arguments
 - `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
 
 # Keyword Arguments
+- `eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation()`: The method to use for evaluating the objective function.
 - `num_candidates::Integer=100`: The number of candidates in the population.
 - `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
@@ -153,8 +153,9 @@ employ a `SerialBatchEvaluator` to evaluate the objective function each iteratio
 - `display::Bool=true`: Whether to display the algorithm status.
 - `display_interval::Integer=1`: The interval at which to display the algorithm status.
 """
-function SerialDE(
+function DE(
     prob::AbstractProblem{has_penalty,SS};
+    eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation(),
     num_candidates::Integer=100,
     population_init_method::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
@@ -170,192 +171,6 @@ function SerialDE(
     display::Bool=false,
     display_interval::Integer=1,
 ) where {
-    MP<:AbstractMutationParameters,
-    CP<:AbstractCrossoverParameters,
-    T<:AbstractFloat,
-    SS<:ContinuousRectangularSearchSpace{T},
-    has_penalty,
-}
-    evaluator = SerialBatchEvaluator(prob)
-    return BuildDE(
-        prob,
-        evaluator,
-        num_candidates,
-        population_init_method,
-        mutation_params,
-        crossover_params,
-        initial_space,
-        max_iterations,
-        max_time,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
-        min_cost,
-        function_value_check,
-        display,
-        display_interval,
-    )
-end
-
-"""
-    ThreadedDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
-
-Construct a serial Differential Evolution (DE) algorithm with the given options that will
-employ a `ThreadedBatchEvaluator` to evaluate the objective function each iteration.
-
-# Arguments
-- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
-
-# Keyword Arguments
-- `num_candidates::Integer=100`: The number of candidates in the population.
-- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
-- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
-- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
-- `max_iterations::Integer=1000`: The maximum number of iterations.
-- `max_time::Real=60.0`: The maximum time to run the algorithm.
-- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
-- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
-- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
-- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
-- `function_value_check::Bool=true`: Whether to check the function value.
-- `display::Bool=true`: Whether to display the algorithm status.
-- `display_interval::Integer=1`: The interval at which to display the algorithm status.
-"""
-function ThreadedDE(
-    prob::AbstractProblem{has_penalty,SS};
-    num_candidates::Integer=100,
-    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    mutation_params::MP=SelfMutationParameters(Rand1()),
-    crossover_params::CP=BinomialCrossoverParameters(0.6),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    max_iterations::Integer=1000,
-    max_time::Real=60.0,
-    function_tolerance::Real=1e-6,
-    max_stall_time::Real=60.0,
-    max_stall_iterations::Integer=100,
-    min_cost::Real=(-Inf),
-    function_value_check::Bool=true,
-    batch_n::Int=Threads.nthreads(),
-    batch_split=ChunkSplitters.RoundRobin(),
-    display::Bool=false,
-    display_interval::Integer=1,
-) where {
-    MP<:AbstractMutationParameters,
-    CP<:AbstractCrossoverParameters,
-    T<:AbstractFloat,
-    SS<:ContinuousRectangularSearchSpace{T},
-    has_penalty,
-}
-    evaluator = ThreadedBatchEvaluator(prob, batch_n, batch_split)
-    return BuildDE(
-        prob,
-        evaluator,
-        num_candidates,
-        population_init_method,
-        mutation_params,
-        crossover_params,
-        initial_space,
-        max_iterations,
-        max_time,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
-        min_cost,
-        function_value_check,
-        display,
-        display_interval,
-    )
-end
-
-"""
-    PolyesterDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
-
-Construct a serial Differential Evolution (DE) algorithm with the given options that will
-employ a `PolyesterBatchEvaluator` to evaluate the objective function each iteration.
-
-# Arguments
-- `prob::AbstractProblem{has_penalty,SS}`: The problem to solve.
-
-# Keyword Arguments
-- `num_candidates::Integer=100`: The number of candidates in the population.
-- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
-- `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
-- `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
-- `max_iterations::Integer=1000`: The maximum number of iterations.
-- `max_time::Real=60.0`: The maximum time to run the algorithm.
-- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
-- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
-- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
-- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
-- `function_value_check::Bool=true`: Whether to check the function value.
-- `display::Bool=true`: Whether to display the algorithm status.
-- `display_interval::Integer=1`: The interval at which to display the algorithm status.
-"""
-function PolyesterDE(
-    prob::AbstractProblem{has_penalty,SS};
-    num_candidates::Integer=100,
-    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
-    mutation_params::MP=SelfMutationParameters(Rand1()),
-    crossover_params::CP=BinomialCrossoverParameters(0.6),
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
-    max_iterations::Integer=1000,
-    max_time::Real=60.0,
-    function_tolerance::Real=1e-6,
-    max_stall_time::Real=60.0,
-    max_stall_iterations::Integer=100,
-    min_cost::Real=(-Inf),
-    function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Integer=1,
-) where {
-    MP<:AbstractMutationParameters,
-    CP<:AbstractCrossoverParameters,
-    T<:AbstractFloat,
-    SS<:ContinuousRectangularSearchSpace{T},
-    has_penalty,
-}
-    evaluator = ThreadedBatchEvaluator(prob)
-    return BuildDE(
-        prob,
-        evaluator,
-        num_candidates,
-        population_init_method,
-        mutation_params,
-        crossover_params,
-        initial_space,
-        max_iterations,
-        max_time,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
-        min_cost,
-        function_value_check,
-        display,
-        display_interval,
-    )
-end
-
-function BuildDE(
-    prob::AbstractProblem{has_penalty,SS},
-    evaluator::BatchEvaluator,
-    num_candidates::Integer,
-    population_init_method::PI,
-    mutation_params::MP,
-    crossover_params::CP,
-    initial_space::Union{Nothing,ContinuousRectangularSearchSpace},
-    max_iterations::Integer,
-    max_time::Real,
-    function_tolerance::Real,
-    max_stall_time::Real,
-    max_stall_iterations::Integer,
-    min_cost::Real,
-    function_value_check::Bool,
-    display::Bool,
-    display_interval::Integer,
-) where {
-    PI<:AbstractPopulationInitialization,
     MP<:AbstractMutationParameters,
     CP<:AbstractCrossoverParameters,
     T<:AbstractFloat,
@@ -384,7 +199,7 @@ function BuildDE(
     # Construct evaluator
     return DE(
         options,
-        evaluator,
+        construct_batch_evaluator(eval_method, prob),
         DEPopulation{T}(num_candidates, num_dims(prob)),
         DECache{T}(num_dims(prob)),
     )

@@ -44,8 +44,8 @@ UB  = [ 32.768 for _ in 1:10] # The upper bounds
 # Construct the optimization problem
 op  = OptimizationProblem(ackley, LB, UB)
 
-# Instantiate SerialPSO instance
-pso = SerialPSO(op)
+# Instantiate PSO instance
+pso = PSO(op)
 
 # Perform optimization with pso
 res = optimize!(pso)

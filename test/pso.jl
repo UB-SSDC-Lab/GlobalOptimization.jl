@@ -41,9 +41,9 @@ ss = GlobalOptimization.ContinuousRectangularSearchSpace(
 prob = GlobalOptimization.OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
-spso = GlobalOptimization.SerialPSO(prob)
-tpso = GlobalOptimization.ThreadedPSO(prob)
-ppso = GlobalOptimization.PolyesterPSO(prob)
+spso = GlobalOptimization.PSO(prob; eval_method=SerialFunctionEvaluation())
+tpso = GlobalOptimization.PSO(prob; eval_method=ThreadedFunctionEvaluation())
+ppso = GlobalOptimization.PSO(prob; eval_method=PolyesterFunctionEvaluation())
 
 # Check optimization is same
 Random.seed!(1234)
@@ -70,6 +70,4 @@ end
 # Check for expected errors
 struct InvalidSearchSpace <: GlobalOptimization.SearchSpace{Float64} end
 prob = GlobalOptimization.OptimizationProblem(layeb_1, InvalidSearchSpace())
-@test_throws ArgumentError GlobalOptimization.SerialPSO(prob)
-@test_throws ArgumentError GlobalOptimization.ThreadedPSO(prob)
-@test_throws ArgumentError GlobalOptimization.PolyesterPSO(prob)
+@test_throws ArgumentError GlobalOptimization.PSO(prob)
