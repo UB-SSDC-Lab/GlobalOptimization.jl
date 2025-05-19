@@ -258,8 +258,8 @@ end
     GlobalOptimization.draw_step!(vec, ls)
     @test all(isfinite, vec)
 
-    # Test OptimSolutionCache initialization
-    cache = GlobalOptimization.OptimSolutionCache{Float64}()
+    # Test LocalSearchSolutionCache initialization
+    cache = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache, 4)
     @test length(cache.x) == 4
     @test cache.cost == 0.0
@@ -269,7 +269,7 @@ end
     N = 2
     ss = GlobalOptimization.ContinuousRectangularSearchSpace(fill(-5.0, N), fill(5.0, N))
     prob = GlobalOptimization.OptimizationProblem(sphere, ss)
-    cache2 = GlobalOptimization.OptimSolutionCache{Float64}()
+    cache2 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache2, N)
     x0 = fill(0.0, N)
     res = GlobalOptimization.optim_solve!(cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2))

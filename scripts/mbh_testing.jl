@@ -10,6 +10,7 @@ using StaticArrays
 using Infiltrator
 #Random.seed!(1234)
 
+import NonlinearSolve
 using ADTypes
 
 # Schwefel Function
@@ -48,9 +49,10 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 5
+N = 2
 ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
-prob = OptimizationProblem(rastrigin, ss)
+#prob = OptimizationProblem(rastrigin, ss)
+prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
 dist = MBHAdaptiveDistribution{Float64}(
@@ -60,10 +62,17 @@ lsgb = LBFGSLocalSearch{Float64}(;
     iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1, ad=AutoForwardDiff()
 )
 lss = LocalStochasticSearch{Float64}(1e-2, 100)
+nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
+    NonlinearSolve.NewtonRaphson();
+    iters_per_solve=5,
+    time_per_solve=0.1,
+    percent_decrease_tol=50.0,
+    abs_tol=1e-14,
+)
 mbh = GlobalOptimization.PolyesterCMBH(
     prob;
     #hop_distribution=dist,
-    local_search=lsgb,
+    local_search=nls,
     num_hoppers=30,
     max_time=20.0,
     min_cost=1e-20,

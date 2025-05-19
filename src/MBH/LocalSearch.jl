@@ -1,6 +1,6 @@
 abstract type AbstractLocalSearch{T} end
-abstract type GradientBasedLocalSearch{T} <: AbstractLocalSearch{T} end
-abstract type OptimLocalSearch{T,AD} <: GradientBasedLocalSearch{T} end
+abstract type DerivativeBasedLocalSearch{T} <: AbstractLocalSearch{T} end
+abstract type OptimLocalSearch{T,AD} <: DerivativeBasedLocalSearch{T} end
 
 # Timeout function
 function timeout(f, arg, seconds, fail)
@@ -11,8 +11,13 @@ function timeout(f, arg, seconds, fail)
     end
     try
         return fetch(tsk)
-    catch _
-        return fail
+    catch e
+        rethrow(e)
+        if e isa InterruptException
+            rethrow(e)
+        else
+            return fail
+        end
     end
 end
 
@@ -34,16 +39,16 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
 end
 
 # A simple cache for storing the solution from optimization with Optim.jl
-mutable struct OptimSolutionCache{T}
+mutable struct LocalSearchSolutionCache{T}
     x::Vector{T}
     cost::T
-    function OptimSolutionCache{T}() where {T}
+    function LocalSearchSolutionCache{T}() where {T}
         return new{T}(Vector{T}(undef, 0), zero(T))
     end
 end
 
 # Initalize optim cache
-function initialize!(cache::OptimSolutionCache, num_dims)
+function initialize!(cache::LocalSearchSolutionCache, num_dims)
     resize!(cache.x, num_dims)
     return nothing
 end
@@ -65,7 +70,7 @@ struct LBFGSLocalSearch{
     max_solve_time::Float64
 
     # Solution cache
-    cache::OptimSolutionCache{T}
+    cache::LocalSearchSolutionCache{T}
 
     # Autodiff method
     ad::AD
@@ -87,7 +92,43 @@ struct LBFGSLocalSearch{
         )
         opts = Optim.Options(; iterations=iters_per_solve)
         return new{T,typeof(alg),typeof(opts),typeof(ad)}(
-            T(percent_decrease_tol), alg, opts, max_solve_time, OptimSolutionCache{T}(), ad,
+            T(percent_decrease_tol), alg, opts, max_solve_time, LocalSearchSolutionCache{T}(), ad,
+        )
+    end
+end
+
+struct NonlinearSolveLocalSearch{T, A} <: DerivativeBasedLocalSearch{T}
+    # Tollerance on percent decrease of objective function for performing another local search
+    percent_decrease_tolerance::T
+
+    alg::A
+
+    # Absolute tolerance for the solver
+    abs_tol::Float64
+
+    # Max solve iters
+    max_solve_iters::Int
+
+    # Max time per solve
+    max_solve_time::Float64
+
+    # Solution cache
+    cache::LocalSearchSolutionCache{T}
+
+    function NonlinearSolveLocalSearch{T}(
+        alg::A;
+        iters_per_solve::Int=5,
+        time_per_solve::Float64=0.1,
+        percent_decrease_tol::Number=50.0,
+        abs_tol::Float64=1e-8,
+    ) where {T,A}
+        return new{T,A}(
+            T(percent_decrease_tol),
+            alg,
+            abs_tol,
+            iters_per_solve,
+            time_per_solve,
+            LocalSearchSolutionCache{T}(),
         )
     end
 end
@@ -97,6 +138,10 @@ function initialize!(ls::LocalStochasticSearch, num_dims)
     return nothing
 end
 function initialize!(ls::LBFGSLocalSearch, num_dims)
+    initialize!(ls.cache, num_dims)
+    return nothing
+end
+function initialize!(ls::NonlinearSolveLocalSearch, num_dims)
     initialize!(ls.cache, num_dims)
     return nothing
 end
@@ -138,7 +183,7 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     return nothing
 end
 
-function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
+function optim_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, options)
     res = Optim.optimize(
         get_scalar_function(prob),
         prob.ss.dim_min,
@@ -151,7 +196,7 @@ function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, options)
     cache.cost = Optim.minimum(res)
     return true
 end
-function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, ad, options)
+function optim_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, ad, options)
     res = Optim.optimize(
         get_scalar_function(prob),
         prob.ss.dim_min,
@@ -166,7 +211,15 @@ function optim_solve!(cache::OptimSolutionCache, prob, x0, alg, ad, options)
     return true
 end
 
-function get_optim_solve(
+function nonlinear_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, abs_tol, max_iters)
+    nl_prob = NonlinearSolve.NonlinearProblem{false}((x,p) -> prob.f(x), x0)
+    sol = NonlinearSolve.solve(nl_prob, alg; abstol=abs_tol, maxiters=max_iters)
+    cache.x .= sol.u
+    cache.cost = scalar_function(prob, sol.u)
+    return true
+end
+
+function get_solve_fun(
     evaluator,
     ls::OptimLocalSearch{T,Nothing},
 ) where T
@@ -177,7 +230,7 @@ function get_optim_solve(
     end
     return solve!
 end
-function get_optim_solve(
+function get_solve_fun(
     evaluator,
     ls::OptimLocalSearch{T,AD},
 ) where {T,AD<:ADTypes.AbstractADType}
@@ -189,12 +242,24 @@ function get_optim_solve(
     return solve!
 end
 
-function local_search!(hopper, evaluator, ls::OptimLocalSearch)
+function get_solve_fun(
+    evaluator,
+    ls::NonlinearSolveLocalSearch{T,A},
+) where {T,A}
+    @unpack prob = evaluator
+    @unpack alg, abs_tol, max_solve_iters, cache = ls
+    solve! = let cache = cache, prob = prob, alg = alg, abs_tol = abs_tol, max_solve_iters = max_solve_iters
+        x -> nonlinear_solve!(cache, prob, x, alg, abs_tol, max_solve_iters)
+    end
+    return solve!
+end
+
+function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     @unpack candidate, candidate_fitness = hopper
     @unpack percent_decrease_tolerance, max_solve_time, cache = ls
 
     # Create solve call
-    solve! = get_optim_solve(evaluator, ls)
+    solve! = get_solve_fun(evaluator, ls)
 
     # Perform local search
     current_fitness = candidate_fitness
@@ -203,7 +268,7 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
         # Perform optimization with optim and terminate if we don't finish in max_solve_time seconds
         solve_finished = timeout(solve!, candidate, max_solve_time, false)
 
-        if solve_finished
+        if solve_finished && feasible(cache.x, evaluator, ls)
             # Solve finished in time, so check fitness
             new_fitness = cache.cost
             if new_fitness < current_fitness
@@ -229,4 +294,29 @@ function local_search!(hopper, evaluator, ls::OptimLocalSearch)
         end
     end
     return nothing
+end
+
+function feasible(
+    x, eval, ls::OptimLocalSearch{T}
+) where T
+    _, penalty = evaluate_with_penalty(eval, x)
+    if abs(penalty) - eps(T) <= zero(T)
+        return true
+    else
+        return false
+    end
+end
+function feasible(
+    x, eval, ls::NonlinearSolveLocalSearch{T}
+) where T
+    if !feasible(x, eval.prob.ss)
+        return false
+    else
+        _, penalty = evaluate_with_penalty(eval, x)
+        if abs(penalty) - eps(T) <= zero(T)
+            return true
+        else
+            return false
+        end
+    end
 end

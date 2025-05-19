@@ -1,6 +1,5 @@
 module GlobalOptimization
 
-using ADTypes
 using ChunkSplitters
 using Distributions
 using LatinHypercubeSampling: LHCoptim, scaleLHC
@@ -12,7 +11,9 @@ using Statistics: cov
 using Random: shuffle!
 using UnPack
 
+import ADTypes
 import Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
+import NonlinearSolve
 using Base: Base
 using Optim: Optim
 using LineSearches: LineSearches
@@ -46,7 +47,7 @@ include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
 export LatinHypercubeInitialization
-export OptimizationProblem
+export OptimizationProblem, NonlinearProblem, NonlinearLeastSquaresProblem
 export optimize!
 
 export SerialPSO, ThreadedPSO, PolyesterPSO
