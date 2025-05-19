@@ -3,7 +3,7 @@ using GlobalOptimization
 using BenchmarkTools
 using Random
 using Distributions
-using BlackBoxOptim
+#using BlackBoxOptim
 #using LoopVectorization
 #using PaddedViews
 #using StaticArrays
@@ -57,8 +57,9 @@ crossover_strategy = SelfBinomialCrossoverParameters(;
     #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N),
 )
 
-de = PolyesterDE(
+de = DE(
     prob;
+    eval_method=ThreadedFunctionEvaluation(),
     num_candidates=100,
     display=false,
     display_interval=1,

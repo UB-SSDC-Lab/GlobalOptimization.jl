@@ -1,4 +1,44 @@
 """
+    AbstractFunctionEvaluationMethod
+
+A function evaluation method is a strategy for evaluating the fitness/objective, as well as
+    possibly other algorithm specific things.
+"""
+abstract type AbstractFunctionEvaluationMethod end
+
+"""
+    SerialFunctionEvaluation
+
+A function evaluation method that evaluates the fitness of a candidate in serial.
+"""
+struct SerialFunctionEvaluation <: AbstractFunctionEvaluationMethod end
+
+"""
+    ThreadedFunctionEvaluation
+
+A function evaluation method that evaluates the fitness of a candidate in parallel using
+    multi-threading from Threads.jl.
+"""
+struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <: AbstractFunctionEvaluationMethod
+    n::Int
+    split::S
+    function ThreadedFunctionEvaluation(;
+        n::Int=Threads.nthreads(),
+        split::S=ChunkSplitters.RoundRobin(),
+    ) where {S<:ChunkSplitters.Split}
+        return new{S}(n, split)
+    end
+end
+
+"""
+    PolyesterFunctionEvaluation
+
+A function evaluation method that evaluates the fitness of a candidate in parallel using
+    Polyester.jl.
+"""
+struct PolyesterFunctionEvaluation <: AbstractFunctionEvaluationMethod end
+
+"""
     AbstractEvaluator
 
 Abstract type for an evaluator. An evaluator is responsible for evaluating the fitness
@@ -75,9 +115,7 @@ struct ThreadedBatchEvaluator{
     split::S
 
     function ThreadedBatchEvaluator(
-        prob::OptimizationProblem{has_penalty,SS,F,G},
-        n::Int=Threads.nthreads(),
-        split::S=ChunkSplitters.RoundRobin(),
+        prob::OptimizationProblem{has_penalty,SS,F,G}, n::Int, split::S,
     ) where {T,has_penalty,SS<:SearchSpace{T},F,G,S<:ChunkSplitters.Split}
         return new{T,has_penalty,SS,F,G,S}(prob, n, split)
     end
@@ -97,6 +135,22 @@ struct PolyesterBatchEvaluator{T,has_penalty,SS<:SearchSpace{T},F,G} <: BatchEva
     ) where {T,has_penalty,SS<:SearchSpace{T},F,G}
         return new{T,has_penalty,SS,F,G}(prob)
     end
+end
+
+"""
+    construct_batch_evaluator(
+        method::AbstractFunctionEvaluationMethod,
+        prob::OptimizationProblem,
+    )
+"""
+function construct_batch_evaluator(method::SerialFunctionEvaluation, prob)
+    return SerialBatchEvaluator(prob)
+end
+function construct_batch_evaluator(method::ThreadedFunctionEvaluation, prob)
+    return ThreadedBatchEvaluator(prob, method.n, method.split)
+end
+function construct_batch_evaluator(method::PolyesterFunctionEvaluation, prob)
+    return PolyesterBatchEvaluator(prob)
 end
 
 """
