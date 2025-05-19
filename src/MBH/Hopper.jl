@@ -17,10 +17,42 @@ mutable struct Hopper{T} <: AbstractCandidate{T}
 end
 
 abstract type AbstractHopperType end
+
+"""
+    SingleHopper <: GlobalOptimization.AbstractHopperType
+
+A single hopper that is used to explore the search space. Note that no parallelism is
+employed.
+"""
 struct SingleHopper <: AbstractHopperType end
+
+"""
+    MCH{EM<:AbstractFunctionEvaluationMethod} <: GlobalOptimization.AbstractHopperType
+
+Employs the method of *Multiple Communicating Hoppers* (MCH) to explore the search space as
+described in Englander, Arnold C., "Speeding-Up a Random Search for the Global Minimum
+of a Non-Convex, Non-Smooth Objective Function" (2021). *Doctoral Dissertations*. 2569.
+[https://scholars.unh.edu/dissertation/2569](https://scholars.unh.edu/dissertation/2569/).
+
+The struct fields are the same as the constructor arguments.
+"""
 struct MCH{EM<:AbstractFunctionEvaluationMethod} <: AbstractHopperType
     num_hoppers::Int
     eval_method::EM
+
+    @doc """
+        MCH(;
+            num_hoppers::Integer=4,
+            eval_method<:AbstractFunctionEvaluationMethod=SerialFunctionEvaluation(),
+        )
+
+    Constructs a new `MCH` object with the specified number of hoppers and evaluation method.
+
+    # Keyword Arguments
+    - `num_hoppers::Integer`: The number of hoppers to use. Default is 4.
+    - `eval_method<:AbstractFunctionEvaluationMethod`: The evaluation method to use. Default
+        is `SerialFunctionEvaluation()`.
+    """
     function MCH(;
         num_hoppers::Integer=4,
         eval_method::EM=SerialFunctionEvaluation(),

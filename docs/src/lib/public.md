@@ -52,13 +52,17 @@ PolyesterFunctionEvaluation()
 
 ## Algorithms
 ### Particle Swarm Optimization
-```@docs
-PSO
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["PSO.jl"]
+    Private = false
 ```
 
 ### Differential Evolution
-```@docs
-DE
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["DE.jl"]
+    Private = false
 ```
 
 #### Mutation Parameters
@@ -84,7 +88,6 @@ RadiusLimitedSelector
 RandomSubsetSelector
 ```
 
-
 #### DE Crossover Strategies
 ```@docs
 BinomialCrossoverParameters
@@ -94,4 +97,32 @@ SelfBinomialCrossoverParameters
 SelfBinomialCrossoverParameters(; dist=::Any, transform=::Any)
 CovarianceTransformation
 CovarianceTransformation(::Any,::Any,::Any)
+```
+
+### Monotonic Basin Hopping
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["MBH.jl"]
+    Private = false
+```
+
+#### Hopper Types
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["Hopper.jl"]
+    Private = false
+```
+
+#### Hop Distributions
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["Distributions.jl"]
+    Private = false
+```
+
+#### Local Search Methods
+```@autodocs
+    Modules = [GlobalOptimization]
+    Pages = ["LocalSearch.jl"]
+    Private = false
 ```
