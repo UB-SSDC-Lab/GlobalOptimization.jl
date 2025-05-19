@@ -1,7 +1,7 @@
 name = "GlobalOptimization"
 uuid = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
 authors = ["Grant Hecht"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
