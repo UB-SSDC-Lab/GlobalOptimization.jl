@@ -6,13 +6,14 @@ using LatinHypercubeSampling: LHCoptim, scaleLHC
 using LinearAlgebra
 using Format
 using Polyester: @batch
-using FunctionWrappersWrappers
 using StaticArrays
 using Statistics: cov
 using Random: shuffle!
 using UnPack
 
+import ADTypes
 import Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
+import NonlinearSolve
 using Base: Base
 using Optim: Optim
 using LineSearches: LineSearches
@@ -45,23 +46,22 @@ include("MBH/LocalSearch.jl")
 include("MBH/MBH.jl")
 
 export ContinuousRectangularSearchSpace
+export SerialFunctionEvaluation, ThreadedFunctionEvaluation, PolyesterFunctionEvaluation
 export LatinHypercubeInitialization
-export OptimizationProblem
+export OptimizationProblem, NonlinearProblem, NonlinearLeastSquaresProblem
 export optimize!
 
-export SerialFunctionEvaluation, ThreadedFunctionEvaluation, PolyesterFunctionEvaluation
-
-export PSO, DE
+export PSO, DE, MBH
 
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
-
 export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
 export CurrentToRand1, CurrentToRand2, RandToBest1, RandToBest2, Unified
 export MutationParameters, SelfMutationParameters
-
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
 export CovarianceTransformation
 
-#export MBH
+export SingleHopper, MCH
+export MBHStaticDistribution, MBHAdaptiveDistribution
+export LocalStochasticSearch, LBFGSLocalSearch, NonlinearSolveLocalSearch
 
 end

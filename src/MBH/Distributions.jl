@@ -97,7 +97,19 @@ abstract type AbstractMBHDistribution{T} end
 """
     MBHStaticDistribution{T}
 
-Static distribution for MBH.
+A static distribution for MBH. In this implementation, each element of a *hop* is drawn
+from a mixture model comprised of two Laplace distributions given by:
+
+``f_{mix}(x; b, c, \\lambda) = (1 - b) f(x;\\mu = 0,\\theta = c*\\lambda) + b f(x;\\mu = 0, \\theta = 1)``
+
+where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
+Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``).
+
+# Fields
+- `a`: Unused
+- `b`: The mixing parameter for the two Laplace distributions
+- `c`: The scale parameter for the first Laplace distribution
+- `λ`: A factor that scales the first Laplace distribution
 """
 struct MBHStaticDistribution{T} <: AbstractMBHDistribution{T}
     # Parameters (Set in options but also here for convenience)
@@ -108,7 +120,17 @@ struct MBHStaticDistribution{T} <: AbstractMBHDistribution{T}
     # Scale parameter for p
     λ::T
 
-    # Constructor
+    @doc """
+        MBHStaticDistribution{T}(; a=0.93, b=0.05, c=1.0, λ=1.0) where {T}
+
+    Creates a new `MBHStaticDistribution` with the given parameters.
+
+    # Keyword Arguments
+    - `a`: Unused
+    - `b`: The mixing parameter for the two Laplace distributions
+    - `c`: The scale parameter for the first Laplace distribution
+    - `λ`: A factor that scales the first Laplace distribution
+    """
     function MBHStaticDistribution{T}(; a=0.93, b=0.05, c=1.0, λ=1.0) where {T}
         return new{T}(T(a), T(b), T(c), T(λ))
     end
@@ -117,7 +139,31 @@ end
 """
     MBHAdaptiveDistribution{T}
 
-Adaptive distribution for MBH.
+An adaptive distribution for MBH. In this implementation, each *hop* is drawn from an
+adaptive mixture model comprised of two Laplace distributions as defined in
+Englander, Arnold C., "Speeding-Up a Random Search for the Global Minimum of a Non-Convex,
+Non-Smooth Objective Function" (2021). *Doctoral Dissertations*. 2569.
+[https://scholars.unh.edu/dissertation/2569](https://scholars.unh.edu/dissertation/2569/).
+
+The mixture model is given by:
+
+``f_{mix}(x; b, c, \\hat{\\boldsymbol{\\lambda}}) = (1 - b) f(x;\\mu = 0,\\theta = c*\\hat{\\lambda}_i) + b f(x;\\mu = 0, \\theta = 1)``
+
+where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
+Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). The ``i``-th
+element of a new hop is draw with the scale parameter ``\\hat{\\lambda}_i`` for the first
+Laplace distribution. Please see the aforementioned dissertation for details on how
+``\\hat{\\lambda}_i`` is updated.
+
+# Fields
+- `step_memory`: The step memory for the distribution
+- `min_memory_update`: The minimum number of steps in memory before updating the scale parameter
+- `a`: A parameter that defines the influence of a new successful step in the adaptation of
+    the distribution.
+- `b`: The mixing parameter for the two Laplace distributions
+- `c`: The scale parameter for the first Laplace distribution
+- `λhat`: The estimated scale parameter of the first Laplace distribution
+- `λhat0`: The initial value of the scale parameter
 """
 mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # Hopper accepted step memory
@@ -137,7 +183,28 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # THe initial value of the scale parameter
     λhat0::T
 
-    # Constructor
+    @doc """
+        MBHAdaptiveDistribution{T}(
+            memory_len::Int, min_memory_update::Int;
+            a=0.93,
+            b=0.05,
+            c=1.0,
+            λhat0=1.0,
+        ) where T
+
+    Creates a new `MBHAdaptiveDistribution` with the given parameters.
+
+    # Arguments
+    - `memory_len::Int`: The length of the memory for the distribution adaptation.
+    - `min_memory_update::Int`: The minimum number of steps in memory before updating the scale parameter.
+
+    # Keyword Arguments
+    - `a`: A parameter that defines the influence of a new successful step in the adaptation of
+        the distribution.
+    - `b`: The mixing parameter for the two Laplace distributions
+    - `c`: The scale parameter for the first Laplace distribution
+    - `λhat0`: The initial value of the scale parameter
+    """
     function MBHAdaptiveDistribution{T}(
         memory_len::Int,
         min_memory_update::Int;

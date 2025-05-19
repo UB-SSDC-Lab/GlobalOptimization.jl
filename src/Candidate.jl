@@ -4,7 +4,7 @@
 
 Abstract type for a candidate
 """
-abstract type AbstractCandidate end
+abstract type AbstractCandidate{T} end
 
 """
     candidate(c::AbstractCandidate)
@@ -25,6 +25,11 @@ fitness(c::AbstractCandidate) = c.candidate_fitness
 """
 @inline function set_fitness!(c::AbstractCandidate, fitness)
     c.candidate_fitness = fitness
+    return nothing
+end
+
+@inline function set_candidate!(c::AbstractCandidate, candidate)
+    c.candidate .= candidate
     return nothing
 end
 

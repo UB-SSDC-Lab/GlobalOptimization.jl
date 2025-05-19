@@ -10,6 +10,9 @@ using StaticArrays
 using Infiltrator
 #Random.seed!(1234)
 
+import NonlinearSolve
+using ADTypes
+
 # Schwefel Function
 function schaffer(x::AbstractArray{T})::Tuple{T,T} where {T}
     obj = 0.5 + (sin(x[1]^2 + x[2]^2)^2 - 0.5) / (1 + 0.001 * (x[1]^2 + x[2]^2))^2
@@ -46,26 +49,40 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 3
+N = 2
 ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
+#prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
-dist = GlobalOptimization.MBHAdaptiveDistribution{Float64}(
+dist = MBHAdaptiveDistribution{Float64}(
     1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
 )
-lsgb = GlobalOptimization.LBFGSLocalSearch{Float64}(;
-    iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1
+lsgb = LBFGSLocalSearch{Float64}(;
+    iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1, ad=AutoForwardDiff()
 )
-lss = GlobalOptimization.LocalStochasticSearch{Float64}(1e-6, 32)
-mbh = GlobalOptimization.MBH(
+lss = LocalStochasticSearch{Float64}(1e-2, 100)
+nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
+    NonlinearSolve.NewtonRaphson();
+    iters_per_solve=5,
+    time_per_solve=0.1,
+    percent_decrease_tol=50.0,
+    abs_tol=1e-14,
+)
+mbh = MBH(
     prob;
-    #hop_distribution=dist,
-    #local_search=lsgb,
-    display=true,
-    display_interval=10,
+    hopper_type=MCH(;
+        num_hoppers=50,
+        eval_method=ThreadedFunctionEvaluation(;
+            n=4*Threads.nthreads(),
+        ),
+    ),
+    hop_distribution=dist,
+    #local_search=nls,
     max_time=20.0,
     min_cost=1e-20,
+    display=true,
+    display_interval=10,
 )
 
 res = optimize!(mbh);

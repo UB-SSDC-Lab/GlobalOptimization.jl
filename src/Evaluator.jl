@@ -82,28 +82,28 @@ end
 Abstract type for an evaluator. An evaluator is responsible for evaluating the fitness
 of a population or candidate.
 """
-abstract type AbstractEvaluator{T} end
+abstract type AbstractEvaluator end
 
 """
     SingleEvaluator
 
 Abstract type for an evaluator that evaluates the fitness of a single candidate
 """
-abstract type SingleEvaluator{T} <: AbstractEvaluator{T} end
+abstract type SingleEvaluator <: AbstractEvaluator end
 
 """
     FeasibilityHandlingEvaluator
 
 An evaluator that handled a functions returned infeasibility penalty
 """
-struct FeasibilityHandlingEvaluator{T,PT<:AbstractProblem} <: SingleEvaluator{T}
+struct FeasibilityHandlingEvaluator{PT<:AbstractProblem} <: SingleEvaluator
     # The optimization problem
     prob::PT
 
     function FeasibilityHandlingEvaluator(
         prob::AbstractProblem{has_penalty,SS}
-    ) where {T,has_penalty,SS<:SearchSpace{T}}
-        return new{T,typeof(prob)}(prob)
+    ) where {has_penalty,SS<:SearchSpace}
+        return new{typeof(prob)}(prob)
     end
 end
 
@@ -112,30 +112,69 @@ end
 
 Abstract type for an evaluator that evaluates the fitness of an entire population.
 """
-abstract type BatchEvaluator{T} <: AbstractEvaluator{T} end
+abstract type BatchEvaluator <: AbstractEvaluator end
 
 """
     AsyncEvaluator
 
 Abstract type for an evaluator that evaluates the fitness of a single candidate asyncronously.
 """
-abstract type AsyncEvaluator{T} <: SingleEvaluator{T} end
+abstract type AsyncEvaluator <: SingleEvaluator end
 
 """
     SerialBatchEvaluator
 
 An evaluator that evaluates the fitness of a population in serial.
 """
-struct SerialBatchEvaluator{T,has_penalty,SS<:SearchSpace{T},F,G} <: BatchEvaluator{T}
+struct SerialBatchEvaluator{has_penalty,SS<:SearchSpace,F,G} <: BatchEvaluator
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
     function SerialBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G}
-    ) where {T,has_penalty,SS<:SearchSpace{T},F,G}
-        return new{T,has_penalty,SS,F,G}(prob)
+    ) where {has_penalty,SS<:SearchSpace,F,G}
+        return new{has_penalty,SS,F,G}(prob)
     end
 end
+
+"""
+    BatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs
+"""
+abstract type BatchJobEvaluator <: AbstractEvaluator end
+
+"""
+    SerialBatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs in serial.
+"""
+struct SerialBatchJobEvaluator <: BatchJobEvaluator end
+
+"""
+    ThreadedBatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs in parallel using Threads.jl and
+ChunkSplitters.jl.
+"""
+struct ThreadedBatchJobEvaluator{S<:ChunkSplitters.Split} <: BatchJobEvaluator
+    # Chunk splitting args
+    n::Int
+    split::S
+    function ThreadedBatchJobEvaluator(
+        n=Threads.nthreads(),
+        split::S=ChunkSplitters.RoundRobin(),
+    ) where {S<:ChunkSplitters.Split}
+        return new{S}(n, split)
+    end
+end
+
+"""
+    PolyesterBatchJobEvaluator
+
+An evaluator that evaluates a batch of jobs in parallel using Polyester.jl.
+"""
+struct PolyesterBatchJobEvaluator <: BatchJobEvaluator end
 
 """
     ThreadedBatchEvaluator
@@ -143,8 +182,8 @@ end
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
 struct ThreadedBatchEvaluator{
-    T,has_penalty,SS<:SearchSpace{T},F,G,S<:ChunkSplitters.Split
-} <: BatchEvaluator{T}
+    has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split
+} <: BatchEvaluator
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
@@ -154,8 +193,8 @@ struct ThreadedBatchEvaluator{
 
     function ThreadedBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G}, n::Int, split::S,
-    ) where {T,has_penalty,SS<:SearchSpace{T},F,G,S<:ChunkSplitters.Split}
-        return new{T,has_penalty,SS,F,G,S}(prob, n, split)
+    ) where {has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split}
+        return new{has_penalty,SS,F,G,S}(prob, n, split)
     end
 end
 
@@ -164,14 +203,14 @@ end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading using Polyester.jl.
 """
-struct PolyesterBatchEvaluator{T,has_penalty,SS<:SearchSpace{T},F,G} <: BatchEvaluator{T}
+struct PolyesterBatchEvaluator{has_penalty,SS<:SearchSpace,F,G} <: BatchEvaluator
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
     function PolyesterBatchEvaluator(
         prob::OptimizationProblem{has_penalty,SS,F,G}
-    ) where {T,has_penalty,SS<:SearchSpace{T},F,G}
-        return new{T,has_penalty,SS,F,G}(prob)
+    ) where {has_penalty,SS<:SearchSpace,F,G}
+        return new{has_penalty,SS,F,G}(prob)
     end
 end
 
@@ -180,6 +219,8 @@ end
         method::AbstractFunctionEvaluationMethod,
         prob::OptimizationProblem,
     )
+
+Constructs a batch evaluator for the given `method` and `prob`.
 """
 function construct_batch_evaluator(method::SerialFunctionEvaluation, prob)
     return SerialBatchEvaluator(prob)
@@ -190,6 +231,17 @@ end
 function construct_batch_evaluator(method::PolyesterFunctionEvaluation, prob)
     return PolyesterBatchEvaluator(prob)
 end
+
+"""
+    construct_batch_job_evaluator(method::AbstractFunctionEvaluationMethod)
+
+Constructs a batch job evaluator for the given `method`.
+"""
+construct_batch_job_evaluator(method::SerialFunctionEvaluation) = SerialBatchJobEvaluator()
+construct_batch_job_evaluator(method::ThreadedFunctionEvaluation) =
+    ThreadedBatchJobEvaluator(method.n, method.split)
+construct_batch_job_evaluator(method::PolyesterFunctionEvaluation) =
+    PolyesterBatchJobEvaluator()
 
 """
     has_gradient(evaluator::AbstractEvaluator)
@@ -240,6 +292,43 @@ function evaluate!(pop::AbstractPopulation, evaluator::PolyesterBatchEvaluator)
 
     @batch for idx in eachindex(pop)
         eval_fitness(idx)
+    end
+    return nothing
+end
+
+"""
+    evaluate!(job::Function, job_ids::AbstractVector{Int}, evaluator::BatchJobEvaluator)
+
+Evaluates `job` for each element of `job_args` using the given `evaluator`.
+"""
+function evaluate!(
+    job::Function, job_args::AbstractVector, evaluator::SerialBatchJobEvaluator
+)
+    @inbounds for arg in job_args
+        job(arg)
+    end
+    return nothing
+end
+function evaluate!(
+    job::Function, job_args::AbstractVector, evaluator::ThreadedBatchJobEvaluator
+)
+    batched_args = ChunkSplitters.chunks(
+        job_args; n=evaluator.n, split=evaluator.split
+    )
+    @sync for args in batched_args
+        Threads.@spawn begin
+            for arg in args
+                job(arg)
+            end
+        end
+    end
+    return nothing
+end
+function evaluate!(
+    job::Function, job_args::AbstractVector, evaluator::PolyesterBatchJobEvaluator
+)
+    @batch for arg in job_args
+        job(arg)
     end
     return nothing
 end

@@ -33,7 +33,7 @@ An optimization problem. Contains the objective function and search space.
 struct OptimizationProblem{has_penalty,SS<:SearchSpace,F,G} <:
        AbstractOptimizationProblem{has_penalty,SS}
     f::F    # Objective function
-    g!::G    # Gradient of the objective function
+    g!::G   # Gradient of the objective function
     ss::SS  # Search space
 
     @doc """
@@ -65,49 +65,25 @@ struct OptimizationProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function OptimizationProblem{has_penalty}(
         f::F, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function}
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function,G<:Function}
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Vector{T},Vector{T}},)
-        grettypes = (Nothing)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function OptimizationProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,G<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}},)
-        frettypes = has_penalty isa Val{false} ? (T,) : (Tuple{T,T},)
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Vector{T},Vector{T}},)
-        grettypes = (Nothing)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
-            fwrap, gwrap, ContinuousRectangularSearchSpace(LB, UB)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(
+            f, g, ContinuousRectangularSearchSpace(LB, UB)
         )
     end
 end
@@ -229,70 +205,24 @@ struct NonlinearProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearProblem{has_penalty}(
         f::F, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function}
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}
     ) where {T,has_penalty,F<:Function,G<:Function}
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(fwrap, nothing, ss)
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss)
     end
     function NonlinearProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}
     ) where {has_penalty,F<:Function,G<:Function,T<:Real}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        N = num_dims(ss)
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{N,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{N,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(fwrap, gwrap, ss)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss)
     end
 end
 
@@ -419,72 +349,30 @@ struct NonlinearLeastSquaresProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
-            fwrap, nothing, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
+            f, nothing, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function,G<:Function}
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(
-            fwrap, gwrap, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(
+            f, g, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),Nothing}(
-            fwrap, nothing, ss, num_resid
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
+            f, nothing, ss, num_resid
         )
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function,G<:Function}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-
-        fargtypes = (Tuple{Vector{T}}, Tuple{Vector{T}})
-        frettypes = if has_penalty isa Val{false}
-            (Vector{T}, SVector{num_resid,T})
-        else
-            (Tuple{Vector{T},T}, Tuple{SVector{num_resid,T},T})
-        end
-        fwrap = FunctionWrappersWrapper(f, fargtypes, frettypes)
-
-        gargtypes = (Tuple{Matrix{T},Vector{T}},)
-        grettypes = (Nothing,)
-        gwrap = FunctionWrappersWrapper(g, gargtypes, grettypes)
-
-        return new{has_penalty,typeof(ss),typeof(fwrap),typeof(gwrap)}(f, g, ss, num_resid)
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss, num_resid)
     end
 end
 
@@ -580,7 +468,7 @@ num_dims(prob::AbstractProblem) = num_dims(search_space(prob))
     scalar_function(prob::OptimizationProblem, x::AbstractArray)
 
 Evaluates the objective function `f` of the optimization problem `prob` at `x`
-and returns the cost function plus half the infeasibility squared.
+and returns the cost function plus the infeasibility.
 """
 @inline function scalar_function(
     prob::OptimizationProblem{has_penalty,SS,F,G}, x::AbstractArray
@@ -589,7 +477,7 @@ and returns the cost function plus half the infeasibility squared.
 end
 @inline function scalar_function(prob::OptimizationProblem, x::AbstractArray, ::Val{true})
     f, g = prob.f(x)
-    return f + 0.5 * g * g
+    return f + max(0.0, g)
 end
 @inline function scalar_function(prob::OptimizationProblem, x::AbstractArray, ::Val{false})
     return prob.f(x)
@@ -610,7 +498,7 @@ end
     prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{true}
 )
     f, g = prob.f(x)
-    return 0.5 * (dot(f, f) + g * g)
+    return 0.5 * dot(f, f) + max(0.0, g)
 end
 @inline function scalar_function(
     prob::AbstractNonlinearEquationProblem, x::AbstractArray, ::Val{false}
