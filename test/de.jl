@@ -366,11 +366,21 @@ end
     # Run DE variants with fixed seed for reproducibility
     seed = 1234
     Random.seed!(seed)
-    res1 = GlobalOptimization.optimize!(GlobalOptimization.SerialDE(prob; num_candidates=20, max_iterations=100))
+    res1 = GlobalOptimization.optimize!(GlobalOptimization.DE(prob; num_candidates=20, max_iterations=100))
     Random.seed!(seed)
-    res2 = GlobalOptimization.optimize!(GlobalOptimization.ThreadedDE(prob; num_candidates=20, max_iterations=100))
+    res2 = GlobalOptimization.optimize!(GlobalOptimization.DE(
+        prob;
+        eval_method=GlobalOptimization.ThreadedFunctionEvaluation(),
+        num_candidates=20,
+        max_iterations=100,
+    ))
     Random.seed!(seed)
-    res3 = GlobalOptimization.optimize!(GlobalOptimization.PolyesterDE(prob; num_candidates=20, max_iterations=100, max_time=1.0))
+    res3 = GlobalOptimization.optimize!(GlobalOptimization.DE(
+        prob;
+        eval_method=GlobalOptimization.PolyesterFunctionEvaluation(),
+        num_candidates=20,
+        max_iterations=100,
+    ))
 
     # Ensure consistent behavior across implementations
     @test res1.exitFlag == res2.exitFlag == res3.exitFlag
