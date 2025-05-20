@@ -128,12 +128,13 @@ abstract type AbstractMBHDistribution{T} end
     MBHStaticDistribution{T}
 
 A static distribution for MBH. In this implementation, each element of a *hop* is drawn
-from a mixture model comprised of two Laplace distributions given by:
+from a mixture model comprised of two Laplace distributions with PDF given by:
 
-``f_{mix}(x; b, \\lambda) = k\\left[(1 - b) f(x;\\mu = 0,\\theta = \\lambda) + b f(x;\\mu = 0, \\theta = 1)\\right]``
+``f_{mix}(x; b, \\lambda) = k_i\\left[(1 - b) f(x;\\mu = 0,\\theta = \\lambda) + b f(x;\\mu = 0, \\theta = 1)\\right]``
 
 where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
-Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``).
+Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). Additionally,
+``k_i`` is half of the length of the search space in the ``i``-th dimension.
 
 # Fields
 - `b`: The mixing parameter for the two Laplace distributions
@@ -167,21 +168,31 @@ end
 """
     MBHAdaptiveDistribution{T}
 
-An adaptive distribution for MBH. In this implementation, each *hop* is drawn from an
-adaptive mixture model comprised of two Laplace distributions as defined in
+An adaptive distribution for MBH. In this implementation, each element of a *hop* is drawn
+from an adaptive mixture model comprised of two Laplace distributions as defined in
 Englander, Arnold C., "Speeding-Up a Random Search for the Global Minimum of a Non-Convex,
 Non-Smooth Objective Function" (2021). *Doctoral Dissertations*. 2569.
 [https://scholars.unh.edu/dissertation/2569](https://scholars.unh.edu/dissertation/2569/).
 
-The mixture model is given by:
+The univariate mixture model has a PDF given by:
 
-``f_{mix}(x; b, c, \\hat{\\boldsymbol{\\lambda}}) = (1 - b) f(x;\\mu = 0,\\theta = c*\\hat{\\lambda}_i) + b f(x;\\mu = 0, \\theta = 1)``
+``f_{mix}(x; b, c, \\hat{\\boldsymbol{\\lambda}}) = k_i\\left[(1 - b) f(x;\\mu = 0,\\theta = c*\\hat{\\lambda}_i) + b f(x;\\mu = 0, \\theta = 1)\\right]``
 
 where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
-Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). The ``i``-th
-element of a new hop is draw with the scale parameter ``\\hat{\\lambda}_i`` for the first
-Laplace distribution. Please see the aforementioned dissertation for details on how
-``\\hat{\\lambda}_i`` is updated.
+Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). Note that
+``k_i`` denotes half of the length of the search space in the ``i``-th dimension.
+
+For a given dimension ``i``, the scale parameter ``\\hat{\\lambda}_i`` is adaptively updated
+with a low-delay estimate given by:
+
+``\\hat{\\lambda}_i = (1 - a) \\Psi_i + a \\hat{\\lambda}_i``
+
+Englander (2021) proposed taking ``\\Psi_i`` to be the standard deviation of the last
+`step_memory` successful hops. Alternatively, the mean absolute deviation (MAD) around the
+median of the last `step_memory` steps can be used. Note that the MAD median is the maximum
+likelihood estimator for a Laplace distribution's shape parameter. In this implementation,
+setting `use_mad = true` with use the MAD median in this expression, otherwise, the standard
+deviation is used.
 
 # Fields
 - `step_memory`: The step memory for the distribution
