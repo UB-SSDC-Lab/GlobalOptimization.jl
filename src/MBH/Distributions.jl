@@ -265,7 +265,7 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
         b=0.05,
         c=1.0,
         λhat0=1.0,
-        use_mad::Bool=false,
+        use_mad::Bool=true,
     ) where {T}
         return new{T}(
             MBHStepMemory{T}(undef, memory_len),
