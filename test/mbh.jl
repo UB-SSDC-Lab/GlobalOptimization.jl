@@ -210,6 +210,10 @@ end
     @test isapprox(σ1, 0.7071067811865476; atol=1e-8)
     σ2 = GlobalOptimization.step_std(mem, 2)
     @test isapprox(σ2, 7.0710678118654755; atol=1e-8)
+    mad1 = GlobalOptimization.step_MAD_median(mem, 1)
+    @test isapprox(mad1, 0.5; atol=1e-8)
+    mad2 = GlobalOptimization.step_MAD_median(mem, 2)
+    @test isapprox(mad2, 5.0; atol=1e-8)
 
     # Test MBHStaticDistribution defaults and draw_step!
     sd = MBHStaticDistribution{Float64}()
