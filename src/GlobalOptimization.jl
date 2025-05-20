@@ -9,7 +9,7 @@ using LinearAlgebra: dot, eigen!, mul!
 using LineSearches: HagerZhang, InitialStatic
 using Polyester: @batch
 using StaticArrays: SA, SVector
-using Statistics: cov
+using Statistics: cov, mean, median, std
 using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using UnPack: @unpack
 

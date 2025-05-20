@@ -119,8 +119,9 @@ import ReverseDiff
 
     # Test update_fitness! with SingleHopperSet and MBHAdaptiveDistribution
     ad = MBHAdaptiveDistribution{Float64}(4, 0)
+    ss = ContinuousRectangularSearchSpace([-100.0, -100.0], [100.0, 100.0])
     sh4 = GlobalOptimization.SingleHopperSet{Float64}(2)
-    GlobalOptimization.initialize!(ad, GlobalOptimization.num_dims(sh3))
+    GlobalOptimization.initialize!(ad, ss)
 
     # Test for improved fitness
     GlobalOptimization.set_candidate!(sh4.hopper, [2.0, 3.0])
@@ -149,7 +150,8 @@ import ReverseDiff
     # Test update_fitness! with MCHSet and MBHStaticDistribution
     ad2 = MBHAdaptiveDistribution{Float64}(4, 0)
     mh4 = GlobalOptimization.MCHSet{Float64}(2, 3)
-    GlobalOptimization.initialize!(ad2, GlobalOptimization.num_dims(mh4))
+    ss2 = ContinuousRectangularSearchSpace([-100.0, -100.0], [100.0, 100.0])
+    GlobalOptimization.initialize!(ad2, ss2)
 
     # Test for improved fitness
     for i in 1:3
@@ -205,13 +207,14 @@ end
 
     # Test step_std computation
     σ1 = GlobalOptimization.step_std(mem, 1)
-    @test isapprox(σ1, 0.5; atol=1e-8)
+    @test isapprox(σ1, 0.7071067811865476; atol=1e-8)
     σ2 = GlobalOptimization.step_std(mem, 2)
-    @test isapprox(σ2, 5.0; atol=1e-8)
+    @test isapprox(σ2, 7.0710678118654755; atol=1e-8)
 
     # Test MBHStaticDistribution defaults and draw_step!
     sd = MBHStaticDistribution{Float64}()
-    @test sd.a == 0.93 && sd.b == 0.05 && sd.c == 1.0 && sd.λ == 1.0
+    GlobalOptimization.initialize!(sd, ContinuousRectangularSearchSpace(fill(-1.0, 3), fill(1.0, 3)))
+    @test sd.b == 0.05 && sd.λ == 0.7
     vec = zeros(3)
     Random.seed!(42)
     GlobalOptimization.draw_step!(vec, sd)
@@ -219,7 +222,8 @@ end
 
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
     ad = MBHAdaptiveDistribution{Float64}(21, 20; a=0.9, b=0.1, c=2.0, λhat0=1.0)
-    GlobalOptimization.initialize!(ad, 2)
+    ss = ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
+    GlobalOptimization.initialize!(ad, ss)
     @test length(ad.λhat) == 2
     # Push fewer than threshold => no λhat change
     for i in 1:19
@@ -236,7 +240,8 @@ end
     vec2 = zeros(3)
     # adjust λhat length for vec2 size
     ad2 = MBHAdaptiveDistribution{Float64}(21, 0)
-    GlobalOptimization.initialize!(ad2, 3)
+    ss2 = ContinuousRectangularSearchSpace([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
+    GlobalOptimization.initialize!(ad2, ss2)
     Random.seed!(123)
     GlobalOptimization.draw_step!(vec2, ad2)
     @test all(isfinite, vec2)

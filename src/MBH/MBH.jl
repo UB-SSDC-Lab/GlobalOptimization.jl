@@ -177,7 +177,7 @@ function initialize!(opt::MBH)
     check_fitness!(hopper_set, get_general(options))
 
     # Initialize the distribution
-    initialize!(distribution, num_dims(hopper_set))
+    initialize!(distribution, evaluator.prob.ss)
 
     # Initialize the local search
     initialize!(local_search, num_dims(hopper_set))

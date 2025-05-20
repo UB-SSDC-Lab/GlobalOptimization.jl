@@ -14,11 +14,24 @@ mutable struct MBHStepMemory{T}
     # Current steps in memory
     steps_in_memory::Int
 
+    # Memory cache for MAD median
+    mad_cache::Vector{T}
+
     function MBHStepMemory{T}(num_dims::Integer, memory_len::Integer) where {T}
-        return new{T}(Matrix{T}(undef, num_dims + 2, memory_len), memory_len, 0)
+        return new{T}(
+            Matrix{T}(undef, num_dims + 2, memory_len),
+            memory_len,
+            0,
+            Vector{T}(undef, memory_len),
+        )
     end
     function MBHStepMemory{T}(num_dims::UndefInitializer, memory_len) where {T}
-        return new{T}(Matrix{T}(undef, 0, 0), memory_len, 0)
+        return new{T}(
+            Matrix{T}(undef, 0, 0),
+            memory_len,
+            0,
+            Vector{T}(undef, memory_len)
+        )
     end
 end
 
@@ -39,16 +52,33 @@ function step_std(step_memory::MBHStepMemory{T}, var_idx::Integer) where {T}
     # Get view of steps for var_idx
     steps = view(step_memory.data, var_idx, 1:(step_memory.steps_in_memory))
 
-    # Compute mean and std
-    mean = sum(steps) / step_memory.steps_in_memory
-    std = zero(T)
-    @inbounds for x in steps
-        std += (x - mean)^2
-    end
-    std = sqrt(std / step_memory.steps_in_memory)
-
     # Return standard deviation
-    return std
+    return std(steps)
+end
+
+"""
+    step_MAD_median(step_memory::MBHStepMemory{T}, var_idx::Integer)
+
+Returns the mean absolute deviation (MAD) around the median of the step memory. If `var_idx`
+is specified, then the MAD median of the step memory for the variable at index `var_idx` is
+returned.
+"""
+function step_MAD_median(step_memory::MBHStepMemory{T}, var_idx::Integer) where {T}
+    # Get view of steps for var_idx
+    steps = view(step_memory.data, var_idx, 1:(step_memory.steps_in_memory))
+
+    # Copy steps
+    steps_copy = step_memory.mad_cache
+    copyto!(steps_copy, steps)
+
+    # Compute median
+    median = median!(steps_copy)
+
+    # Compute MAD median
+    steps_copy .= abs.(steps_copy .- median)
+    mad = mean(steps_copy)
+
+    return mad
 end
 
 """
@@ -100,39 +130,37 @@ abstract type AbstractMBHDistribution{T} end
 A static distribution for MBH. In this implementation, each element of a *hop* is drawn
 from a mixture model comprised of two Laplace distributions given by:
 
-``f_{mix}(x; b, c, \\lambda) = (1 - b) f(x;\\mu = 0,\\theta = c*\\lambda) + b f(x;\\mu = 0, \\theta = 1)``
+``f_{mix}(x; b, \\lambda) = k\\left[(1 - b) f(x;\\mu = 0,\\theta = \\lambda) + b f(x;\\mu = 0, \\theta = 1)\\right]``
 
 where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
 Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``).
 
 # Fields
-- `a`: Unused
 - `b`: The mixing parameter for the two Laplace distributions
-- `c`: The scale parameter for the first Laplace distribution
-- `λ`: A factor that scales the first Laplace distribution
+- `λ`: The scale parameter for the first Laplace distribution in the mixture model
+- `dim_delta`: The length of the search space in each dimension
 """
 struct MBHStaticDistribution{T} <: AbstractMBHDistribution{T}
-    # Parameters (Set in options but also here for convenience)
-    a::T
+    # The mixing parameter for the mixture model
     b::T
-    c::T
 
     # Scale parameter for p
     λ::T
 
+    # The length of the search space in each dimension
+    dim_delta::Vector{T}
+
     @doc """
-        MBHStaticDistribution{T}(; a=0.93, b=0.05, c=1.0, λ=1.0) where {T}
+        MBHStaticDistribution{T}(; b=0.05, λ=0.7) where {T}
 
     Creates a new `MBHStaticDistribution` with the given parameters.
 
     # Keyword Arguments
-    - `a`: Unused
     - `b`: The mixing parameter for the two Laplace distributions
-    - `c`: The scale parameter for the first Laplace distribution
-    - `λ`: A factor that scales the first Laplace distribution
+    - `λ`: The scale parameter for the first Laplace distribution in the mixture model
     """
-    function MBHStaticDistribution{T}(; a=0.93, b=0.05, c=1.0, λ=1.0) where {T}
-        return new{T}(T(a), T(b), T(c), T(λ))
+    function MBHStaticDistribution{T}(; b=0.05, λ=0.7) where {T}
+        return new{T}(T(b), T(λ), Vector{T}(undef, 0))
     end
 end
 
@@ -164,6 +192,9 @@ Laplace distribution. Please see the aforementioned dissertation for details on 
 - `c`: The scale parameter for the first Laplace distribution
 - `λhat`: The estimated scale parameter of the first Laplace distribution
 - `λhat0`: The initial value of the scale parameter
+- `use_mad`: Flag to indicate if we will use the STD (proposed by Englander) or MAD median (MVE) to
+    update the estimated scale parameter
+- `dim_delta`: The length of the search space in each dimension
 """
 mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # Hopper accepted step memory
@@ -182,6 +213,13 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
 
     # THe initial value of the scale parameter
     λhat0::T
+
+    # Flag to indicate if we will use the STD (proposed by Englander) or MAD median (MVE) to
+    # update the estimated scale parameter
+    use_mad::Bool
+
+    # The length of the search space in each dimension
+    dim_delta::Vector{T}
 
     @doc """
         MBHAdaptiveDistribution{T}(
@@ -204,6 +242,10 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     - `b`: The mixing parameter for the two Laplace distributions
     - `c`: The scale parameter for the first Laplace distribution
     - `λhat0`: The initial value of the scale parameter
+    - `use_mad::Bool`: Flag to indicate which metric to use for estimating the scale parameter.
+        If `true`, the MAD median is used, which is the maximum likelihood estimator for a
+        Laplace distribution's shape parameter. If `false`, the standard deviation is used
+        as proposed by Englander (2021).
     """
     function MBHAdaptiveDistribution{T}(
         memory_len::Int,
@@ -212,6 +254,7 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
         b=0.05,
         c=1.0,
         λhat0=1.0,
+        use_mad::Bool=false,
     ) where {T}
         return new{T}(
             MBHStepMemory{T}(undef, memory_len),
@@ -221,6 +264,8 @@ mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
             T(c),
             Vector{T}(undef, 0),
             T(λhat0),
+            use_mad,
+            Vector{T}(undef, 0),
         )
     end
 end
@@ -230,17 +275,35 @@ end
 
 Initializes the distribution `dist` with the number of dimensions `num_dims`.
 """
-initialize!(dist::AbstractMBHDistribution, num_dims) = nothing
-function initialize!(dist::MBHAdaptiveDistribution, num_dims)
+initialize!(dist::AbstractMBHDistribution, ::ContinuousRectangularSearchSpace) = nothing
+function initialize!(dist::MBHStaticDistribution, search_space::ContinuousRectangularSearchSpace)
+    # Get search space info
+    ndims = num_dims(search_space)
+    ddims = dim_delta(search_space)
+
+    # Set the length of the search space in each dimension
+    resize!(dist.dim_delta, ndims)
+    dist.dim_delta .= ddims
+    return nothing
+end
+function initialize!(dist::MBHAdaptiveDistribution, search_space::ContinuousRectangularSearchSpace)
     # Unpack distribution
     @unpack step_memory = dist
 
+    # Get search space info
+    ndims = num_dims(search_space)
+    ddims = dim_delta(search_space)
+
     # Initialize step memory
-    initialize!(step_memory, num_dims)
+    initialize!(step_memory, ndims)
 
     # Initialize scale parameter vector
-    resize!(dist.λhat, num_dims)
+    resize!(dist.λhat, ndims)
     dist.λhat .= dist.λhat0
+
+    # Set the length of the search space in each dimension
+    resize!(dist.dim_delta, ndims)
+    dist.dim_delta .= ddims
 
     return nothing
 end
@@ -260,7 +323,7 @@ function push_accepted_step!(
     post_step_fitness::T,
 ) where {T}
     # Unpack distribution
-    @unpack step_memory, λhat, a, b, c = dist
+    @unpack step_memory, λhat, a = dist
 
     # Push step into memory
     push!(step_memory, step, pre_step_fitness, post_step_fitness)
@@ -268,11 +331,19 @@ function push_accepted_step!(
     # Update scale parameter vector if enough steps are contained in memory
     if step_memory.steps_in_memory >= dist.min_memory_update
         @inbounds for i in eachindex(λhat)
+            # Note: We should probably use the mean absolute deviation from the median
+            # instead of the standard deviation as this is the correct maximum likelihood
+            # estimator for the Laplace distribution shape parameter.
+
             # Compute standard deviation of steps for var index i
-            σ = step_std(step_memory, i)
+            Ψ = if dist.use_mad
+                step_MAD_median(step_memory, i)
+            else
+                step_std(step_memory, i)
+            end
 
             # Update scale parameter
-            λhat[i] = (1.0 - a) * σ + a * λhat[i]
+            λhat[i] = (1.0 - a) * Ψ + a * λhat[i]
         end
     end
 
@@ -286,28 +357,41 @@ Draws a step from the distribution `dist` and stores it in `step`.
 """
 function draw_step!(step::AbstractVector{T}, dist::MBHStaticDistribution{T}) where {T}
     # Unpack distribution
-    @unpack a, b, c, λ = dist
+    @unpack b, λ = dist
 
     # Draw step
-    #k = length(step) / 2.0
-    k = 1.0
-    l1 = Laplace(0.0, c * λ)
-    l2 = Laplace()
+    l1 = Laplace{T}(0.0, λ)
+    l2 = Laplace{T}(0.0, 1.0)
     @inbounds for i in eachindex(step)
-        step[i] = k * ((1.0 - b) * rand(l1) + b * rand(l2))
+        k = 0.5*dist.dim_delta[i]
+
+        # Draw step element from mixture model
+        r = rand(T)
+        if r < b
+            step[i] = k * rand(l2)
+        else
+            step[i] = k * rand(l1)
+        end
     end
 
     return nothing
 end
 function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) where {T}
     # Unpack distribution
-    @unpack a, b, c, λhat = dist
+    @unpack b, c, λhat = dist
 
     # Draw step
-    #k = length(step) / 2.0
-    k = 1.0
+    l2 = Laplace{T}(0.0, 1.0)
     @inbounds for i in eachindex(step)
-        step[i] = k * ((1.0 - b) * rand(Laplace(0.0, c * λhat[i])) + b * rand(Laplace()))
+        k = 0.5*dist.dim_delta[i]
+
+        # Draw step element from mixture model
+        r = rand(T)
+        if r < b
+            step[i] = k * rand(l2)
+        else
+            step[i] = k * rand(Laplace{T}(0.0, c * λhat[i]))
+        end
     end
 
     return nothing
