@@ -106,7 +106,7 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
     [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 """
 struct LBFGSLocalSearch{
-    T,AT,OT,AD<:Union{ADTypes.AbstractADType, Nothing},
+    T,AT,OT,AD<:Union{AbstractADType, Nothing},
 } <: OptimLocalSearch{T,AD}
 
     # Tollerance on percent decrease of objective function for performing another local search
@@ -162,8 +162,8 @@ struct LBFGSLocalSearch{
         iters_per_solve::Int=5,
         percent_decrease_tol::Number=50.0,
         m::Int=10,
-        alphaguess=LineSearches.InitialStatic(),
-        linesearch=LineSearches.HagerZhang(),
+        alphaguess=InitialStatic(),
+        linesearch=HagerZhang(),
         manifold=Optim.Flat(),
         max_solve_time=0.1,
         ad=nothing,
@@ -365,7 +365,7 @@ end
 function get_solve_fun(
     evaluator,
     ls::OptimLocalSearch{T,AD},
-) where {T,AD<:ADTypes.AbstractADType}
+) where {T,AD<:AbstractADType}
     @unpack prob = evaluator
     @unpack alg, options, cache, ad = ls
     solve! = let cache = cache, prob = prob, alg = alg, options = options, ad = ad

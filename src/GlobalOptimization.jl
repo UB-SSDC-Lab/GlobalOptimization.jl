@@ -1,22 +1,21 @@
 module GlobalOptimization
 
-using ChunkSplitters
-using Distributions
-using LatinHypercubeSampling: LHCoptim, scaleLHC
-using LinearAlgebra
-using Format
+using ADTypes: AbstractADType
+using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
+using Distributions: Cauchy, Laplace, MixtureModel
+using Format: printfmtln, FormatExpr
+using LatinHypercubeSampling: scaleLHC, LHCoptim
+using LinearAlgebra: dot, eigen!, mul!
+using LineSearches: HagerZhang, InitialStatic
 using Polyester: @batch
-using StaticArrays
+using StaticArrays: SA, SVector
 using Statistics: cov
-using Random: shuffle!
-using UnPack
+using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
+using UnPack: @unpack
 
-import ADTypes
-import Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
+import Base
 import NonlinearSolve
-using Base: Base
-using Optim: Optim
-using LineSearches: LineSearches
+import Optim
 
 # Base
 include("Options.jl")
