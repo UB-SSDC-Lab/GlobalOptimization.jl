@@ -218,9 +218,8 @@ end
     @test all(isfinite, vec)
 
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
-    ad = MBHAdaptiveDistribution{Float64}(21, 0; a=0.9, b=0.1, c=2.0, λhat0=1.0)
+    ad = MBHAdaptiveDistribution{Float64}(21, 20; a=0.9, b=0.1, c=2.0, λhat0=1.0)
     GlobalOptimization.initialize!(ad, 2)
-    @test ad.min_memory_update == 0
     @test length(ad.λhat) == 2
     # Push fewer than threshold => no λhat change
     for i in 1:19

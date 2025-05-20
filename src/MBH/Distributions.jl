@@ -266,7 +266,7 @@ function push_accepted_step!(
     push!(step_memory, step, pre_step_fitness, post_step_fitness)
 
     # Update scale parameter vector if enough steps are contained in memory
-    if step_memory.steps_in_memory >= 20
+    if step_memory.steps_in_memory >= dist.min_memory_update
         @inbounds for i in eachindex(λhat)
             # Compute standard deviation of steps for var index i
             σ = step_std(step_memory, i)
