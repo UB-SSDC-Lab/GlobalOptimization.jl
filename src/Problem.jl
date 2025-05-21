@@ -349,24 +349,18 @@ struct NonlinearLeastSquaresProblem{has_penalty,SS<:SearchSpace,F,G} <:
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
-        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
-            f, nothing, ss, num_resid
-        )
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss, num_resid)
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, ss::SearchSpace{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function,G<:Function}
-        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(
-            f, g, ss, num_resid
-        )
+        return new{has_penalty,typeof(ss),typeof(f),typeof(g)}(f, g, ss, num_resid)
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int
     ) where {T,has_penalty,F<:Function}
         ss = ContinuousRectangularSearchSpace(LB, UB)
-        return new{has_penalty,typeof(ss),typeof(f),Nothing}(
-            f, nothing, ss, num_resid
-        )
+        return new{has_penalty,typeof(ss),typeof(f),Nothing}(f, nothing, ss, num_resid)
     end
     function NonlinearLeastSquaresProblem{has_penalty}(
         f::F, g::G, LB::AbstractArray{T}, UB::AbstractArray{T}, num_resid::Int

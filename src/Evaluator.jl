@@ -34,7 +34,8 @@ A function evaluation method that evaluates the fitness of a candidate in parall
 - `split::S`: The chunk splitter to use. See [ChunkSplitters.jl](https://github.com/JuliaFolds2/ChunkSplitters.jl)
     for more information.
 """
-struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <: AbstractFunctionEvaluationMethod
+struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <:
+       AbstractFunctionEvaluationMethod
     n::Int
     split::S
     @doc """
@@ -52,8 +53,7 @@ struct ThreadedFunctionEvaluation{S<:ChunkSplitters.Split} <: AbstractFunctionEv
         for more information.
     """
     function ThreadedFunctionEvaluation(;
-        n::Int=Threads.nthreads(),
-        split::S=ChunkSplitters.RoundRobin(),
+        n::Int=Threads.nthreads(), split::S=ChunkSplitters.RoundRobin()
     ) where {S<:ChunkSplitters.Split}
         return new{S}(n, split)
     end
@@ -162,8 +162,7 @@ struct ThreadedBatchJobEvaluator{S<:ChunkSplitters.Split} <: BatchJobEvaluator
     n::Int
     split::S
     function ThreadedBatchJobEvaluator(
-        n=Threads.nthreads(),
-        split::S=ChunkSplitters.RoundRobin(),
+        n=Threads.nthreads(), split::S=ChunkSplitters.RoundRobin()
     ) where {S<:ChunkSplitters.Split}
         return new{S}(n, split)
     end
@@ -181,9 +180,8 @@ struct PolyesterBatchJobEvaluator <: BatchJobEvaluator end
 
 An evaluator that evaluates the fitness of a population in parallel using multi-threading.
 """
-struct ThreadedBatchEvaluator{
-    has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split
-} <: BatchEvaluator
+struct ThreadedBatchEvaluator{has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split} <:
+       BatchEvaluator
     # The optimization problem
     prob::OptimizationProblem{has_penalty,SS,F,G}
 
@@ -192,7 +190,7 @@ struct ThreadedBatchEvaluator{
     split::S
 
     function ThreadedBatchEvaluator(
-        prob::OptimizationProblem{has_penalty,SS,F,G}, n::Int, split::S,
+        prob::OptimizationProblem{has_penalty,SS,F,G}, n::Int, split::S
     ) where {has_penalty,SS<:SearchSpace,F,G,S<:ChunkSplitters.Split}
         return new{has_penalty,SS,F,G,S}(prob, n, split)
     end
@@ -238,10 +236,12 @@ end
 Constructs a batch job evaluator for the given `method`.
 """
 construct_batch_job_evaluator(method::SerialFunctionEvaluation) = SerialBatchJobEvaluator()
-construct_batch_job_evaluator(method::ThreadedFunctionEvaluation) =
+function construct_batch_job_evaluator(method::ThreadedFunctionEvaluation)
     ThreadedBatchJobEvaluator(method.n, method.split)
-construct_batch_job_evaluator(method::PolyesterFunctionEvaluation) =
+end
+function construct_batch_job_evaluator(method::PolyesterFunctionEvaluation)
     PolyesterBatchJobEvaluator()
+end
 
 """
     has_gradient(evaluator::AbstractEvaluator)
@@ -312,9 +312,7 @@ end
 function evaluate!(
     job::Function, job_args::AbstractVector, evaluator::ThreadedBatchJobEvaluator
 )
-    batched_args = ChunkSplitters.chunks(
-        job_args; n=evaluator.n, split=evaluator.split
-    )
+    batched_args = ChunkSplitters.chunks(job_args; n=evaluator.n, split=evaluator.split)
     @sync for args in batched_args
         Threads.@spawn begin
             for arg in args

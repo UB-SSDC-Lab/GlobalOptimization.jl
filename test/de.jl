@@ -14,8 +14,12 @@ using Random
     @test isa(dbin, MixtureModel{Univariate,Continuous})
 
     # Test adaptation strategy types
-    @test isa(GlobalOptimization.RandomAdaptation(), GlobalOptimization.AbstractAdaptationStrategy)
-    @test isa(GlobalOptimization.NoAdaptation(), GlobalOptimization.AbstractAdaptationStrategy)
+    @test isa(
+        GlobalOptimization.RandomAdaptation(), GlobalOptimization.AbstractAdaptationStrategy
+    )
+    @test isa(
+        GlobalOptimization.NoAdaptation(), GlobalOptimization.AbstractAdaptationStrategy
+    )
 
     # Test SimpleSelector
     s = GlobalOptimization.SimpleSelector()
@@ -56,7 +60,7 @@ using Random
     @test 0.0 < max_val <= 1.0
 
     # Test one_clamped_rand error with always-zero distribution
-    struct AlwaysZeroDist <: Distribution{Univariate, Continuous} end
+    struct AlwaysZeroDist <: Distribution{Univariate,Continuous} end
     Base.rand(::AlwaysZeroDist) = 0.0
     @test_throws ArgumentError GlobalOptimization.one_clamped_rand(AlwaysZeroDist())
 end
@@ -107,7 +111,7 @@ end
 
 @testset showtiming=true "Mutation" begin
     # Define a constant distribution for testing
-    struct ConstDist{T} <: Distribution{Univariate, Continuous}
+    struct ConstDist{T} <: Distribution{Univariate,Continuous}
         val::T
     end
     Base.rand(d::ConstDist{T}) where {T} = d.val
@@ -184,7 +188,9 @@ end
     @test mp2.F3 == 0.123
 
     # Test SelfMutationParameters
-    sp = GlobalOptimization.SelfMutationParameters(GlobalOptimization.Rand2(); dist=ConstDist(0.4))
+    sp = GlobalOptimization.SelfMutationParameters(
+        GlobalOptimization.Rand2(); dist=ConstDist(0.4)
+    )
     @test isempty(sp.Fs)
     GlobalOptimization.initialize!(sp, 3)
     @test length(sp.Fs) == 3
@@ -192,8 +198,7 @@ end
 
     # Test adapt!: only updates when improved[i] == false
     sp2 = GlobalOptimization.SelfMutationParameters(
-        GlobalOptimization.Rand2();
-        dist=Uniform(0.1, 0.9),
+        GlobalOptimization.Rand2(); dist=Uniform(0.1, 0.9)
     )
     GlobalOptimization.initialize!(sp2, 3)
     original_Fs = deepcopy(sp2.Fs)
@@ -210,7 +215,7 @@ end
         SVector(0.1, 0.2, 0.3),
         SVector(0.4, 0.5, 0.6),
         SVector(0.7, 0.8, 0.9),
-        SVector(1.0, 1.1, 1.2)
+        SVector(1.0, 1.1, 1.2),
     ]
     pop.current_generation.candidates_fitness .= [0.5, 0.2, 0.8, 0.1]
     best = GlobalOptimization.get_best_candidate_in_selection(pop, [1, 3, 4])
@@ -224,7 +229,9 @@ end
         pop.current_generation.candidates_fitness[i] = 0.0
         pop.mutants.candidates[i] = pop.current_generation.candidates[i]
     end
-    mp_zero = GlobalOptimization.MutationParameters(0.0, 0.0, 0.0, 0.0; sel=GlobalOptimization.SimpleSelector())
+    mp_zero = GlobalOptimization.MutationParameters(
+        0.0, 0.0, 0.0, 0.0; sel=GlobalOptimization.SimpleSelector()
+    )
     GlobalOptimization.initialize!(mp_zero, length(pop.current_generation))
     GlobalOptimization.mutate!(pop, mp_zero)
     @test pop.mutants.candidates == pop.current_generation.candidates
@@ -333,24 +340,29 @@ end
 
     # Test crossover! with CR=1.0 (no change)
     pop2 = GlobalOptimization.DEPopulation(4, 2)
-    search_space = GlobalOptimization.ContinuousRectangularSearchSpace([0.0, 0.0], [10.0, 10.0])
+    search_space = GlobalOptimization.ContinuousRectangularSearchSpace(
+        [0.0, 0.0], [10.0, 10.0]
+    )
     for i in 1:4
         pop2.current_generation.candidates[i] = SVector(1.0, 2.0)
         pop2.mutants.candidates[i] = SVector(3.0, 4.0)
     end
-    bp_fixed = GlobalOptimization.BinomialCrossoverParameters(1.0; transform=GlobalOptimization.NoTransformation())
+    bp_fixed = GlobalOptimization.BinomialCrossoverParameters(
+        1.0; transform=GlobalOptimization.NoTransformation()
+    )
     GlobalOptimization.crossover!(pop2, bp_fixed, search_space)
     @test pop2.mutants.candidates == [SVector(3.0, 4.0) for _ in 1:4]
 
     # Test crossover! with CR=0.0 (some crossover occurs)
-    bp0 = GlobalOptimization.BinomialCrossoverParameters(0.0; transform=GlobalOptimization.NoTransformation())
+    bp0 = GlobalOptimization.BinomialCrossoverParameters(
+        0.0; transform=GlobalOptimization.NoTransformation()
+    )
     # Reset mutants
     for i in 1:4
         pop2.mutants.candidates[i] = SVector(3.0, 4.0)
     end
     GlobalOptimization.crossover!(pop2, bp0, search_space)
     @test any(pop2.mutants.candidates[i] != SVector(3.0, 4.0) for i in 1:4)
-
 end
 
 @testset showtiming=true "Full DE Optimization" begin
@@ -366,21 +378,27 @@ end
     # Run DE variants with fixed seed for reproducibility
     seed = 1234
     Random.seed!(seed)
-    res1 = GlobalOptimization.optimize!(GlobalOptimization.DE(prob; num_candidates=20, max_iterations=100))
+    res1 = GlobalOptimization.optimize!(
+        GlobalOptimization.DE(prob; num_candidates=20, max_iterations=100)
+    )
     Random.seed!(seed)
-    res2 = GlobalOptimization.optimize!(GlobalOptimization.DE(
-        prob;
-        eval_method=GlobalOptimization.ThreadedFunctionEvaluation(),
-        num_candidates=20,
-        max_iterations=100,
-    ))
+    res2 = GlobalOptimization.optimize!(
+        GlobalOptimization.DE(
+            prob;
+            eval_method=GlobalOptimization.ThreadedFunctionEvaluation(),
+            num_candidates=20,
+            max_iterations=100,
+        ),
+    )
     Random.seed!(seed)
-    res3 = GlobalOptimization.optimize!(GlobalOptimization.DE(
-        prob;
-        eval_method=GlobalOptimization.PolyesterFunctionEvaluation(),
-        num_candidates=20,
-        max_iterations=100,
-    ))
+    res3 = GlobalOptimization.optimize!(
+        GlobalOptimization.DE(
+            prob;
+            eval_method=GlobalOptimization.PolyesterFunctionEvaluation(),
+            num_candidates=20,
+            max_iterations=100,
+        ),
+    )
 
     # Ensure consistent behavior across implementations
     @test res1.exitFlag == res2.exitFlag == res3.exitFlag

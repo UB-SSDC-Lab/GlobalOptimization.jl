@@ -8,11 +8,7 @@ mutable struct Hopper{T} <: AbstractCandidate{T}
     function Hopper{T}(nDims::Integer) where {T}
         candidate = zeros(T, nDims)
         candidate_fitness = T(Inf)
-        return new{T}(
-            candidate,
-            copy(candidate),
-            candidate_fitness,
-        )
+        return new{T}(candidate, copy(candidate), candidate_fitness)
     end
 end
 
@@ -54,10 +50,9 @@ struct MCH{EM<:AbstractFunctionEvaluationMethod} <: AbstractHopperType
         is `SerialFunctionEvaluation()`.
     """
     function MCH(;
-        num_hoppers::Integer=4,
-        eval_method::EM=SerialFunctionEvaluation(),
+        num_hoppers::Integer=4, eval_method::EM=SerialFunctionEvaluation()
     ) where {EM<:AbstractFunctionEvaluationMethod}
-        return new{EM}(num_hoppers,eval_method)
+        return new{EM}(num_hoppers, eval_method)
     end
 end
 
@@ -70,12 +65,8 @@ mutable struct SingleHopperSet{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
-    function SingleHopperSet{T}(nDims::Integer) where T
-        new{T}(
-            Hopper{T}(nDims),
-            zeros(T, nDims),
-            T(Inf),
-        )
+    function SingleHopperSet{T}(nDims::Integer) where {T}
+        new{T}(Hopper{T}(nDims), zeros(T, nDims), T(Inf))
     end
 end
 
@@ -87,7 +78,7 @@ mutable struct MCHSet{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
-    function MCHSet{T}(nDims::Integer, nHoppers::Integer) where T
+    function MCHSet{T}(nDims::Integer, nHoppers::Integer) where {T}
         hoppers = [Hopper{T}(nDims) for _ in 1:nHoppers]
         best_candidate = Vector{T}(undef, nDims)
         best_candidate_fitness = T(Inf)
@@ -157,15 +148,11 @@ function initialize!(
     shopper::SingleHopperSet{T},
     search_space::ContinuousRectangularSearchSpace{T},
     evaluator::FeasibilityHandlingEvaluator,
-    bhe::Nothing
+    bhe::Nothing,
 ) where {T}
     @unpack hopper, best_candidate = shopper
 
-    initialize!(
-        hopper,
-        search_space,
-        evaluator,
-    )
+    initialize!(hopper, search_space, evaluator)
 
     best_candidate .= candidate(hopper)
     shopper.best_candidate_fitness = fitness(hopper)
@@ -177,7 +164,7 @@ function initialize!(
     mch::MCHSet{T},
     search_space::ContinuousRectangularSearchSpace{T},
     evaluator::FeasibilityHandlingEvaluator,
-    bhe::BatchJobEvaluator
+    bhe::BatchJobEvaluator,
 ) where {T}
     @unpack hoppers, best_candidate = mch
 
@@ -208,15 +195,14 @@ Checks the fitness of the candidate `c` to ensure that it is valid
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
 @inline function check_fitness!(
-    hs::AbstractHopperSet, options::GeneralOptions{D,FVC},
+    hs::AbstractHopperSet, options::GeneralOptions{D,FVC}
 ) where {D,FVC}
     check_fitness!(hs, FVC)
 end
 @inline check_fitness!(hs::AbstractHopperSet, ::Type{Val{false}}) = nothing
 function check_fitness!(hs::AbstractHopperSet, ::Type{Val{true}})
-    isfinite(hs.best_candidate_fitness) || error(
-        "Hopper set has an invalid fitness ($(hs.best_candidate_fitness))."
-    )
+    isfinite(hs.best_candidate_fitness) ||
+        error("Hopper set has an invalid fitness ($(hs.best_candidate_fitness)).")
     return nothing
 end
 
@@ -259,7 +245,6 @@ function update_fitness!(
 
     return nothing
 end
-
 
 function update_fitness!(
     hopper_set::SingleHopperSet{T}, distribution::MBHAdaptiveDistribution{T}
@@ -317,9 +302,7 @@ end
 
 Draws a perterbation from distribution and updates candidate for the hopper `hopper`.
 """
-function draw_update!(
-    hopper::Hopper{T}, distribution::AbstractMBHDistribution{T}
-) where {T}
+function draw_update!(hopper::Hopper{T}, distribution::AbstractMBHDistribution{T}) where {T}
     # Unpack hopper
     @unpack candidate, candidate_step = hopper
 

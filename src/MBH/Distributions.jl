@@ -26,12 +26,7 @@ mutable struct MBHStepMemory{T}
         )
     end
     function MBHStepMemory{T}(num_dims::UndefInitializer, memory_len) where {T}
-        return new{T}(
-            Matrix{T}(undef, 0, 0),
-            memory_len,
-            0,
-            Vector{T}(undef, memory_len)
-        )
+        return new{T}(Matrix{T}(undef, 0, 0), memory_len, 0, Vector{T}(undef, memory_len))
     end
 end
 
@@ -287,7 +282,9 @@ end
 Initializes the distribution `dist` with the number of dimensions `num_dims`.
 """
 initialize!(dist::AbstractMBHDistribution, ::ContinuousRectangularSearchSpace) = nothing
-function initialize!(dist::MBHStaticDistribution, search_space::ContinuousRectangularSearchSpace)
+function initialize!(
+    dist::MBHStaticDistribution, search_space::ContinuousRectangularSearchSpace
+)
     # Get search space info
     ndims = num_dims(search_space)
     ddims = dim_delta(search_space)
@@ -297,7 +294,9 @@ function initialize!(dist::MBHStaticDistribution, search_space::ContinuousRectan
     dist.dim_delta .= ddims
     return nothing
 end
-function initialize!(dist::MBHAdaptiveDistribution, search_space::ContinuousRectangularSearchSpace)
+function initialize!(
+    dist::MBHAdaptiveDistribution, search_space::ContinuousRectangularSearchSpace
+)
     # Unpack distribution
     @unpack step_memory = dist
 

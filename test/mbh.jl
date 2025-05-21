@@ -1,8 +1,8 @@
 using GlobalOptimization, Test
 using Distributions, Random
 using Optim, LineSearches, ADTypes
-import NonlinearSolve
-import ReverseDiff
+using NonlinearSolve: NonlinearSolve
+using ReverseDiff: ReverseDiff
 
 @testset showtiming = true "Hopper" begin
 
@@ -27,28 +27,41 @@ import ReverseDiff
     @test GlobalOptimization.num_dims(mh) == 3
 
     # Test initialization of SingleHopperSet and MCHSet
-    search_space = GlobalOptimization.ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
-    initial_space = GlobalOptimization.ContinuousRectangularSearchSpace([0.0, 0.0], [2.0, 2.0])
+    search_space = GlobalOptimization.ContinuousRectangularSearchSpace(
+        [-1.0, -1.0], [1.0, 1.0]
+    )
+    initial_space = GlobalOptimization.ContinuousRectangularSearchSpace(
+        [0.0, 0.0], [2.0, 2.0]
+    )
     evaluator = GlobalOptimization.FeasibilityHandlingEvaluator(
-        GlobalOptimization.OptimizationProblem(sum, search_space),
+        GlobalOptimization.OptimizationProblem(sum, search_space)
     )
 
     # SingleHopperSet
     sh2 = GlobalOptimization.SingleHopperSet{Float64}(2)
     GlobalOptimization.initialize!(
-        sh2, GlobalOptimization.intersection(search_space, initial_space), evaluator, nothing,
+        sh2,
+        GlobalOptimization.intersection(search_space, initial_space),
+        evaluator,
+        nothing,
     )
     @test GlobalOptimization.candidate(sh2.hopper) != [0.0, 0.0]
     @test GlobalOptimization.candidate(sh2.hopper) == sh2.best_candidate
     @test isfinite(GlobalOptimization.fitness(sh2.hopper))
     @test GlobalOptimization.fitness(sh2.hopper) == sh2.best_candidate_fitness
-    @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), search_space)
-    @test GlobalOptimization.feasible(GlobalOptimization.candidate(sh2.hopper), initial_space)
+    @test GlobalOptimization.feasible(
+        GlobalOptimization.candidate(sh2.hopper), search_space
+    )
+    @test GlobalOptimization.feasible(
+        GlobalOptimization.candidate(sh2.hopper), initial_space
+    )
 
     # MCHSet
     mh2 = GlobalOptimization.MCHSet{Float64}(2, 3)
     GlobalOptimization.initialize!(
-        mh2, GlobalOptimization.intersection(search_space, initial_space), evaluator,
+        mh2,
+        GlobalOptimization.intersection(search_space, initial_space),
+        evaluator,
         GlobalOptimization.SerialBatchJobEvaluator(),
     )
     @test all(h -> GlobalOptimization.candidate(h) == mh2.best_candidate, mh2.hoppers)
@@ -217,7 +230,9 @@ end
 
     # Test MBHStaticDistribution defaults and draw_step!
     sd = MBHStaticDistribution{Float64}()
-    GlobalOptimization.initialize!(sd, ContinuousRectangularSearchSpace(fill(-1.0, 3), fill(1.0, 3)))
+    GlobalOptimization.initialize!(
+        sd, ContinuousRectangularSearchSpace(fill(-1.0, 3), fill(1.0, 3))
+    )
     @test sd.b == 0.05 && sd.λ == 0.7
     vec = zeros(3)
     Random.seed!(42)
@@ -284,7 +299,9 @@ end
     cache2 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache2, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2))
+    res = GlobalOptimization.optim_solve!(
+        cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2)
+    )
     @test res == true
     @test isapprox(cache2.cost, sphere(cache2.x); atol=1e-6)
 
@@ -313,9 +330,7 @@ end
     )
     @test res == true
     @test isapprox(
-        cache4.cost,
-        GlobalOptimization.scalar_function(prob2,cache4.x),
-        atol=1e-6
+        cache4.cost, GlobalOptimization.scalar_function(prob2, cache4.x), atol=1e-6
     )
 
     # Test local_search!
@@ -403,11 +418,15 @@ end
         if GlobalOptimization.fitness(hopper_set.hopper) < hopper_set.best_candidate_fitness
             # Update hopper set
             hopper_set.best_candidate .= GlobalOptimization.candidate(hopper_set.hopper)
-            hopper_set.best_candidate_fitness = GlobalOptimization.fitness(hopper_set.hopper)
+            hopper_set.best_candidate_fitness = GlobalOptimization.fitness(
+                hopper_set.hopper
+            )
         else
             # Reset hopper
             GlobalOptimization.set_candidate!(hopper_set.hopper, hopper_set.best_candidate)
-            GlobalOptimization.set_fitness!(hopper_set.hopper, hopper_set.best_candidate_fitness)
+            GlobalOptimization.set_fitness!(
+                hopper_set.hopper, hopper_set.best_candidate_fitness
+            )
         end
         return nothing
     end
@@ -421,12 +440,7 @@ end
     end
 
     # Test MBH with ZeroDist and DummyLS
-    mbh1 = MBH(
-        prob;
-        hop_distribution=ZeroDist(),
-        local_search=DummyLS(),
-        max_time = 0.0,
-    )
+    mbh1 = MBH(prob; hop_distribution=ZeroDist(), local_search=DummyLS(), max_time=0.0)
     res1 = GlobalOptimization.optimize!(mbh1)
     @test res1.fbest == 0.0
     @test length(res1.xbest) == 2
@@ -434,12 +448,7 @@ end
 
     # Test MBH with static distribution
     stat = MBHStaticDistribution{Float64}()
-    mbh2 = MBH(
-        prob;
-        hop_distribution = stat,
-        local_search = DummyLS(),
-        max_time = 0.0,
-    )
+    mbh2 = MBH(prob; hop_distribution=stat, local_search=DummyLS(), max_time=0.0)
     res2 = GlobalOptimization.optimize!(mbh2)
     @test res2.fbest == 0.0
     @test length(res2.xbest) == 2
@@ -447,12 +456,7 @@ end
 
     # Test MBH with adaptive distribution
     ad = MBHAdaptiveDistribution{Float64}(1, 0)
-    mbh3 = MBH(
-        prob;
-        hop_distribution = ad,
-        local_search = DummyLS(),
-        max_time = 0.0,
-    )
+    mbh3 = MBH(prob; hop_distribution=ad, local_search=DummyLS(), max_time=0.0)
     res3 = GlobalOptimization.optimize!(mbh3)
     @test res3.fbest == 0.0
     @test length(res3.xbest) == 2
@@ -460,12 +464,7 @@ end
 
     # Test MBH with ZeroDist and LocalStochasticSearch
     ls = LocalStochasticSearch{Float64}(0.1, 1)
-    mbh4 = MBH(
-        prob;
-        hop_distribution = ZeroDist(),
-        local_search = ls,
-        max_time = 0.0,
-    )
+    mbh4 = MBH(prob; hop_distribution=ZeroDist(), local_search=ls, max_time=0.0)
     res4 = GlobalOptimization.optimize!(mbh4)
     @test res4.fbest == 0.0
     @test length(res4.xbest) == 2
@@ -475,9 +474,9 @@ end
     ls2 = LocalStochasticSearch{Float64}(0.1, 2)
     mbh5 = MBH(
         prob;
-        hop_distribution = MBHStaticDistribution{Float64}(),
-        local_search = ls2,
-        max_time = 2.0,
+        hop_distribution=MBHStaticDistribution{Float64}(),
+        local_search=ls2,
+        max_time=2.0,
     )
     res5 = GlobalOptimization.optimize!(mbh5)
     @test res5.fbest == 0.0
@@ -488,9 +487,9 @@ end
     ls3 = LocalStochasticSearch{Float64}(0.1, 2)
     mbh6 = MBH(
         prob;
-        hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
-        local_search = ls3,
-        max_time = 2.0,
+        hop_distribution=MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search=ls3,
+        max_time=2.0,
     )
     res6 = GlobalOptimization.optimize!(mbh6)
     @test res6.fbest == 0.0
@@ -501,9 +500,9 @@ end
     ls4 = LBFGSLocalSearch{Float64}()
     mbh7 = MBH(
         prob;
-        hop_distribution = MBHStaticDistribution{Float64}(),
-        local_search = ls4,
-        max_time = 2.0,
+        hop_distribution=MBHStaticDistribution{Float64}(),
+        local_search=ls4,
+        max_time=2.0,
     )
     res7 = GlobalOptimization.optimize!(mbh7)
     @test res7.fbest == 0.0
@@ -514,9 +513,9 @@ end
     ls5 = LBFGSLocalSearch{Float64}()
     mbh8 = MBH(
         prob;
-        hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
-        local_search = ls5,
-        max_time = 2.0,
+        hop_distribution=MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search=ls5,
+        max_time=2.0,
     )
     res8 = GlobalOptimization.optimize!(mbh8)
     @test res8.fbest == 0.0
@@ -532,10 +531,10 @@ end
     for eval_method in eval_methods
         cmbh1 = MBH(
             prob;
-            hopper_type = MCH(; eval_method=eval_method),
-            hop_distribution = MBHStaticDistribution{Float64}(),
-            local_search = LocalStochasticSearch{Float64}(0.1, 2),
-            max_time = 2.0,
+            hopper_type=MCH(; eval_method=eval_method),
+            hop_distribution=MBHStaticDistribution{Float64}(),
+            local_search=LocalStochasticSearch{Float64}(0.1, 2),
+            max_time=2.0,
         )
         cres1 = GlobalOptimization.optimize!(cmbh1)
         @test cres1.fbest == 0.0
@@ -545,10 +544,10 @@ end
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh2 = MBH(
             prob;
-            hopper_type = MCH(; eval_method=eval_method),
-            hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
-            local_search = LocalStochasticSearch{Float64}(0.1, 2),
-            max_time = 2.0,
+            hopper_type=MCH(; eval_method=eval_method),
+            hop_distribution=MBHAdaptiveDistribution{Float64}(1, 0),
+            local_search=LocalStochasticSearch{Float64}(0.1, 2),
+            max_time=2.0,
         )
         cres2 = GlobalOptimization.optimize!(cmbh2)
         @test cres2.fbest == 0.0
@@ -558,10 +557,10 @@ end
         # Test MBH with static distribution and LBFGSLocalSearch
         cmbh3 = MBH(
             prob;
-            hopper_type = MCH(; eval_method=eval_method),
-            hop_distribution = MBHStaticDistribution{Float64}(),
-            local_search = LBFGSLocalSearch{Float64}(),
-            max_time = 2.0,
+            hopper_type=MCH(; eval_method=eval_method),
+            hop_distribution=MBHStaticDistribution{Float64}(),
+            local_search=LBFGSLocalSearch{Float64}(),
+            max_time=2.0,
         )
         cres3 = GlobalOptimization.optimize!(cmbh3)
         @test cres3.fbest == 0.0
@@ -571,14 +570,19 @@ end
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh4 = MBH(
             prob;
-            hopper_type = MCH(; eval_method=eval_method),
-            hop_distribution = MBHAdaptiveDistribution{Float64}(1, 0),
-            local_search = LBFGSLocalSearch{Float64}(),
-            max_time = 2.0,
+            hopper_type=MCH(; eval_method=eval_method),
+            hop_distribution=MBHAdaptiveDistribution{Float64}(1, 0),
+            local_search=LBFGSLocalSearch{Float64}(),
+            max_time=2.0,
         )
         cres4 = GlobalOptimization.optimize!(cmbh4)
         @test cres4.fbest == 0.0
         @test length(cres4.xbest) == 2
         @test cres4.exitFlag == 1
     end
+
+    # Test that MBH throws an error if trying to solve an OptimizationProblem with
+    # a NonlinearSolveLocalSearch
+    nl_ls = NonlinearSolveLocalSearch{Float64}(NonlinearSolve.NewtonRaphson())
+    @test_throws ArgumentError MBH(prob; local_search=nl_ls)
 end
