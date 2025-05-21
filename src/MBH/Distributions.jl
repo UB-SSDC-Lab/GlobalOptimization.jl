@@ -132,9 +132,9 @@ Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). Add
 ``k_i`` is half of the length of the search space in the ``i``-th dimension.
 
 # Fields
-- `b`: The mixing parameter for the two Laplace distributions
-- `λ`: The scale parameter for the first Laplace distribution in the mixture model
-- `dim_delta`: The length of the search space in each dimension
+- `b::T`: The mixing parameter for the two Laplace distributions
+- `λ::T`: The scale parameter for the first Laplace distribution in the mixture model
+- `dim_delta::Vector{T}`: The length of the search space in each dimension
 """
 struct MBHStaticDistribution{T} <: AbstractMBHDistribution{T}
     # The mixing parameter for the mixture model
@@ -164,43 +164,44 @@ end
     MBHAdaptiveDistribution{T}
 
 An adaptive distribution for MBH. In this implementation, each element of a *hop* is drawn
-from an adaptive mixture model comprised of two Laplace distributions as defined in
-Englander, Arnold C., "Speeding-Up a Random Search for the Global Minimum of a Non-Convex,
-Non-Smooth Objective Function" (2021). *Doctoral Dissertations*. 2569.
+from a univariate adaptive mixture model comprised of two Laplace distributions as defined
+in Englander, Arnold C., "Speeding-Up a Random Search for the Global Minimum of a
+Non-Convex, Non-Smooth Objective Function" (2021). *Doctoral Dissertations*. 2569.
 [https://scholars.unh.edu/dissertation/2569](https://scholars.unh.edu/dissertation/2569/).
 
-The univariate mixture model has a PDF given by:
+The univariate mixture model for the ``i``-th element of a hop has a PDF given by:
 
-``f_{mix}(x; b, c, \\hat{\\boldsymbol{\\lambda}}) = k_i\\left[(1 - b) f(x;\\mu = 0,\\theta = c*\\hat{\\lambda}_i) + b f(x;\\mu = 0, \\theta = 1)\\right]``
+``f_{\\text{mix},i}(x; b, c, \\hat{\\lambda}_i) = k_i\\left[(1 - b) f(x;\\mu = 0,\\theta = c*\\hat{\\lambda}_i) + b f(x;\\mu = 0, \\theta = 1)\\right]``
 
 where ``\\mu`` denotes the location parameter and ``\\theta`` the scale parameter of a
 Laplace distribution (i.e., with probability density ``f(x;\\mu,\\theta)``). Note that
 ``k_i`` denotes half of the length of the search space in the ``i``-th dimension.
 
-For a given dimension ``i``, the scale parameter ``\\hat{\\lambda}_i`` is adaptively updated
+The scale parameter ``\\hat{\\lambda}_i`` is adaptively updated after each successful hop
 with a low-delay estimate given by:
 
 ``\\hat{\\lambda}_i = (1 - a) \\Psi_i + a \\hat{\\lambda}_i``
 
-Englander (2021) proposed taking ``\\Psi_i`` to be the standard deviation of the last
-`step_memory` successful hops. Alternatively, the mean absolute deviation (MAD) around the
-median of the last `step_memory` steps can be used. Note that the MAD median is the maximum
-likelihood estimator for a Laplace distribution's shape parameter. In this implementation,
-setting `use_mad = true` with use the MAD median in this expression, otherwise, the standard
-deviation is used.
+Note that ``\\hat{\\lambda}_i`` is held constant at `λhat0` until `min_memory_update`
+successful steps have been made. Englander (2021) proposed taking ``\\Psi_i`` to be the
+standard deviation of the ``i``-th element of the last `step_memory` successful hops.
+Alternatively, the mean absolute deviation (MAD) around the median of the last `step_memory`
+steps can be used. Note that the MAD median is the maximum likelihood estimator for a
+Laplace distribution's shape parameter. In this implementation, setting `use_mad = true`
+will take ``\\Psi_i`` to be the MAD median, otherwise, the standard deviation is used.
 
 # Fields
-- `step_memory`: The step memory for the distribution
-- `min_memory_update`: The minimum number of steps in memory before updating the scale parameter
+- `step_memory::MBHStepMemoory{T}`: The step memory for the distribution
+- `min_memory_update::Int`: The minimum number of steps in memory before updating the scale parameter
 - `a`: A parameter that defines the influence of a new successful step in the adaptation of
     the distribution.
-- `b`: The mixing parameter for the two Laplace distributions
-- `c`: The scale parameter for the first Laplace distribution
-- `λhat`: The estimated scale parameter of the first Laplace distribution
-- `λhat0`: The initial value of the scale parameter
-- `use_mad`: Flag to indicate if we will use the STD (proposed by Englander) or MAD median (MVE) to
+- `b::T`: The mixing parameter for the two Laplace distributions
+- `c::T`: The scale parameter for the first Laplace distribution
+- `λhat::Vector{T}`: The estimated scale parameter of the first Laplace distribution
+- `λhat0::T`: The initial value of the scale parameter
+- `use_mad::Bool`: Flag to indicate if we will use the STD (proposed by Englander) or MAD median (MVE) to
     update the estimated scale parameter
-- `dim_delta`: The length of the search space in each dimension
+- `dim_delta::Vector{T}`: The length of the search space in each dimension
 """
 mutable struct MBHAdaptiveDistribution{T} <: AbstractMBHDistribution{T}
     # Hopper accepted step memory

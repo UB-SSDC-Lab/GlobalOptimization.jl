@@ -8,12 +8,7 @@ Pages = ["public.md"]
 Depth = 2:3
 ```
 
-## Index
-```@index
-Pages = ["public.md"]
-```
-
-## Optimization Problem
+## Problems
 ```@autodocs
 Modules = [GlobalOptimization]
 Pages = ["Problem.jl"]
@@ -125,4 +120,9 @@ CovarianceTransformation(::Any,::Any,::Any)
     Modules = [GlobalOptimization]
     Pages = ["LocalSearch.jl"]
     Private = false
+```
+
+## Index
+```@index
+Pages = ["public.md"]
 ```
