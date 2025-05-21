@@ -580,4 +580,9 @@ end
         @test length(cres4.xbest) == 2
         @test cres4.exitFlag == 1
     end
+
+    # Test that MBH throws an error if trying to solve an OptimizationProblem with
+    # a NonlinearSolveLocalSearch
+    nl_ls = NonlinearSolveLocalSearch{Float64}(NonlinearSolve.NewtonRaphson())
+    @test_throws ArgumentError MBH(prob; local_search=nl_ls)
 end
