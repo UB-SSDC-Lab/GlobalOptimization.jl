@@ -13,4 +13,4 @@ Currently implemented algorithms:
 
     1. Particle Swarm Optimization
     2. Differential Evolution
-    3. Monotonic Basin Hopping (work in progress, undocumented)
+    3. Monotonic Basin Hopping
