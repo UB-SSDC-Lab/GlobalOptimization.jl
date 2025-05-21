@@ -18,6 +18,7 @@ using NonlinearSolve: NonlinearSolve
 using Optim: Optim
 
 # Base
+include("tracing.jl")
 include("Options.jl")
 include("SearchSpace.jl")
 include("Problem.jl")

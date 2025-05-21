@@ -6,56 +6,25 @@ Abstract type for multiple options
 abstract type AbstractOptions end
 
 """
-    GeneralOptions{display, function_value_check}
+    GeneralOptions
 
 General options for all optimizers
 """
-struct GeneralOptions{display,funciton_value_check} <: AbstractOptions
-    # Display options
-    display_interval::Int
+struct GeneralOptions{
+    FVC <: Union{Val{false}, Val{true}},
+    T,
+} <: AbstractOptions
+    # Trace
+    trace::T
+
+    # Check function value
+    function_value_check::FVC
 
     # Maximum time (seconds)
     max_time::Float64
 
     # Minimum cost value
     min_cost::Float64
-
-    function GeneralOptions(
-        function_value_check::Val{true},
-        display::Val{true},
-        display_interval::Int,
-        max_time,
-        min_cost,
-    )
-        return new{Val{true},Val{true}}(display_interval, max_time, min_cost)
-    end
-    function GeneralOptions(
-        function_value_check::Val{true},
-        display::Val{false},
-        display_interval::Int,
-        max_time,
-        min_cost,
-    )
-        return new{Val{false},Val{true}}(display_interval, max_time, min_cost)
-    end
-    function GeneralOptions(
-        function_value_check::Val{false},
-        display::Val{true},
-        display_interval::Int,
-        max_time,
-        min_cost,
-    )
-        return new{Val{true},Val{false}}(display_interval, max_time, min_cost)
-    end
-    function GeneralOptions(
-        function_value_check::Val{false},
-        display::Val{false},
-        display_interval::Int,
-        max_time,
-        min_cost,
-    )
-        return new{Val{false},Val{false}}(display_interval, max_time, min_cost)
-    end
 end
 
 """
@@ -73,31 +42,21 @@ Returns the general options from an algorithm options type.
 get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
 
 """
-    get_display(opts::AbstractOptions)
+    get_trace(opts::AbstractOptions)
 
 Returns the display option from an options type.
 """
-get_display(opts::GeneralOptions{Val{true},fvc}) where {fvc} = true
-get_display(opts::GeneralOptions{Val{false},fvc}) where {fvc} = false
-get_display(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
-
-"""
-    get_display_interval(opts::AbstractAlgorithmSpecificOptions)
-
-Returns the display interval from an algorithm options type.
-"""
-get_display_interval(opts::GeneralOptions) = opts.display_interval
-get_display_interval(opts::AbstractAlgorithmSpecificOptions) = opts.general.display_interval
+get_trace(opts::GeneralOptions) = opts.trace
+get_trace(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
 
 """
     get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the function value check option from an algorithm options type.
 """
-get_function_value_check(opts::GeneralOptions{d,Val{true}}) where {d} = true
-get_function_value_check(opts::GeneralOptions{d,Val{false}}) where {d} = false
+get_function_value_check(opts::GeneralOptions) = opts.function_value_check
 function get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
-    get_function_value_check(get_general(opts))
+    return get_function_value_check(get_general(opts))
 end
 
 """
