@@ -50,16 +50,8 @@ spso = PSO(
     population_init_method=LatinHypercubeInitialization(),
     max_time=20.0,
 )
-tpso = PSO(
-    prob;
-    eval_method=ThreadedFunctionEvaluation(),
-    max_time = 20.0,
-)
-ppso = PSO(
-    prob;
-    eval_method=PolyesterFunctionEvaluation(),
-    max_time=20.0,
-)
+tpso = PSO(prob; eval_method=ThreadedFunctionEvaluation(), max_time=20.0)
+ppso = PSO(prob; eval_method=PolyesterFunctionEvaluation(), max_time=20.0)
 
 res = optimize!(ppso)
 # res = optimize!(spso); display(res)

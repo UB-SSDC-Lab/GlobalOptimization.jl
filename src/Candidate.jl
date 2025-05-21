@@ -40,7 +40,7 @@ Checks the fitness of the candidate `c` to ensure that it is valid
 iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
 """
 @inline function check_fitness!(
-    c::AbstractCandidate, options::GeneralOptions{D,FVC},
+    c::AbstractCandidate, options::GeneralOptions{D,FVC}
 ) where {D,FVC}
     check_fitness!(c, FVC)
 end

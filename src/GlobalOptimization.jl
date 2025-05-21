@@ -13,9 +13,9 @@ using Statistics: cov, mean, median!, std
 using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using UnPack: @unpack
 
-import Base
-import NonlinearSolve
-import Optim
+using Base: Base
+using NonlinearSolve: NonlinearSolve
+using Optim: Optim
 
 # Base
 include("Options.jl")

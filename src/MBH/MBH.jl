@@ -31,7 +31,7 @@ struct MBH{
     E<:FeasibilityHandlingEvaluator,
     BHE<:Union{Nothing,BatchJobEvaluator},
     D<:AbstractMBHDistribution,
-    LS<:Union{AbstractLocalSearch, Vector{<:AbstractLocalSearch}},
+    LS<:Union{AbstractLocalSearch,Vector{<:AbstractLocalSearch}},
 } <: AbstractOptimizer
 
     # Monotonic Basin Hopping Options
@@ -65,7 +65,7 @@ function _MBH(
     local_search,
     options,
 ) where {has_penalty,T}
- return MBH(
+    return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
         SingleHopperSet{T}(num_dims(prob)),
@@ -81,7 +81,7 @@ function _MBH(
     local_search,
     options,
 ) where {has_penalty,T}
- return MBH(
+    return MBH(
         options,
         FeasibilityHandlingEvaluator(prob),
         MCHSet{T}(num_dims(prob), hopper_type.num_hoppers),
@@ -126,10 +126,12 @@ function MBH(
 ) where {T<:Number,has_penalty}
     # Check arguments
     if isa(prob, OptimizationProblem) && isa(local_search, NonlinearSolveLocalSearch)
-        throw(ArgumentError(
-            "NonlinearSolveLocalSearch is not supported for OptimizationProblem! " *
-            "Please consider using LBFGSLocalSearch or LocalStochasticSearch instead."
-        ))
+        throw(
+            ArgumentError(
+                "NonlinearSolveLocalSearch is not supported for OptimizationProblem! " *
+                "Please consider using LBFGSLocalSearch or LocalStochasticSearch instead.",
+            ),
+        )
     end
     if max_time < 0.0
         throw(ArgumentError("max_time must be greater than 0.0!"))
@@ -204,12 +206,7 @@ function iterate!(opt::MBH)
 
         # Take a hop
         draw_count = hop!(
-            hopper_set,
-            search_space,
-            evaluator,
-            bhe,
-            distribution,
-            local_search,
+            hopper_set, search_space, evaluator, bhe, distribution, local_search
         )
 
         # Update fitness
@@ -244,7 +241,6 @@ function iterate!(opt::MBH)
 end
 
 function hop!(hopper::Hopper, ss, eval, dist, ls)
-
     step_accepted = false
     draw_count = 0
     while !step_accepted

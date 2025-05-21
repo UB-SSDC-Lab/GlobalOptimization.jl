@@ -58,9 +58,7 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     - `b::Real`: The local step standard deviation.
     - `iters::Int`: The number of iterations to perform.
     """
-    function LocalStochasticSearch{T}(
-        b::Real, iters::Int
-    ) where {T<:AbstractFloat}
+    function LocalStochasticSearch{T}(b::Real, iters::Int) where {T<:AbstractFloat}
         return new{T}(T(b), iters, Vector{T}(undef, 0))
     end
 end
@@ -105,9 +103,7 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
     used. Can be any of the autodiff methods from
     [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 """
-struct LBFGSLocalSearch{
-    T,AT,OT,AD<:Union{AbstractADType, Nothing},
-} <: OptimLocalSearch{T,AD}
+struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocalSearch{T,AD}
 
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
@@ -175,7 +171,12 @@ struct LBFGSLocalSearch{
         )
         opts = Optim.Options(; iterations=iters_per_solve)
         return new{T,typeof(alg),typeof(opts),typeof(ad)}(
-            T(percent_decrease_tol), alg, opts, max_solve_time, LocalSearchSolutionCache{T}(), ad,
+            T(percent_decrease_tol),
+            alg,
+            opts,
+            max_solve_time,
+            LocalSearchSolutionCache{T}(),
+            ad,
         )
     end
 end
@@ -206,7 +207,7 @@ terminated.
 - `cache::LocalSearchSolutionCache{T}`: The solution cache for storing the solution from
     solving with NonlinearSolve.jl.
 """
-struct NonlinearSolveLocalSearch{T, A} <: DerivativeBasedLocalSearch{T}
+struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -277,9 +278,7 @@ function initialize!(ls::NonlinearSolveLocalSearch, num_dims)
     initialize!(ls.cache, num_dims)
     return nothing
 end
-function initialize!(
-    ls_vec::Vector{<:AbstractLocalSearch}, num_dims
-)
+function initialize!(ls_vec::Vector{<:AbstractLocalSearch}, num_dims)
     for ls in ls_vec
         initialize!(ls, num_dims)
     end
@@ -317,12 +316,7 @@ end
 
 function optim_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, options)
     res = Optim.optimize(
-        get_scalar_function(prob),
-        prob.ss.dim_min,
-        prob.ss.dim_max,
-        x0,
-        alg,
-        options;
+        get_scalar_function(prob), prob.ss.dim_min, prob.ss.dim_max, x0, alg, options;
     )
     cache.x .= Optim.minimizer(res)
     cache.cost = Optim.minimum(res)
@@ -336,25 +330,24 @@ function optim_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, ad, option
         x0,
         alg,
         options;
-        autodiff = ad,
+        autodiff=ad,
     )
     cache.x .= Optim.minimizer(res)
     cache.cost = Optim.minimum(res)
     return true
 end
 
-function nonlinear_solve!(cache::LocalSearchSolutionCache, prob, x0, alg, abs_tol, max_iters)
-    nl_prob = NonlinearSolve.NonlinearProblem{false}((x,p) -> prob.f(x), x0)
+function nonlinear_solve!(
+    cache::LocalSearchSolutionCache, prob, x0, alg, abs_tol, max_iters
+)
+    nl_prob = NonlinearSolve.NonlinearProblem{false}((x, p) -> prob.f(x), x0)
     sol = NonlinearSolve.solve(nl_prob, alg; abstol=abs_tol, maxiters=max_iters)
     cache.x .= sol.u
     cache.cost = scalar_function(prob, sol.u)
     return true
 end
 
-function get_solve_fun(
-    evaluator,
-    ls::OptimLocalSearch{T,Nothing},
-) where T
+function get_solve_fun(evaluator, ls::OptimLocalSearch{T,Nothing}) where {T}
     @unpack prob = evaluator
     @unpack alg, options, cache = ls
     solve! = let cache = cache, prob = prob, alg = alg, options = options
@@ -362,10 +355,7 @@ function get_solve_fun(
     end
     return solve!
 end
-function get_solve_fun(
-    evaluator,
-    ls::OptimLocalSearch{T,AD},
-) where {T,AD<:AbstractADType}
+function get_solve_fun(evaluator, ls::OptimLocalSearch{T,AD}) where {T,AD<:AbstractADType}
     @unpack prob = evaluator
     @unpack alg, options, cache, ad = ls
     solve! = let cache = cache, prob = prob, alg = alg, options = options, ad = ad
@@ -374,15 +364,18 @@ function get_solve_fun(
     return solve!
 end
 
-function get_solve_fun(
-    evaluator,
-    ls::NonlinearSolveLocalSearch{T,A},
-) where {T,A}
+function get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A}
     @unpack prob = evaluator
     @unpack alg, abs_tol, max_solve_iters, cache = ls
-    solve! = let cache = cache, prob = prob, alg = alg, abs_tol = abs_tol, max_solve_iters = max_solve_iters
-        x -> nonlinear_solve!(cache, prob, x, alg, abs_tol, max_solve_iters)
-    end
+    solve! =
+        let cache = cache,
+            prob = prob,
+            alg = alg,
+            abs_tol = abs_tol,
+            max_solve_iters = max_solve_iters
+
+            x -> nonlinear_solve!(cache, prob, x, alg, abs_tol, max_solve_iters)
+        end
     return solve!
 end
 
@@ -428,9 +421,7 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     return nothing
 end
 
-function feasible(
-    x, eval, ls::OptimLocalSearch{T}
-) where T
+function feasible(x, eval, ls::OptimLocalSearch{T}) where {T}
     _, penalty = evaluate_with_penalty(eval, x)
     if abs(penalty) - eps(T) <= zero(T)
         return true
@@ -438,9 +429,7 @@ function feasible(
         return false
     end
 end
-function feasible(
-    x, eval, ls::NonlinearSolveLocalSearch{T}
-) where T
+function feasible(x, eval, ls::NonlinearSolveLocalSearch{T}) where {T}
     if !feasible(x, eval.prob.ss)
         return false
     else

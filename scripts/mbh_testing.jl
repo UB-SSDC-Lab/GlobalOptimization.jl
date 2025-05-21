@@ -10,7 +10,7 @@ using StaticArrays
 using Infiltrator
 #Random.seed!(1234)
 
-import NonlinearSolve
+using NonlinearSolve: NonlinearSolve
 using ADTypes
 
 # Schwefel Function
@@ -55,11 +55,13 @@ prob = OptimizationProblem(rastrigin, ss)
 #prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
-dist = MBHAdaptiveDistribution{Float64}(
-    1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01
-)
+dist = MBHAdaptiveDistribution{Float64}(1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01)
 lsgb = LBFGSLocalSearch{Float64}(;
-    iters_per_solve=5, percent_decrease_tol=30.0, m=10, max_solve_time=0.1, ad=AutoForwardDiff()
+    iters_per_solve=5,
+    percent_decrease_tol=30.0,
+    m=10,
+    max_solve_time=0.1,
+    ad=AutoForwardDiff(),
 )
 lss = LocalStochasticSearch{Float64}(1e-2, 100)
 nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
@@ -72,10 +74,7 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 mbh = MBH(
     prob;
     hopper_type=MCH(;
-        num_hoppers=50,
-        eval_method=ThreadedFunctionEvaluation(;
-            n=4*Threads.nthreads(),
-        ),
+        num_hoppers=50, eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
     ),
     hop_distribution=dist,
     #local_search=nls,

@@ -343,12 +343,12 @@ function display_de_status(
     )
 end
 function display_de_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}},
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}}
 )
     return nothing
 end
 function display_de_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}},
+    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}}
 )
     if iteration % display_interval == 0
         fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
