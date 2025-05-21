@@ -142,14 +142,13 @@ end
 
 Updates the velocity of each candidate in the swarm `swarm`,
 """
-function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where {T}
+function update_velocity!(swarm::Swarm{T}, cache, y1, y2) where {T}
     # Unpack data
     @unpack candidates, candidates_velocity, best_candidates, best_candidates_fitness =
         swarm
-    @unpack index_vector = cache
+    @unpack index_vector, neighborhood_size, inertia = cache
 
     # Update velocity for each candidate
-    wT = T(w)
     y1T = T(y1)
     y2T = T(y2)
     for (i, vel) in enumerate(candidates_velocity)
@@ -159,10 +158,15 @@ function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where {T}
         # Defermine fbest in neighborhood
         fbest = Inf
         bestidx = 0
-        for j in 1:ns
+        for j in 1:neighborhood_size
             # Get index of particle in neighborhood
-            # If k in neighborhood is i, replace with index_vector[ns + 1]
-            k = index_vector[j] != i ? index_vector[j] : index_vector[ns + 1]
+            # If k in neighborhood is i, replace with index_vector[neighborhood_size + 1]
+            #k = index_vector[j] != i ? index_vector[j] : index_vector[neighborhood_size + 1]
+            k = ifelse(
+                index_vector[j] != i,
+                index_vector[j],
+                index_vector[neighborhood_size + 1]
+            )
             if best_candidates_fitness[k] < fbest
                 fbest = best_candidates_fitness[k]
                 bestidx = k
@@ -172,7 +176,7 @@ function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where {T}
         # Update velocity
         for j in eachindex(vel)
             vel[j] =
-                wT * vel[j] +
+                inertia * vel[j] +
                 y1T * rand(T) * (best_candidates[i][j] - candidates[i][j]) +
                 y2T * rand(T) * (best_candidates[bestidx][j] - candidates[i][j])
         end

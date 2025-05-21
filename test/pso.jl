@@ -34,7 +34,7 @@ function check_swarm_equality(pso1, pso2, pso3)
 end
 
 # Define problem
-N = 10
+N = 3
 ss = GlobalOptimization.ContinuousRectangularSearchSpace(
     [-5.12 for i in 1:N], [5.12 for i in 1:N]
 )

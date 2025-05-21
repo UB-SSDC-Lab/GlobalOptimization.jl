@@ -77,8 +77,18 @@ mutable struct PSOCache{T}
     global_best_candidate::Vector{T}
     global_best_fitness::T
     index_vector::Vector{UInt16}
+    inertia::T
+    counter::Int
+    neighborhood_size::Int
     function PSOCache{T}(num_particles::Integer, num_dims::Integer) where {T}
-        return new{T}(zeros(T, num_dims), T(Inf), collect(0x1:UInt16(num_particles)))
+        return new{T}(
+            zeros(T, num_dims),
+            T(Inf),
+            collect(0x1:UInt16(num_particles)),
+            0.0,
+            0,
+            0
+        )
     end
 end
 
@@ -216,10 +226,10 @@ function iterate!(opt::PSO)
     @unpack options, evaluator, swarm, cache = opt
     search_space = evaluator.prob.ss
 
-    # Initialize PSO algorithm parameters
-    ns = options.minimum_neighborhood_size  # Neighborhood size
-    sc = 0                                  # Stall counter
-    w = options.inertia_range[2]           # Inertia weight
+    # Initialize PSO algorithm cache/parameters
+    cache.neighborhood_size = options.minimum_neighborhood_size
+    cache.inertia = options.inertia_range[2]
+    swarm_size = length(swarm)
     y1 = options.self_adjustment_weight     # Self adjustment weight
     y2 = options.social_adjustment_weight   # Social adjustment weight
 
@@ -227,8 +237,9 @@ function iterate!(opt::PSO)
     iteration = 0
     start_time = time()
     current_time = start_time
+    stall_iteration = 0 # Stall iteration counter
     stall_start_time = start_time
-    stall_value = Inf
+    stall_value = cache.global_best_fitness
 
     # Begin loop
     exit_flag = 0
@@ -237,7 +248,7 @@ function iterate!(opt::PSO)
         iteration += 1
 
         # Update swarm velocity and step (enforcing particles are feasible after step)
-        update_velocity!(swarm, cache, ns, w, y1, y2)
+        update_velocity!(swarm, cache, y1, y2)
         step!(swarm)
         enforce_bounds!(swarm, search_space)
 
@@ -245,28 +256,34 @@ function iterate!(opt::PSO)
         evaluate_fitness!(swarm, evaluator)
         check_fitness!(swarm, get_general(options))
 
-        # Update global best (STOPPED HERE!)
-        update_global_best!(opt)
+        # Update global best
+        improved = update_global_best!(opt)
 
-        # Update inertia
-        w = update_inertia(w, options.inertia_range, sc)
+        # Update neighborhood and inertia
+        update_neighborhood_and_inertia!(
+            cache,
+            improved,
+            options.inertia_range,
+            options.minimum_neighborhood_size,
+            swarm_size,
+        )
 
         # Handle stall
         if stalled(opt, stall_value)
-            sc += 1
+            stall_iteration += 1
         else
             stall_value = cache.global_best_fitness
-            sc = 0
+            stall_iteration = 0
             stall_start_time = time()
         end
 
         # Stopping criteria
         current_time = time()
-        if current_time - start_time >= options.general.max_time # Hit maximum time
+        if current_time - start_time >= get_max_time(options) # Hit maximum time
             exit_flag = 1
         elseif iteration >= options.max_iterations # Hit maximum iterations
             exit_flag = 2
-        elseif sc >= options.max_stall_iterations # Hit maximum stall iterations
+        elseif stall_iteration >= options.max_stall_iterations # Hit maximum stall iterations
             exit_flag = 3
         elseif current_time - stall_start_time >= options.max_stall_time # Hit maximum stall time
             exit_flag = 4
@@ -276,7 +293,7 @@ function iterate!(opt::PSO)
         display_status(
             current_time - start_time,
             iteration,
-            sc,
+            stall_iteration,
             cache.global_best_fitness,
             get_general(options),
         )
@@ -301,10 +318,9 @@ function update_global_best!(pso::PSO)
     # Grab information
     @unpack swarm, cache = pso
     @unpack best_candidates, best_candidates_fitness = swarm
-    @unpack global_best_candidate = cache
+    @unpack global_best_candidate, global_best_fitness = cache
 
     # Find index and value of global best fitness if better than previous best
-    global_best_fitness = cache.global_best_fitness
     global_best_idx = 0
     @inbounds for (i, fitness) in enumerate(best_candidates_fitness)
         if fitness < global_best_fitness
@@ -334,18 +350,46 @@ function stalled(pso::PSO, stall_value)
 end
 
 """
-    update_inertia(inertia, range, stall_count)
+    update_neighborhood_and_inertia!(
+        cache,
+        improved,
+        inertia_range,
+        min_neighborhood_size,
+        swarm_size,
+    )
 
-Returns new inertia weight based on the current 'inertia', the `range`, and `stall_count`.
+Updates the neighborhood size and inertia weight in `cache` based on the `improved` flag,
+`inertia_range`, `min_neighborhood_size`, and `swarm_size`.
 """
-function update_inertia(inertia, range, stall_count)
-    w = inertia
-    if stall_count < 2
-        w *= 2.0
-    elseif stall_count > 5
-        w /= 2.0
+function update_neighborhood_and_inertia!(
+    cache,
+    improved,
+    inertia_range,
+    min_neighborhood_size,
+    swarm_size,
+)
+    if improved
+        # Reduce counter
+        cache.counter = max(0, cache.counter - 1)
+
+        # Set neighborhood size to minimum
+        cache.neighborhood_size = min_neighborhood_size
+
+        # Update inertia weight
+        w = cache.inertia
+        w = ifelse(cache.counter < 2, 2.0*w, w)
+        w = ifelse(cache.counter > 5, 0.5*w, w)
+        cache.inertia = clamp(w, inertia_range[1], inertia_range[2])
+    else
+        # Increase counter and neighborhood size
+        cache.counter += 1
+
+        cache.neighborhood_size = min(
+            cache.neighborhood_size + min_neighborhood_size,
+            swarm_size - 1
+        )
     end
-    return clamp(w, range[1], range[2])
+    return nothing
 end
 
 """
