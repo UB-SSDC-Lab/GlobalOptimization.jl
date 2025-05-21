@@ -45,6 +45,8 @@ include("MBH/Hopper.jl")
 include("MBH/LocalSearch.jl")
 include("MBH/MBH.jl")
 
+export TraceMinimal, TraceDetailed, TraceAll
+
 export ContinuousRectangularSearchSpace
 export SerialFunctionEvaluation, ThreadedFunctionEvaluation, PolyesterFunctionEvaluation
 export LatinHypercubeInitialization
