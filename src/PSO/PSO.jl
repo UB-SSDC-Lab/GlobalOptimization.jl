@@ -241,11 +241,11 @@ function iterate!(opt::PSO)
         # Update global best
         improved = update_global_best!(opt)
 
-        # Handle stall check
-        handle_stall!(opt)
-
         # Adapt the velocity update scheme
         adapt!(velocity_update, improved, cache.stall_iteration)
+
+        # Handle stall check
+        handle_stall!(opt)
 
         # Check stopping criteria
         exit_flag = check_stopping_criteria(opt)

@@ -12,8 +12,7 @@ abstract type AbstractVelocityUpdateScheme end
 Abstract type for a velocity update scheme that randomly selects the particles in the
 neighborhood of a given particle.
 """
-abstract type AbstractRandomNeighborhoodVelocityUpdateScheme <:
-              AbstractVelocityUpdateScheme end
+abstract type AbstractRandomNeighborhoodVelocityUpdateScheme <: AbstractVelocityUpdateScheme end
 
 """
     MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
@@ -67,31 +66,103 @@ mutable struct MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateS
     end
 end
 
-function initialize!(mvu::MATLABVelocityUpdate, swarm_size)
+"""
+    CSRNVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
+
+A velocity update scheme employed a Constant Size Random Neighborhood (CSRN).
+"""
+mutable struct CSRNVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
+    # Constant parameters
+    inertia_range::Tuple{Float64,Float64}
+    neighborhood_fraction::Float64
+    N::Int # The neighborhood size
+    self_adjustment_weight::Float64
+    social_adjustment_weight::Float64
+
+    # State variables
+    w::Float64 # The inertia weight
+
+    # Cache
+    index_vector::Vector{UInt16}
+
+    # Constructor
+    function CSRNVelocityUpdate(;
+        inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+        neighborhood_fraction::AbstractFloat=0.25,
+        self_adjustment_weight::AbstractFloat=1.49,
+        social_adjustment_weight::AbstractFloat=1.49,
+    )
+        # Validate input parameters
+        @assert neighborhood_fraction > 0.0 && neighborhood_fraction <= 1.0 "Invalid neighborhood fraction"
+        ir_check =
+            inertia_range[1] >= 0.0 &&
+            inertia_range[2] <= 2.0 &&
+            inertia_range[1] < inertia_range[2]
+        @assert ir_check "Invalid inertia range"
+
+        return new(
+            (Float64(inertia_range[1]), Float64(inertia_range[2])),
+            Float64(neighborhood_fraction),
+            0,
+            Float64(self_adjustment_weight),
+            Float64(social_adjustment_weight),
+            Float64(inertia_range[2]),
+            Vector{UInt16}(undef, 0),
+        )
+    end
+end
+
+"""
+    initialize!(vu::AbstractVelocityUpdateScheme, swarm_size::Int)
+
+Initialize the velocity update scheme for a given swarm size.
+"""
+function initialize!(vu::MATLABVelocityUpdate, swarm_size)
+    # Initialize state variables
+    vu.w = vu.inertia_range[2]
+    vu.c = 0
+
     # Set swarm size
-    mvu.swarm_size = swarm_size
+    vu.swarm_size = swarm_size
 
     # Set initial neighborhood parameters
-    mvu.minimum_neighborhood_size = max(
-        2, floor(Int, swarm_size * mvu.minimum_neighborhood_fraction)
+    vu.minimum_neighborhood_size = max(
+        2, min(floor(Int, swarm_size * vu.minimum_neighborhood_fraction), swarm_size - 1)
     )
-    mvu.N = mvu.minimum_neighborhood_size
+    vu.N = vu.minimum_neighborhood_size
 
     # Allocate index vector
-    resize!(mvu.index_vector, swarm_size)
-    mvu.index_vector .= 1:swarm_size
+    resize!(vu.index_vector, swarm_size)
+    vu.index_vector .= 1:swarm_size
+
+    return nothing
+end
+function initialize!(vu::CSRNVelocityUpdate, swarm_size)
+    # Initialize state variables
+    vu.w = vu.inertia_range[2]
+
+    # Set neighborhood size
+    vu.N = max(2, min(floor(Int, swarm_size * vu.neighborhood_fraction), swarm_size - 1))
+
+    # Allocate index vector
+    resize!(vu.index_vector, swarm_size)
+    vu.index_vector .= 1:swarm_size
 
     return nothing
 end
 
+"""
+    update_velocity!(swarm::Swarm, vu::AbstractVelocityUpdateScheme)
+
+Update the velocity of each candidate in the swarm using the specified velocity update scheme.
+"""
 function update_velocity!(
-    swarm::Swarm{T}, velocity_update::AbstractRandomNeighborhoodVelocityUpdateScheme
+    swarm::Swarm{T}, vu::AbstractRandomNeighborhoodVelocityUpdateScheme
 ) where {T}
     # Unpack data
     @unpack candidates, candidates_velocity, best_candidates, best_candidates_fitness =
         swarm
-    @unpack index_vector, w, N, self_adjustment_weight, social_adjustment_weight =
-        velocity_update
+    @unpack index_vector, w, N, self_adjustment_weight, social_adjustment_weight = vu
 
     # Update velocity for each candidate
     wT = T(w)
@@ -125,23 +196,36 @@ function update_velocity!(
     return nothing
 end
 
-function adapt!(mvu::MATLABVelocityUpdate, improved::Bool, stall_iteration::Int)
+"""
+    adapt!(vu::AbstractVelocityUpdateScheme, improved::Bool, stall_iteration::Int)
+
+Adapt the velocity update scheme based on the improvement status of the swarm and the
+stall iteration counter.
+"""
+function adapt!(vu::MATLABVelocityUpdate, improved::Bool, stall_iteration::Int)
     if improved
         # Reduce counter
-        mvu.c = max(0, mvu.c - 1)
+        vu.c = max(0, vu.c - 1)
 
         # Set neighborhood size to minimum
-        mvu.N = mvu.minimum_neighborhood_size
+        vu.N = vu.minimum_neighborhood_size
 
         # Update inertia weight
-        w = mvu.w
-        w = ifelse(mvu.c < 2, 2.0*w, w)
-        w = ifelse(mvu.c > 5, 0.5*w, w)
-        mvu.w = clamp(w, mvu.inertia_range[1], mvu.inertia_range[2])
+        w = vu.w
+        w = ifelse(vu.c < 2, 2.0*w, w)
+        w = ifelse(vu.c > 5, 0.5*w, w)
+        vu.w = clamp(w, vu.inertia_range[1], vu.inertia_range[2])
     else
         # Increase counter and neighborhood size
-        mvu.c += 1
-        mvu.N = min(mvu.N + mvu.minimum_neighborhood_size, mvu.swarm_size - 1)
+        vu.c += 1
+        vu.N = min(vu.N + vu.minimum_neighborhood_size, vu.swarm_size - 1)
     end
+    return nothing
+end
+function adapt!(vu::CSRNVelocityUpdate, improved::Bool, stall_iteration::Int)
+    w = vu.w
+    w = ifelse(stall_iteration < 2, 2.0*w, w)
+    w = ifelse(stall_iteration > 5, 0.5*w, w)
+    vu.w = clamp(w, vu.inertia_range[1], vu.inertia_range[2])
     return nothing
 end

@@ -67,6 +67,18 @@ end
 @test sres.fbest ≈ 0.0 atol = 1e-6
 @test sres.xbest ≈ fill(1.0, N) atol = 1e-6
 
+# Test with CSRNVelocityUpdate scheme
+N = 10
+ss2 = GlobalOptimization.ContinuousRectangularSearchSpace(
+    [-5.12 for i in 1:N], [5.12 for i in 1:N]
+)
+prob2 = GlobalOptimization.OptimizationProblem(layeb_1, ss2)
+csrn_pso = GlobalOptimization.PSO(prob2; velocity_update=CSRNVelocityUpdate())
+Random.seed!(1234)
+res2 = GlobalOptimization.optimize!(csrn_pso)
+@test res2.fbest ≈ 0.0 atol = 1e-6
+@test res2.xbest ≈ fill(1.0, N) atol = 1e-6
+
 # Check for expected errors
 struct InvalidSearchSpace <: GlobalOptimization.SearchSpace{Float64} end
 prob = GlobalOptimization.OptimizationProblem(layeb_1, InvalidSearchSpace())
