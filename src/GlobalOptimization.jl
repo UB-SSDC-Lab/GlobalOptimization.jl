@@ -29,6 +29,7 @@ include("Results.jl")
 
 # PSO
 include("PSO/Swarm.jl")
+include("PSO/velocity_update.jl")
 include("PSO/PSO.jl")
 
 # DE

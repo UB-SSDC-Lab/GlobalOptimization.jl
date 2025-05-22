@@ -8,6 +8,7 @@
 *.cov
 lcov.info
 test_coverage.sh
+format.sh
 /Manifest.toml
 /docs/Manifest.toml
 /docs/build/

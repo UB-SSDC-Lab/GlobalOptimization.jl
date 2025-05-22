@@ -28,7 +28,6 @@ struct DEOptions{
     # The Population initialization method
     pop_init_method::PI
 
-    # ===== DE specific options
     # Mutation strategy parameters
     mutation_params::MP
 
