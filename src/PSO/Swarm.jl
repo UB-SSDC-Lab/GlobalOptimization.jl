@@ -27,31 +27,6 @@ struct Swarm{T<:AbstractFloat} <: AbstractPopulation{T}
 end
 
 """
-    Swarm(num_particles::Integer, num_dims::Integer)
-
-Constructs a `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-Swarm(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles, num_dims)
-
-"""
-    Swarm_F64(num_particles::Integer, num_dims::Integer)
-
-Constructs a Float64 `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-function Swarm_F64(num_particles::Integer, num_dims::Integer)
-    Swarm{Float64}(num_particles, num_dims)
-end
-
-"""
-    Swarm_F32(num_particles::Integer, num_dims::Integer)
-
-Constructs a Float32 `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-function Swarm_F32(num_particles::Integer, num_dims::Integer)
-    Swarm{Float32}(num_particles, num_dims)
-end
-
-"""
     initialize!(
         swarm::Swarm{T},
         pop_init_method::AbstractPopulationInitialization,
@@ -133,49 +108,6 @@ function step!(swarm::Swarm)
     @unpack candidates, candidates_velocity = swarm
     @inbounds for (i, candidate) in enumerate(candidates)
         candidate .+= candidates_velocity[i]
-    end
-    return nothing
-end
-
-"""
-    update_velocity!(swarm::Swarm{T}, cache::Cache, ns::Integer, w, y1, y2)
-
-Updates the velocity of each candidate in the swarm `swarm`,
-"""
-function update_velocity!(swarm::Swarm{T}, cache, ns, w, y1, y2) where {T}
-    # Unpack data
-    @unpack candidates, candidates_velocity, best_candidates, best_candidates_fitness =
-        swarm
-    @unpack index_vector = cache
-
-    # Update velocity for each candidate
-    wT = T(w)
-    y1T = T(y1)
-    y2T = T(y2)
-    for (i, vel) in enumerate(candidates_velocity)
-        # Shuffle vector containing integers 1:num_particles
-        shuffle!(index_vector)
-
-        # Defermine fbest in neighborhood
-        fbest = Inf
-        bestidx = 0
-        for j in 1:ns
-            # Get index of particle in neighborhood
-            # If k in neighborhood is i, replace with index_vector[ns + 1]
-            k = index_vector[j] != i ? index_vector[j] : index_vector[ns + 1]
-            if best_candidates_fitness[k] < fbest
-                fbest = best_candidates_fitness[k]
-                bestidx = k
-            end
-        end
-
-        # Update velocity
-        for j in eachindex(vel)
-            vel[j] =
-                wT * vel[j] +
-                y1T * rand(T) * (best_candidates[i][j] - candidates[i][j]) +
-                y2T * rand(T) * (best_candidates[bestidx][j] - candidates[i][j])
-        end
     end
     return nothing
 end
