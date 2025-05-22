@@ -35,15 +35,15 @@ end
 
 # Define problem
 N = 3
-ss = GlobalOptimization.ContinuousRectangularSearchSpace(
+ss = ContinuousRectangularSearchSpace(
     [-5.12 for i in 1:N], [5.12 for i in 1:N]
 )
-prob = GlobalOptimization.OptimizationProblem(layeb_1, ss)
+prob = OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
-spso = GlobalOptimization.PSO(prob; eval_method=SerialFunctionEvaluation())
-tpso = GlobalOptimization.PSO(prob; eval_method=ThreadedFunctionEvaluation())
-ppso = GlobalOptimization.PSO(prob; eval_method=PolyesterFunctionEvaluation())
+spso = PSO(prob; eval_method=SerialFunctionEvaluation())
+tpso = PSO(prob; eval_method=ThreadedFunctionEvaluation())
+ppso = PSO(prob; eval_method=PolyesterFunctionEvaluation())
 
 # Check optimization is same
 Random.seed!(1234)
@@ -69,17 +69,31 @@ end
 
 # Test with CSRNVelocityUpdate scheme
 N = 10
-ss2 = GlobalOptimization.ContinuousRectangularSearchSpace(
+ss2 = ContinuousRectangularSearchSpace(
     [-5.12 for i in 1:N], [5.12 for i in 1:N]
 )
-prob2 = GlobalOptimization.OptimizationProblem(layeb_1, ss2)
-csrn_pso = GlobalOptimization.PSO(prob2; velocity_update=CSRNVelocityUpdate())
+prob2 = OptimizationProblem(layeb_1, ss2)
+csrn_pso = PSO(prob2; velocity_update=CSRNVelocityUpdate())
 Random.seed!(1234)
-res2 = GlobalOptimization.optimize!(csrn_pso)
-@test res2.fbest ≈ 0.0 atol = 1e-6
-@test res2.xbest ≈ fill(1.0, N) atol = 1e-6
+sres2 = optimize!(csrn_pso)
+@test sres2.fbest ≈ 0.0 atol = 1e-6
+@test sres2.xbest ≈ fill(1.0, N) atol = 1e-6
+
+# Test stopping criteria
+pso1 = PSO(prob; max_time=1e-6)
+res1 = optimize!(pso1)
+@test res1.exitFlag == 1
+pso2 = PSO(prob; max_iterations=1)
+res2 = optimize!(pso2)
+@test res2.exitFlag == 2
+pso3 = PSO(prob; function_tolerance=Inf, max_stall_iterations = 2)
+res3 = optimize!(pso3)
+@test res3.exitFlag == 3
+pso4 = PSO(prob; function_tolerance=Inf, max_stall_iterations = 1000000, max_stall_time = 1e-6)
+res4 = optimize!(pso4)
+@test res4.exitFlag == 4
 
 # Check for expected errors
 struct InvalidSearchSpace <: GlobalOptimization.SearchSpace{Float64} end
-prob = GlobalOptimization.OptimizationProblem(layeb_1, InvalidSearchSpace())
-@test_throws ArgumentError GlobalOptimization.PSO(prob)
+prob = OptimizationProblem(layeb_1, InvalidSearchSpace())
+@test_throws ArgumentError PSO(prob)

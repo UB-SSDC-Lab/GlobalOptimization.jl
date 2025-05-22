@@ -27,31 +27,6 @@ struct Swarm{T<:AbstractFloat} <: AbstractPopulation{T}
 end
 
 """
-    Swarm(num_particles::Integer, num_dims::Integer)
-
-Constructs a `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-Swarm(num_particles::Integer, num_dims::Integer) = Swarm{Float64}(num_particles, num_dims)
-
-"""
-    Swarm_F64(num_particles::Integer, num_dims::Integer)
-
-Constructs a Float64 `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-function Swarm_F64(num_particles::Integer, num_dims::Integer)
-    Swarm{Float64}(num_particles, num_dims)
-end
-
-"""
-    Swarm_F32(num_particles::Integer, num_dims::Integer)
-
-Constructs a Float32 `Swarm` with `num_particles` particles in `num_dims` dimensions.
-"""
-function Swarm_F32(num_particles::Integer, num_dims::Integer)
-    Swarm{Float32}(num_particles, num_dims)
-end
-
-"""
     initialize!(
         swarm::Swarm{T},
         pop_init_method::AbstractPopulationInitialization,
