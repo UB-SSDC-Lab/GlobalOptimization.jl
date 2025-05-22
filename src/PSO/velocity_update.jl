@@ -4,7 +4,7 @@
 
 Abstract type for velocity update schemes in Particle Swarm Optimization (PSO).
 """
-abstract type AbstractVelocityUpdateScheme{T} end
+abstract type AbstractVelocityUpdateScheme end
 
 """
     AbstractRandomNeighborhoodVelocityUpdateScheme
@@ -12,38 +12,38 @@ abstract type AbstractVelocityUpdateScheme{T} end
 Abstract type for a velocity update scheme that randomly selects the particles in the
 neighborhood of a given particle.
 """
-abstract type AbstractRandomNeighborhoodVelocityUpdateScheme{T} <:
-              AbstractVelocityUpdateScheme{T} end
+abstract type AbstractRandomNeighborhoodVelocityUpdateScheme <:
+              AbstractVelocityUpdateScheme end
 
 """
     MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
 
 A velocity update scheme employed by the [MATLAB PSO algorithm](https://www.mathworks.com/help/gads/particle-swarm-optimization-algorithm.html).
 """
-mutable struct MATLABVelocityUpdate{T} <: AbstractRandomNeighborhoodVelocityUpdateScheme{T}
+mutable struct MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
     # Constant parameters
     swarm_size::Int
-    inertia_range::Tuple{T,T}
-    minimum_neighborhood_fraction::T
+    inertia_range::Tuple{Float64,Float64}
+    minimum_neighborhood_fraction::Float64
     minimum_neighborhood_size::Int
-    self_adjustment_weight::T
-    social_adjustment_weight::T
+    self_adjustment_weight::Float64
+    social_adjustment_weight::Float64
 
     # State variables
-    w::T    # The inertia weight
-    c::Int  # The stall iteration counter
-    N::Int  # The neighborhood size
+    w::Float64  # The inertia weight
+    c::Int      # The stall iteration counter
+    N::Int      # The neighborhood size
 
     # Cache
     index_vector::Vector{UInt16}
 
     # Constructor
-    function MATLABVelocityUpdate{T}(;
+    function MATLABVelocityUpdate(;
         inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
         minimum_neighborhood_fraction::AbstractFloat=0.25,
         self_adjustment_weight::AbstractFloat=1.49,
         social_adjustment_weight::AbstractFloat=1.49,
-    ) where {T<:AbstractFloat}
+    )
         # Validate input parameters
         @assert minimum_neighborhood_fraction > 0.0 && minimum_neighborhood_fraction <= 1.0 "Invalid neighborhood fraction"
         ir_check =
@@ -52,22 +52,20 @@ mutable struct MATLABVelocityUpdate{T} <: AbstractRandomNeighborhoodVelocityUpda
             inertia_range[1] < inertia_range[2]
         @assert ir_check "Invalid inertia range"
 
-        return new{T}(
+        return new(
             0,
-            (T(inertia_range[1]), T(inertia_range[2])),
-            minimum_neighborhood_fraction,
+            (Float64(inertia_range[1]), Float64(inertia_range[2])),
+            Float64(minimum_neighborhood_fraction),
             0,
-            self_adjustment_weight,
-            social_adjustment_weight,
-            T(inertia_range[2]),
+            Float64(self_adjustment_weight),
+            Float64(social_adjustment_weight),
+            Float64(inertia_range[2]),
             0,
             0,
             Vector{UInt16}(undef, 0),
         )
     end
 end
-
-MATLABVelocityUpdate(; kwargs...) = MATLABVelocityUpdate{Float64}(; kwargs...)
 
 function initialize!(mvu::MATLABVelocityUpdate, swarm_size)
     # Set swarm size
