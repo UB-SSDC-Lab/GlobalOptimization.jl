@@ -18,6 +18,43 @@ abstract type AbstractRandomNeighborhoodVelocityUpdateScheme <: AbstractVelocity
     MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
 
 A velocity update scheme employed by the [MATLAB PSO algorithm](https://www.mathworks.com/help/gads/particle-swarm-optimization-algorithm.html).
+This scheme is described as follows:
+
+In this velocity update scheme, the size of the neighborhood, as well as the inertia weight,
+are adaptively updated as follows:
+
+*Prior to First Iteration:*
+1. Set the inertial weight ``w``: `w = inertia_range[2]`
+2. Set the minimum neighborhood size: `minimum_neighborhood_size = max(2, floor(Int, swarm_size * minimum_neighborhood_fraction))`
+
+3. Set the neighborhood size: `N = minimum_neighborhood_size`
+4. Set counter: `c = 0`
+
+*After Evaluating Swarm Fitness Each Iteration:*
+- If the best fitness of the swarm has improved:
+    1. Decrease the counter: `c = max(0, c - 1)`
+    2. Set the neighborhood size to the minimum: `N = minimum_neighborhood_size`
+    3. Update the inertia weight:
+        - If `c < 2; w = 2.0 * w`
+        - If `c > 5; w = 0.5 * w`
+        - Clamp `w` to lie in `[inertia_range[1], inertia_range[2]]`
+- If the best fitness of the swarm has not improved:
+    1. Increase the counter: `c += 1`
+    2. Increase the neighborhood size:
+        `N = min(N + minimum_neighborhood_size, swarm_size - 1)`
+
+# Fields
+- `swarm_size::Int`: The size of the swarm.
+- `inertia_range::Tuple{Float64,Float64}`: The range of inertia weights.
+- `minimum_neighborhood_fraction::Float64`: The minimum fraction of the swarm size to be used as the neighborhood size.
+- `minimum_neighborhood_size::Int`: The minimum neighborhood size.
+- `self_adjustment_weight::Float64`: The self-adjustment weight.
+- `social_adjustment_weight::Float64`: The social adjustment weight.
+- `w::Float64`: The inertia weight.
+- `c::Int`: The stall iteration counter.
+- `N::Int`: The neighborhood size.
+- `index_vector::Vector{UInt16}`: A vector used to store the indices of the particles in the
+    swarm. Used for random neighborhood selection without allocations.
 """
 mutable struct MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
     # Constant parameters
@@ -36,7 +73,22 @@ mutable struct MATLABVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateS
     # Cache
     index_vector::Vector{UInt16}
 
-    # Constructor
+    @doc """
+        MATLABVelocityUpdate(;
+            inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+            minimum_neighborhood_fraction::AbstractFloat=0.25,
+            self_adjustment_weight::AbstractFloat=1.49,
+            social_adjustment_weight::AbstractFloat=1.49,
+        )
+
+    Create a new instance of the `MATLABVelocityUpdate` velocity update scheme.
+
+    # Keyword Arguments
+    - `inertia_range::Tuple{AbstractFloat,AbstractFloat}`: The range of inertia weights.
+    - `minimum_neighborhood_fraction::AbstractFloat`: The minimum fraction of the swarm size to be used as the neighborhood size.
+    - `self_adjustment_weight::AbstractFloat`: The self-adjustment weight.
+    - `social_adjustment_weight::AbstractFloat`: The social adjustment weight.
+    """
     function MATLABVelocityUpdate(;
         inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
         minimum_neighborhood_fraction::AbstractFloat=0.25,
@@ -70,6 +122,30 @@ end
     CSRNVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
 
 A velocity update scheme employed a Constant Size Random Neighborhood (CSRN).
+
+In this velocity update scheme, the size of the neighborhood is constant and set based
+on the specified `neighborhood_fraction` (i.e., the fraction of the swarm size to be
+considered to lie in a neighborhood). However, the inertia is adaptively updated as follows:
+
+*Prior to First Iteration:*  Set the inertial weight ``w``: `w = inertia_range[2]`
+
+*After Evaluating Swarm Fitness Each Iteration:*
+- If `stall_iteration < 2; w = 2.0 * w`
+- If `stall_iteration > 5; w = 0.5 * w`
+- Clamp `w` to lie in `[inertia_range[1], inertia_range[2]]`
+
+Note that `stall_iteration` is the number of iterations since the global best position
+found so far was improved by a specified `function_tolerance` (see PSO keyword arguments).
+
+# Fields
+- `inertia_range::Tuple{Float64,Float64}`: The range of inertia weights.
+- `neighborhood_fraction::Float64`: The fraction of the swarm size to be used as the neighborhood size.
+- `N::Int`: The neighborhood size.
+- `self_adjustment_weight::Float64`: The self-adjustment weight.
+- `social_adjustment_weight::Float64`: The social adjustment weight.
+- `w::Float64`: The inertia weight.
+- `index_vector::Vector{UInt16}`: A vector used to store the indices of the particles in the
+    swarm. Used for random neighborhood selection without allocations.
 """
 mutable struct CSRNVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateScheme
     # Constant parameters
@@ -85,7 +161,16 @@ mutable struct CSRNVelocityUpdate <: AbstractRandomNeighborhoodVelocityUpdateSch
     # Cache
     index_vector::Vector{UInt16}
 
-    # Constructor
+    @doc """
+        CSRNVelocityUpdate(;
+            inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
+            neighborhood_fraction::AbstractFloat=0.25,
+            self_adjustment_weight::AbstractFloat=1.49,
+            social_adjustment_weight::AbstractFloat=1.49,
+        )
+
+    Create a new instance of the `CSRNVelocityUpdate` velocity update scheme.
+    """
     function CSRNVelocityUpdate(;
         inertia_range::Tuple{AbstractFloat,AbstractFloat}=(0.1, 1.0),
         neighborhood_fraction::AbstractFloat=0.25,
