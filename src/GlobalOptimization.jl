@@ -29,6 +29,7 @@ include("Results.jl")
 
 # PSO
 include("PSO/Swarm.jl")
+include("PSO/velocity_update.jl")
 include("PSO/PSO.jl")
 
 # DE
@@ -51,6 +52,8 @@ export OptimizationProblem, NonlinearProblem, NonlinearLeastSquaresProblem
 export optimize!
 
 export PSO, DE, MBH
+
+export MATLABVelocityUpdate, CSRNVelocityUpdate
 
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
 export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2

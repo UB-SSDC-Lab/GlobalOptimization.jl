@@ -47,7 +47,7 @@ prob = OptimizationProblem(rastrigin, ss)
 spso = PSO(
     prob;
     eval_method=SerialFunctionEvaluation(),
-    population_init_method=LatinHypercubeInitialization(),
+    population_initialization=LatinHypercubeInitialization(),
     max_time=20.0,
 )
 tpso = PSO(prob; eval_method=ThreadedFunctionEvaluation(), max_time=20.0)
