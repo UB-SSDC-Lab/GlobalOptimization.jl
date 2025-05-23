@@ -16,7 +16,7 @@ struct Results{T<:AbstractFloat}
 
     iters::Int
     time::Float64
-    exitFlag::Int
+    exitFlag::Status
 
     @doc """
         Results(fbest::T, xbest::AbstractVector{T}, iters, time, exitFlag)
@@ -33,7 +33,13 @@ struct Results{T<:AbstractFloat}
     # Returns
     - `Results{T}`
     """
-    function Results(fbest::T, xbest::AbstractVector{T}, iters, time, exitFlag) where {T}
+    function Results(
+        fbest::T,
+        xbest::AbstractVector{T},
+        iters,
+        time,
+        exitFlag::Status
+    ) where {T}
         return new{T}(fbest, copy(xbest), iters, time, exitFlag)
     end
 end

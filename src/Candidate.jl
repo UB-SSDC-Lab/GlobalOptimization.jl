@@ -34,18 +34,12 @@ end
 end
 
 """
-    check_fitness!(c::AbstractCandidate, options::Union{GeneralOptions,Val{true},Val{false}})
+    check_fitness!(c::AbstractCandidate, ::Val)
 
-Checks the fitness of the candidate `c` to ensure that it is valid
-iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
+Checks the fitness if the option has been enabled.
 """
-@inline function check_fitness!(
-    c::AbstractCandidate, options::GeneralOptions{D,FVC}
-) where {D,FVC}
-    check_fitness!(c, FVC)
-end
-@inline check_fitness!(c::AbstractCandidate, ::Type{Val{false}}) = nothing
-function check_fitness!(c::AbstractCandidate, ::Type{Val{true}})
+check_fitness!(c::AbstractCandidate, ::Val{false}) = nothing
+function check_fitness!(c::AbstractCandidate, ::Val{true})
     isfinite(fitness(c)) || error("Candidate has an invalid fitness.")
     return nothing
 end

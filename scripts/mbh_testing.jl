@@ -74,14 +74,13 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 mbh = MBH(
     prob;
     hopper_type=MCH(;
-        num_hoppers=50, eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
+        num_hoppers=50,
+        eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
     ),
     hop_distribution=dist,
-    #local_search=nls,
+    local_search=lss,
     max_time=20.0,
     min_cost=1e-20,
-    display=true,
-    display_interval=10,
 )
 
 res = optimize!(mbh);

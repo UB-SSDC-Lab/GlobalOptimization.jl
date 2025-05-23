@@ -59,10 +59,8 @@ crossover_strategy = SelfBinomialCrossoverParameters(;
 
 de = DE(
     prob;
-    eval_method=ThreadedFunctionEvaluation(),
+    eval_method=SerialFunctionEvaluation(),
     num_candidates=100,
-    display=false,
-    display_interval=1,
     max_iterations=1000,
     max_stall_iterations=100,
     mutation_params=mutation_strategy,
