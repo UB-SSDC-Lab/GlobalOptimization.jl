@@ -20,11 +20,19 @@ struct GeneralOptions{
     # Check function value
     function_value_check::FVC
 
+    # Minimum cost value
+    min_cost::Float64
+
     # Maximum time (seconds)
     max_time::Float64
 
-    # Minimum cost value
-    min_cost::Float64
+    # Maximum iterations
+    max_iterations::Int
+
+    # Stall
+    function_tolerance::Float64
+    max_stall_time::Float64
+    max_stall_iterations::Int
 end
 
 """
@@ -63,15 +71,51 @@ function get_function_value_check(opts::AbstractAlgorithmSpecificOptions)
 end
 
 """
-    get_max_time(opts::AbstractAlgorithmSpecificOptions)
-
-Returns the max time option from an algorithm options type.
-"""
-get_max_time(opts::AbstractAlgorithmSpecificOptions) = opts.general.max_time
-
-"""
     get_min_cost(opts::AbstractAlgorithmSpecificOptions)
 
 Returns the min cost option from an algorithm options type.
 """
-get_min_cost(opts::AbstractAlgorithmSpecificOptions) = opts.general.min_cost
+get_min_cost(opts::GeneralOptions) = opts.min_cost
+get_min_cost(opts::AbstractAlgorithmSpecificOptions) = get_min_cost(get_general(opts))
+
+"""
+    get_max_time(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the max time option from an algorithm options type.
+"""
+get_max_time(opts::GeneralOptions) = opts.max_time
+get_max_time(opts::AbstractAlgorithmSpecificOptions) = get_max_time(get_general(opts))
+
+"""
+    get_max_iterations(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the max iterations option from an algorithm options type.
+"""
+get_max_iterations(opts::GeneralOptions) = opts.max_iterations
+get_max_iterations(opts::AbstractAlgorithmSpecificOptions) = get_max_iterations(get_general(opts))
+
+"""
+    get_function_tolerance(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the function tolerance option from an algorithm options type.
+"""
+get_function_tolerance(opts::GeneralOptions) = opts.function_tolerance
+get_function_tolerance(opts::AbstractAlgorithmSpecificOptions) = get_function_tolerance(get_general(opts))
+
+"""
+    get_max_stall_time(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the max stall time option from an algorithm options type.
+"""
+get_max_stall_time(opts::GeneralOptions) = opts.max_stall_time
+get_max_stall_time(opts::AbstractAlgorithmSpecificOptions) = get_max_stall_time(get_general(opts))
+
+"""
+    get_max_stall_iterations(opts::AbstractAlgorithmSpecificOptions)
+
+Returns the max stall iterations option from an algorithm options type.
+"""
+get_max_stall_iterations(opts::GeneralOptions) = opts.max_stall_iterations
+function get_max_stall_iterations(opts::AbstractAlgorithmSpecificOptions)
+    return get_max_stall_iterations(get_general(opts))
+end

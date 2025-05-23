@@ -22,50 +22,18 @@ struct MBHOptions{
     # MBH specific options
     initial_space::ISS
 
-    # Algorithm max iterations
-    max_iterations::Int
-
-    # Stall parameters
-    function_tolerance::Float64
-    max_stall_time::Float64
-    max_stall_iterations::Int
-
     function MBHOptions(
         general::GO,
         distribution::D,
         local_search::LS,
         initial_space::ISS,
-        max_iterations::Int,
-        function_tolerance::Float64,
-        max_stall_time::Float64,
-        max_stall_iterations::Int,
     ) where {D,LS,ISS,GO}
         return new{D,LS,ISS,GO}(
             general,
             distribution,
             local_search,
             initial_space,
-            max_iterations,
-            function_tolerance,
-            max_stall_time,
-            max_stall_iterations,
         )
-    end
-end
-
-"""
-    MBHCache
-
-Cache for the Monotonic Basin Hopping (MBH) algorithm.
-"""
-mutable struct MBHCache{T}
-    iteration::Int
-    start_time::Float64
-    stall_start_time::Float64
-    stall_iteration::Int
-    stall_value::T
-    function MBHCache{T}() where {T}
-        return new{T}(0, 0.0, 0.0, 0, T(Inf))
     end
 end
 
@@ -99,7 +67,7 @@ struct MBH{
     hopper_set::H
 
     # The MBH cache
-    cache::MBHCache{T}
+    cache::MinimalOptimizerCache{T}
 end
 
 # Functions to help construct the MBH algorithm
@@ -207,16 +175,16 @@ function MBH(
                 trace_level,
             ),
             function_value_check,
-            max_time,
             min_cost,
+            max_time,
+            max_iterations,
+            function_tolerance,
+            max_stall_time,
+            max_stall_iterations,
         ),
         hop_distribution,
         handle_local_search(local_search, hopper_type),
         intersection(search_space(prob), initial_space),
-        max_iterations,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
     )
 
     # Construct MBH
@@ -225,13 +193,13 @@ function MBH(
         FeasibilityHandlingEvaluator(prob),
         get_batch_evaluator(hopper_type),
         get_hopper_set(prob, hopper_type),
-        MBHCache{T}(),
+        MinimalOptimizerCache{T}(),
     )
 end
 
 # ===== AbstractOptimizer interface
-
-get_iteration(opt::MBH) = opt.cache.iteration
+get_best_fitness(mbh::MBH) = mbh.hopper_set.best_candidate_fitness
+get_best_candidate(mbh::MBH) = mbh.hopper_set.best_candidate
 
 function initialize!(opt::MBH)
     # Unpack MBH
@@ -249,46 +217,27 @@ function initialize!(opt::MBH)
     check_fitness!(hopper_set, get_function_value_check(options))
 
     # Initialize the cache
-    cache.iteration = 0
-    cache.start_time = time()
-    cache.stall_start_time = cache.start_time
-    cache.stall_iteration = 0
-    cache.stall_value = hopper_set.best_candidate_fitness
+    initialize!(cache, hopper_set.best_candidate_fitness)
 
     return nothing
 end
 
-function iterate!(opt::MBH)
+function step!(opt::MBH)
     # Unpack MBH
     @unpack options, evaluator, bhe, hopper_set, cache = opt
     @unpack distribution, local_search = options
     search_space = evaluator.prob.ss
 
-    # Begin loop
-    status = IN_PROGRESS
-    draw_count = 0
-    while status == IN_PROGRESS
-        # Update iteration counter
-        cache.iteration += 1
+    # Take a hop
+    draw_count = hop!(
+        hopper_set, search_space, evaluator, bhe, distribution, local_search
+    )
+    check_fitness!(hopper_set, get_function_value_check(options))
 
-        # Take a hop
-        draw_count = hop!(
-            hopper_set, search_space, evaluator, bhe, distribution, local_search
-        )
-        check_fitness!(hopper_set, get_function_value_check(options))
+    # Update fitness
+    update_fitness!(hopper_set, distribution)
 
-        # Update fitness
-        update_fitness!(hopper_set, distribution)
-
-        # Stopping criteria
-        status = check_stopping_criteria(opt)
-
-        # Tracing
-        trace(opt)
-    end
-
-    # Return results
-    return construct_results(opt, status)
+    return nothing
 end
 
 function hop!(hopper::Hopper, ss, eval, dist, ls)
@@ -343,49 +292,6 @@ function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
     evaluate!(job!, eachindex(hopper_set), bhe)
 
     return 0
-end
-
-function handle_stall!(mbh::MBH)
-    @unpack cache, options = mbh
-    if cache.stall_value - get_best_fitness(mbh) < options.function_tolerance
-        # Currently stalled...
-        cache.stall_iteration += 1
-    else
-        # Not stalled!!
-        cache.stall_value = get_best_fitness(mbh)
-        cache.stall_iteration = 0
-        cache.stall_start_time = time()
-    end
-end
-
-get_best_fitness(mbh::MBH) = mbh.hopper_set.best_candidate_fitness
-
-function check_stopping_criteria(mbh::MBH)
-    @unpack cache, options = mbh
-    current_time = time()
-    if get_best_fitness(mbh) <= get_min_cost(options)
-        return MINIMUM_COST_ACHIEVED
-    elseif current_time - cache.start_time >= get_max_time(options)
-        return MAXIMUM_TIME_EXCEEDED
-    elseif cache.iteration >= options.max_iterations
-        return MAXIMUM_ITERATIONS_EXCEEDED
-    elseif cache.stall_iteration >= options.max_stall_iterations
-        return MAXIMUM_STALL_ITERATIONS_EXCEEDED
-    elseif current_time - cache.stall_start_time >= options.max_stall_time
-        return MAXIMUM_STALL_TIME_EXCEEDED
-    end
-    return IN_PROGRESS
-end
-
-function construct_results(mbh::MBH, status::Status)
-    @unpack cache, hopper_set = mbh
-    return Results(
-        hopper_set.best_candidate_fitness,
-        hopper_set.best_candidate,
-        cache.iteration,
-        time() - cache.start_time,
-        status,
-    )
 end
 
 function show_trace(mbh::MBH, ::Any)

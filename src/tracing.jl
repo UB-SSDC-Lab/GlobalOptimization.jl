@@ -62,7 +62,7 @@ struct GlobalOptimizationTrace{
     trace_level::TraceLevel{TM}
 end
 
-function trace(opt::AbstractOptimizer)
+function trace(opt)
     # Do nothing if tracing is not enabled
     trace = get_trace(opt.options)
     trace.save_trace isa Val{false} && trace.show_trace isa Val{false} && return nothing
@@ -84,13 +84,13 @@ function trace(opt::AbstractOptimizer)
     end
 end
 
-function show_trace(opt::AbstractOptimizer, trace_mode::Val{mode}) where mode
+function show_trace(opt, trace_mode::Val{mode}) where mode
     throw(ArgumentError(
         "show_trace with trace mode " * String(mode) * " not implemented for $(typeof(opt))."
     ))
 end
 
-function get_save_trace(opt::AbstractOptimizer, trace_mode::Val{mode}) where mode
+function get_save_trace(opt, trace_mode::Val{mode}) where mode
     throw(ArgumentError(
         "get_save_trace with trace mode " * String(mode) * " not implemented for $(typeof(opt))."
     ))

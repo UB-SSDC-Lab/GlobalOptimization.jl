@@ -19,15 +19,15 @@ using Optim: Optim
 
 # Base
 include("enums.jl")
+include("tracing.jl")
+include("Options.jl")
+include("Results.jl")
 include("Optimizers.jl")
 include("SearchSpace.jl")
 include("Problem.jl")
 include("Candidate.jl")
 include("Population.jl")
 include("Evaluator.jl")
-include("Results.jl")
-include("tracing.jl")
-include("Options.jl")
 
 # PSO
 include("PSO/Swarm.jl")

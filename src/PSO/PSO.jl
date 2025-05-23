@@ -23,56 +23,18 @@ struct PSOOptions{
     # intersection of the search space and the separate user provided initial space.
     initial_space::ISS
 
-    # Max iterations
-    max_iterations::Int
-
-    # Stall parameters
-    function_tolerance::Float64
-    max_stall_time::Float64
-    max_stall_iterations::Int
-
     function PSOOptions(
         general::GO,
         pim::PI,
         velocity_update::VU,
         initial_space::ISS,
-        max_iterations::Int,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
     ) where {VU,ISS,PI,GO}
         return new{VU,ISS,PI,GO}(
             general,
             pim,
             velocity_update,
             initial_space,
-            max_iterations,
-            function_tolerance,
-            max_stall_time,
-            max_stall_iterations,
         )
-    end
-end
-
-"""
-    PSOCache
-
-Cache for PSO algorithm.
-"""
-mutable struct PSOCache{T}
-    # Global best candidate info
-    global_best_candidate::Vector{T}
-    global_best_fitness::T
-
-    # Generic optimization state variables
-    iteration::Int
-    start_time::Float64
-    stall_start_time::Float64
-    stall_iteration::Int
-    stall_value::T
-
-    function PSOCache{T}(num_dims::Integer) where {T}
-        return new{T}(zeros(T, num_dims), T(Inf), 0, 0.0, 0.0, 0, T(Inf))
     end
 end
 
@@ -88,7 +50,7 @@ struct PSO{
     IBSS,
     PI<:AbstractPopulationInitialization,
     GO<:GeneralOptions,
-} <: AbstractOptimizer
+} <: AbstractPopulationBasedOptimizer
     # The PSO algorithm options
     options::PSOOptions{VU,IBSS,PI,GO}
 
@@ -99,7 +61,7 @@ struct PSO{
     swarm::Swarm{T}
 
     # The PSO cache
-    cache::PSOCache{T}
+    cache::MinimalPopulationBasedOptimizerCache{T}
 end
 
 """
@@ -160,16 +122,16 @@ function PSO(
                 trace_level,
             ),
             function_value_check,
-            max_time,
             min_cost,
+            max_time,
+            max_iterations,
+            function_tolerance,
+            max_stall_time,
+            max_stall_iterations,
         ),
         population_initialization,
         velocity_update,
         intersection(search_space(prob), initial_space),
-        max_iterations,
-        function_tolerance,
-        max_stall_time,
-        max_stall_iterations,
     )
 
     # Construct PSO
@@ -177,7 +139,7 @@ function PSO(
         options,
         construct_batch_evaluator(eval_method, prob),
         Swarm{T}(num_particles, num_dims(prob)),
-        PSOCache{T}(num_dims(prob)),
+        MinimalPopulationBasedOptimizerCache{T}(num_dims(prob)),
     )
 end
 function PSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
@@ -188,10 +150,7 @@ function PSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     )
 end
 
-# ===== AbstractOptimizer interface
-
-get_iteration(opt::PSO) = opt.cache.iteration
-
+# ===== AbstractPopulationBasedOptimizer interface
 function initialize!(opt::PSO)
     # Unpack PSO
     @unpack options, evaluator, swarm, cache = opt
@@ -208,59 +167,38 @@ function initialize!(opt::PSO)
 
     # Initialize PSO cache
     update_global_best!(opt)
-    cache.iteration = 0
-    cache.start_time = time()
-    cache.stall_start_time = cache.start_time
-    cache.stall_iteration = 0
-    cache.stall_value = cache.global_best_fitness
+    initialize!(cache)
 
     return nothing
 end
 
-function iterate!(opt::PSO)
+function step!(opt::PSO)
     # Unpack PSO
     @unpack options, evaluator, swarm, cache = opt
     velocity_update = options.velocity_update
     search_space = evaluator.prob.ss
 
-    # Begin loop
-    status = IN_PROGRESS
-    while status == IN_PROGRESS
-        # Update iteration counter
-        cache.iteration += 1
+    # Update velocity
+    update_velocity!(swarm, velocity_update)
 
-        # Update velocity
-        update_velocity!(swarm, velocity_update)
+    # Step swarm forward and enforce bounds
+    step!(swarm)
+    enforce_bounds!(swarm, search_space)
 
-        # Step swarm forward and enforce bounds
-        step!(swarm)
-        enforce_bounds!(swarm, search_space)
+    # Evaluate the objective function and check for bad values in fitness
+    evaluate_fitness!(swarm, evaluator)
+    check_fitness!(swarm, get_function_value_check(options))
 
-        # Evaluate the objective function and check for bad values in fitness
-        evaluate_fitness!(swarm, evaluator)
-        check_fitness!(swarm, get_function_value_check(options))
+    # Update global best
+    improved = update_global_best!(opt)
 
-        # Update global best
-        improved = update_global_best!(opt)
+    # Adapt the velocity update scheme
+    adapt!(velocity_update, improved, cache.stall_iteration)
 
-        # Adapt the velocity update scheme
-        adapt!(velocity_update, improved, cache.stall_iteration)
-
-        # Handle stall check
-        handle_stall!(opt)
-
-        # Check stopping criteria
-        status = check_stopping_criteria(opt)
-
-        # Tracing
-        trace(opt)
-    end
-
-    # Return results
-    return construct_results(opt, status)
+    return nothing
 end
 
-# ===== Implementation
+# ===== Implementation Specific Methods
 
 """
     update_global_best!(pso::PSO)
@@ -290,49 +228,6 @@ function update_global_best!(pso::PSO)
         cache.global_best_fitness = global_best_fitness
     end
     return updated
-end
-
-get_best_fitness(pso::PSO) = pso.cache.global_best_fitness
-
-function handle_stall!(pso::PSO)
-    @unpack cache, options = pso
-    if cache.stall_value - get_best_fitness(pso) < options.function_tolerance
-        # Currently stalled...
-        cache.stall_iteration += 1
-    else
-        # Not stalled!!
-        cache.stall_value = get_best_fitness(pso)
-        cache.stall_iteration = 0
-        cache.stall_start_time = time()
-    end
-end
-
-function check_stopping_criteria(pso::PSO)
-    @unpack cache, options = pso
-    current_time = time()
-    if get_best_fitness(pso) <= get_min_cost(options)
-        return MINIMUM_COST_ACHIEVED
-    elseif current_time - cache.start_time >= get_max_time(options)
-        return MAXIMUM_TIME_EXCEEDED
-    elseif cache.iteration >= options.max_iterations
-        return MAXIMUM_ITERATIONS_EXCEEDED
-    elseif cache.stall_iteration >= options.max_stall_iterations
-        return MAXIMUM_STALL_ITERATIONS_EXCEEDED
-    elseif current_time - cache.stall_start_time >= options.max_stall_time
-        return MAXIMUM_STALL_TIME_EXCEEDED
-    end
-    return IN_PROGRESS
-end
-
-function construct_results(pso::PSO, status::Status)
-    @unpack cache = pso
-    return Results(
-        cache.global_best_fitness,
-        cache.global_best_candidate,
-        cache.iteration,
-        time() - cache.start_time,
-        status,
-    )
 end
 
 function show_trace(pso::PSO, ::Any)
