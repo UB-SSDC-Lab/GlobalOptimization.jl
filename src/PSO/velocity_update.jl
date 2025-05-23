@@ -307,6 +307,7 @@ function adapt!(vu::MATLABVelocityUpdate, improved::Bool, stall_iteration::Int)
     end
     return nothing
 end
+
 function adapt!(vu::CSRNVelocityUpdate, improved::Bool, stall_iteration::Int)
     w = vu.w
     w = ifelse(stall_iteration < 2, 2.0*w, w)

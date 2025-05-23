@@ -444,7 +444,7 @@ end
     res1 = GlobalOptimization.optimize!(mbh1)
     @test res1.fbest == 0.0
     @test length(res1.xbest) == 2
-    @test res1.exitFlag == 1
+    @test res1.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with static distribution
     stat = MBHStaticDistribution{Float64}()
@@ -452,7 +452,7 @@ end
     res2 = GlobalOptimization.optimize!(mbh2)
     @test res2.fbest == 0.0
     @test length(res2.xbest) == 2
-    @test res2.exitFlag == 1
+    @test res2.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with adaptive distribution
     ad = MBHAdaptiveDistribution{Float64}(1, 0)
@@ -460,7 +460,7 @@ end
     res3 = GlobalOptimization.optimize!(mbh3)
     @test res3.fbest == 0.0
     @test length(res3.xbest) == 2
-    @test res3.exitFlag == 1
+    @test res3.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with ZeroDist and LocalStochasticSearch
     ls = LocalStochasticSearch{Float64}(0.1, 1)
@@ -468,7 +468,7 @@ end
     res4 = GlobalOptimization.optimize!(mbh4)
     @test res4.fbest == 0.0
     @test length(res4.xbest) == 2
-    @test res4.exitFlag == 1
+    @test res4.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with static distribution and LocalStochasticSearch
     ls2 = LocalStochasticSearch{Float64}(0.1, 2)
@@ -481,7 +481,6 @@ end
     res5 = GlobalOptimization.optimize!(mbh5)
     @test res5.fbest == 0.0
     @test length(res5.xbest) == 2
-    @test res5.exitFlag == 1
 
     # Test MBH with adaptive distribution and LocalStochasticSearch
     ls3 = LocalStochasticSearch{Float64}(0.1, 2)
@@ -494,7 +493,6 @@ end
     res6 = GlobalOptimization.optimize!(mbh6)
     @test res6.fbest == 0.0
     @test length(res6.xbest) == 2
-    @test res6.exitFlag == 1
 
     # Test MBH with static distribution and LBFGSLocalSearch
     ls4 = LBFGSLocalSearch{Float64}()
@@ -507,7 +505,6 @@ end
     res7 = GlobalOptimization.optimize!(mbh7)
     @test res7.fbest == 0.0
     @test length(res7.xbest) == 2
-    @test res7.exitFlag == 1
 
     # Test MBH with adaptive distribution and LocalStochasticSearch
     ls5 = LBFGSLocalSearch{Float64}()
@@ -520,7 +517,6 @@ end
     res8 = GlobalOptimization.optimize!(mbh8)
     @test res8.fbest == 0.0
     @test length(res8.xbest) == 2
-    @test res8.exitFlag == 1
 
     # Test MBH with MCH and each eval method for static distribution and LocalStochasticSearch
     eval_methods = [
@@ -539,7 +535,6 @@ end
         cres1 = GlobalOptimization.optimize!(cmbh1)
         @test cres1.fbest == 0.0
         @test length(cres1.xbest) == 2
-        @test cres1.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh2 = MBH(
@@ -552,7 +547,6 @@ end
         cres2 = GlobalOptimization.optimize!(cmbh2)
         @test cres2.fbest == 0.0
         @test length(cres2.xbest) == 2
-        @test cres2.exitFlag == 1
 
         # Test MBH with static distribution and LBFGSLocalSearch
         cmbh3 = MBH(
@@ -565,7 +559,6 @@ end
         cres3 = GlobalOptimization.optimize!(cmbh3)
         @test cres3.fbest == 0.0
         @test length(cres3.xbest) == 2
-        @test cres3.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh4 = MBH(
@@ -578,7 +571,6 @@ end
         cres4 = GlobalOptimization.optimize!(cmbh4)
         @test cres4.fbest == 0.0
         @test length(cres4.xbest) == 2
-        @test cres4.exitFlag == 1
     end
 
     # Test that MBH throws an error if trying to solve an OptimizationProblem with

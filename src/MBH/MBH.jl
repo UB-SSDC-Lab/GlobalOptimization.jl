@@ -240,6 +240,16 @@ function step!(opt::MBH)
     return nothing
 end
 
+function show_trace(mbh::MBH, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
+function get_save_trace(mbh::MBH, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
+# ===== Implementation Specific Methods
+
 function hop!(hopper::Hopper, ss, eval, dist, ls)
     step_accepted = false
     draw_count = 0
@@ -292,12 +302,4 @@ function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
     evaluate!(job!, eachindex(hopper_set), bhe)
 
     return 0
-end
-
-function show_trace(mbh::MBH, ::Any)
-
-end
-
-function get_save_trace(mbh::MBH, ::Any)
-
 end

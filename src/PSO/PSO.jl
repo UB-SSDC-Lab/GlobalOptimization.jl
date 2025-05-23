@@ -198,6 +198,14 @@ function step!(opt::PSO)
     return nothing
 end
 
+function show_trace(pso::PSO, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
+function get_save_trace(pso::PSO, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
 # ===== Implementation Specific Methods
 
 """
@@ -228,12 +236,4 @@ function update_global_best!(pso::PSO)
         cache.global_best_fitness = global_best_fitness
     end
     return updated
-end
-
-function show_trace(pso::PSO, ::Any)
-
-end
-
-function get_save_trace(pso::PSO, ::Any)
-
 end

@@ -179,12 +179,12 @@ end
 function initialize!(opt::DE)
     # Unpack DE
     @unpack options, evaluator, population, cache = opt
-    @unpack pop_init_method = options
+    @unpack pop_init_method, mutation_params, crossover_params = options
 
     # Initialize mutation and crossover parameters
     N = length(population)
-    initialize!(options.mutation_params, N)
-    initialize!(options.crossover_params, num_dims(evaluator.prob), N)
+    initialize!(mutation_params, N)
+    initialize!(crossover_params, num_dims(evaluator.prob), N)
 
     # Initialize population
     initialize!(population, pop_init_method, options.initial_space)
@@ -227,6 +227,14 @@ function step!(opt::DE)
     return nothing
 end
 
+function show_trace(de::DE, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
+function get_save_trace(de::DE, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+
+end
+
 # ===== Implementation Specific Methods
 
 """
@@ -257,12 +265,4 @@ function update_global_best!(opt::DE)
         cache.global_best_fitness = global_best_fitness
     end
     return updated
-end
-
-function show_trace(de::DE, ::Any)
-
-end
-
-function get_save_trace(de::DE, ::Any)
-
 end
