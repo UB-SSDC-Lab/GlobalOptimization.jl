@@ -1,5 +1,6 @@
 using GlobalOptimization, Test
 using ChunkSplitters: ChunkSplitters
+using Suppressor
 
 # Define a concrete simple population type
 struct SimplePopulation <: GlobalOptimization.AbstractPopulation{Float64}
@@ -129,20 +130,222 @@ end
     @test GlobalOptimization.scalar_function_with_penalty(nlsprob, xn) == (0.0, 0.0)
 end
 
+@testset showtiming = true "Trace" begin
+    # Setup dummy optimizer
+    struct DummyOptimizerOptions <: GlobalOptimization.AbstractAlgorithmSpecificOptions
+        general::GlobalOptimization.GeneralOptions
+    end
+    struct DummyOptimizer <: GlobalOptimization.AbstractOptimizer
+        options::DummyOptimizerOptions
+        cache::GlobalOptimization.MinimalOptimizerCache{Float64}
+    end
+    function GlobalOptimization.show_trace(opt::DummyOptimizer, ::Val{mode}) where mode
+        println(stdout, "Printing " * String(mode) * " trace...")
+        return nothing
+    end
+    function GlobalOptimization.get_save_trace(
+        opt::DummyOptimizer,
+        ::Val{mode}
+    ) where mode
+        return "Saving " * String(mode) * " trace..."
+    end
+
+    trace_file = "./trace.txt"
+
+    TraceLevelConstructors = [:TraceMinimal, :TraceDetailed, :TraceAll]
+    trace_modes = [:minimal, :detailed, :all]
+    for i in eachindex(TraceLevelConstructors)
+        do_no_trace = DummyOptimizer(
+            DummyOptimizerOptions(
+                GlobalOptimization.GeneralOptions(
+                    GlobalOptimization.GlobalOptimizationTrace(
+                        Val(false),
+                        Val(false),
+                        trace_file,
+                        @eval $(TraceLevelConstructors[i])(1)
+                    ),
+                    Val(true),
+                    0.0,
+                    10.0,
+                    100,
+                    1e-4,
+                    2.0,
+                    5,
+                )
+            ),
+            GlobalOptimization.MinimalOptimizerCache{Float64}(),
+        )
+
+        output = @capture_out begin
+            GlobalOptimization.trace(do_no_trace)
+        end
+        @test isempty(output)
+
+        # Test only show trace
+        do_only_show_trace = DummyOptimizer(
+            DummyOptimizerOptions(
+                GlobalOptimization.GeneralOptions(
+                    GlobalOptimization.GlobalOptimizationTrace(
+                        Val(true),
+                        Val(false),
+                        trace_file,
+                        @eval $(TraceLevelConstructors[i])(2)
+                    ),
+                    Val(true),
+                    0.0,
+                    10.0,
+                    100,
+                    1e-4,
+                    2.0,
+                    5,
+                )
+            ),
+            GlobalOptimization.MinimalOptimizerCache{Float64}(),
+        )
+
+        do_only_show_trace.cache.iteration = 1
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_show_trace)
+        end
+        @test output == "Printing " * String(trace_modes[i]) * " trace...\n"
+
+        do_only_show_trace.cache.iteration = 2
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_show_trace)
+        end
+        @test isempty(output)
+
+        do_only_show_trace.cache.iteration = 3
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_show_trace)
+        end
+        @test output == "Printing " * String(trace_modes[i]) * " trace...\n"
+
+        do_only_save_trace = DummyOptimizer(
+            DummyOptimizerOptions(
+                GlobalOptimization.GeneralOptions(
+                    GlobalOptimization.GlobalOptimizationTrace(
+                        Val(false),
+                        Val(true),
+                        trace_file,
+                        @eval $(TraceLevelConstructors[i])(2)
+                    ),
+                    Val(true),
+                    0.0,
+                    10.0,
+                    100,
+                    1e-4,
+                    2.0,
+                    5,
+                )
+            ),
+            GlobalOptimization.MinimalOptimizerCache{Float64}(),
+        )
+
+        do_only_save_trace.cache.iteration = 1
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_save_trace)
+        end
+        @test isempty(output)
+        lines = readlines(trace_file)
+        @test length(lines) == 1
+        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
+
+        do_only_save_trace.cache.iteration = 2
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_save_trace)
+        end
+        @test isempty(output)
+        lines = readlines(trace_file)
+        @test length(lines) == 1
+        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
+
+        do_only_save_trace.cache.iteration = 3
+        output = @capture_out begin
+            GlobalOptimization.trace(do_only_save_trace)
+        end
+        @test isempty(output)
+        lines = readlines(trace_file)
+        @test length(lines) == 2
+        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
+        @test lines[2] == "Saving " * String(trace_modes[i]) * " trace..."
+        rm(trace_file)
+    end
+
+    # Test that errors are thrown if AbstractOptimizer trace methods are not implemented
+    struct NotImplementedOptimizer <: GlobalOptimization.AbstractOptimizer end
+
+    nio = NotImplementedOptimizer()
+    @test_throws ArgumentError GlobalOptimization.show_trace(nio, Val{:minimal}())
+    @test_throws ArgumentError GlobalOptimization.get_save_trace(nio, Val{:minimal}())
+end
+
+@testset showtiming = true "Options" begin
+    # Test GeneralOptions constructors and accessors
+    go_tt = GlobalOptimization.GeneralOptions(
+        GlobalOptimization.GlobalOptimizationTrace(
+            Val(true),
+            Val(false),
+            "no_file.txt",
+            GlobalOptimization.TraceMinimal(1),
+        ), Val(true), 0.0, 10.0, 100, 1e-4, 2.0, 5
+    )
+    @test GlobalOptimization.get_max_time(go_tt) == 10.0
+    @test GlobalOptimization.get_min_cost(go_tt) == 0.0
+    @test GlobalOptimization.get_function_value_check(go_tt) isa Val{true}
+    @test GlobalOptimization.get_max_iterations(go_tt) == 100
+    @test GlobalOptimization.get_function_tolerance(go_tt) == 1e-4
+    @test GlobalOptimization.get_max_stall_time(go_tt) == 2.0
+    @test GlobalOptimization.get_max_stall_iterations(go_tt) == 5
+
+    go_tf = GlobalOptimization.GeneralOptions(
+        GlobalOptimization.GlobalOptimizationTrace(
+            Val(true),
+            Val(false),
+            "no_file.txt",
+            GlobalOptimization.TraceMinimal(1),
+        ), Val(false), 0.0, 10.0, 100, 1e-4, 2.0, 5
+    )
+    @test GlobalOptimization.get_max_time(go_tf) == 10.0
+    @test GlobalOptimization.get_min_cost(go_tf) == 0.0
+    @test GlobalOptimization.get_function_value_check(go_tf) isa Val{false}
+    @test GlobalOptimization.get_max_iterations(go_tf) == 100
+    @test GlobalOptimization.get_function_tolerance(go_tf) == 1e-4
+    @test GlobalOptimization.get_max_stall_time(go_tf) == 2.0
+    @test GlobalOptimization.get_max_stall_iterations(go_tf) == 5
+
+    # Define a dummy algorithm-specific options type
+    struct DummyAlgoOpts{GO} <: GlobalOptimization.AbstractAlgorithmSpecificOptions
+        general::GO
+    end
+    dummy = DummyAlgoOpts(go_tf)
+
+    # Test get_general and delegation methods
+    @test GlobalOptimization.get_max_time(dummy) == 10.0
+    @test GlobalOptimization.get_min_cost(dummy) == 0.0
+    @test GlobalOptimization.get_function_value_check(dummy) isa Val{false}
+    @test GlobalOptimization.get_max_iterations(dummy) == 100
+    @test GlobalOptimization.get_function_tolerance(dummy) == 1e-4
+    @test GlobalOptimization.get_max_stall_time(dummy) == 2.0
+    @test GlobalOptimization.get_max_stall_iterations(dummy) == 5
+end
+
 @testset showtiming = true "Optimizers" begin
     # Define a dummy optimizer subtype
-    struct DummyOptimizer <: GlobalOptimization.AbstractOptimizer end
+    struct MissingMethodOptimizer <: GlobalOptimization.AbstractOptimizer end
 
     # Test default optimize! throws NotImplementedError
-    opt = DummyOptimizer()
+    opt = MissingMethodOptimizer()
     @test_throws ArgumentError GlobalOptimization.optimize!(opt)
+    @test_throws ArgumentError GlobalOptimization.initialize!(opt)
+    @test_throws ArgumentError GlobalOptimization.step!(opt)
 
     # Test error message includes the optimizer type
     try
         GlobalOptimization.optimize!(opt)
     catch e
         @test isa(e, ArgumentError)
-        @test occursin("DummyOptimizer", e.msg)
+        @test occursin("MissingMethodOptimizer", e.msg)
     end
 end
 
@@ -268,56 +471,6 @@ end
         col = [popvec2[i][j] for i in 1:length(popvec2)]
         @test length(unique(col)) == length(popvec2)
     end
-end
-
-@testset showtiming = true "Options" begin
-    # Test GeneralOptions constructors and accessors
-    go_tt = GlobalOptimization.GeneralOptions(
-        GlobalOptimization.GlobalOptimizationTrace(
-            Val(true),
-            Val(false),
-            "no_file.txt",
-            GlobalOptimization.TraceMinimal(1),
-        ), Val(true), 0.0, 10.0, 100, 1e-4, 2.0, 5
-    )
-    @test GlobalOptimization.get_max_time(go_tt) == 10.0
-    @test GlobalOptimization.get_min_cost(go_tt) == 0.0
-    @test GlobalOptimization.get_function_value_check(go_tt) isa Val{true}
-    @test GlobalOptimization.get_max_iterations(go_tt) == 100
-    @test GlobalOptimization.get_function_tolerance(go_tt) == 1e-4
-    @test GlobalOptimization.get_max_stall_time(go_tt) == 2.0
-    @test GlobalOptimization.get_max_stall_iterations(go_tt) == 5
-
-    go_tf = GlobalOptimization.GeneralOptions(
-        GlobalOptimization.GlobalOptimizationTrace(
-            Val(true),
-            Val(false),
-            "no_file.txt",
-            GlobalOptimization.TraceMinimal(1),
-        ), Val(false), 0.0, 10.0, 100, 1e-4, 2.0, 5
-    )
-    @test GlobalOptimization.get_max_time(go_tf) == 10.0
-    @test GlobalOptimization.get_min_cost(go_tf) == 0.0
-    @test GlobalOptimization.get_function_value_check(go_tf) isa Val{false}
-    @test GlobalOptimization.get_max_iterations(go_tf) == 100
-    @test GlobalOptimization.get_function_tolerance(go_tf) == 1e-4
-    @test GlobalOptimization.get_max_stall_time(go_tf) == 2.0
-    @test GlobalOptimization.get_max_stall_iterations(go_tf) == 5
-
-    # Define a dummy algorithm-specific options type
-    struct DummyAlgoOpts{GO} <: GlobalOptimization.AbstractAlgorithmSpecificOptions
-        general::GO
-    end
-    dummy = DummyAlgoOpts(go_tf)
-
-    # Test get_general and delegation methods
-    @test GlobalOptimization.get_max_time(dummy) == 10.0
-    @test GlobalOptimization.get_min_cost(dummy) == 0.0
-    @test GlobalOptimization.get_function_value_check(dummy) isa Val{false}
-    @test GlobalOptimization.get_max_iterations(dummy) == 100
-    @test GlobalOptimization.get_function_tolerance(dummy) == 1e-4
-    @test GlobalOptimization.get_max_stall_time(dummy) == 2.0
-    @test GlobalOptimization.get_max_stall_iterations(dummy) == 5
 end
 
 @testset showtiming = true "Evaluator" begin

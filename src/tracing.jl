@@ -68,9 +68,9 @@ function trace(opt)
 
     iteration = get_iteration(opt)
     show_now = trace.show_trace isa Val{true} &&
-        (mod1(iteration, trace.trace_level.print_frequency) == 0)
+        (mod1(iteration, trace.trace_level.print_frequency) == 1)
     save_now = trace.save_trace isa Val{true} &&
-        (mod1(iteration, trace.trace_level.save_frequency) == 0)
+        (mod1(iteration, trace.trace_level.save_frequency) == 1)
 
     if show_now || save_now
         show_now && show_trace(opt, trace.trace_level.trace_mode)
