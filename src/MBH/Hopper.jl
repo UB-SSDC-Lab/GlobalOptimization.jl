@@ -192,15 +192,10 @@ end
     check_fitness!(c::AbstractHopperSet, options::Union{GeneralOptions,Val{true},Val{false}})
 
 Checks the fitness of the candidate `c` to ensure that it is valid
-iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
+iff the option has been enabled.
 """
-@inline function check_fitness!(
-    hs::AbstractHopperSet, options::GeneralOptions{D,FVC}
-) where {D,FVC}
-    check_fitness!(hs, FVC)
-end
-@inline check_fitness!(hs::AbstractHopperSet, ::Type{Val{false}}) = nothing
-function check_fitness!(hs::AbstractHopperSet, ::Type{Val{true}})
+check_fitness!(hs::AbstractHopperSet, ::Val{false}) = nothing
+function check_fitness!(hs::AbstractHopperSet, ::Val{true})
     isfinite(hs.best_candidate_fitness) ||
         error("Hopper set has an invalid fitness ($(hs.best_candidate_fitness)).")
     return nothing

@@ -12,10 +12,10 @@ General options for all optimizers
 """
 struct GeneralOptions{
     FVC <: Union{Val{false}, Val{true}},
-    T,
+    TR,
 } <: AbstractOptions
     # Trace
-    trace::T
+    trace::TR
 
     # Check function value
     function_value_check::FVC
@@ -31,6 +31,9 @@ end
     AbstractAlgorithmSpecificOptions
 
 Abstract type for algorithm specific options
+
+All subtypes must define the following fields:
+- `general`: The general options for an optimizer.
 """
 abstract type AbstractAlgorithmSpecificOptions <: AbstractOptions end
 
@@ -47,7 +50,7 @@ get_general(opts::AbstractAlgorithmSpecificOptions) = opts.general
 Returns the display option from an options type.
 """
 get_trace(opts::GeneralOptions) = opts.trace
-get_trace(opts::AbstractAlgorithmSpecificOptions) = get_display(get_general(opts))
+get_trace(opts::AbstractAlgorithmSpecificOptions) = get_trace(get_general(opts))
 
 """
     get_function_value_check(opts::AbstractAlgorithmSpecificOptions)

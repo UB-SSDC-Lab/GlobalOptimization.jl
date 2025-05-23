@@ -18,15 +18,16 @@ using NonlinearSolve: NonlinearSolve
 using Optim: Optim
 
 # Base
-include("tracing.jl")
-include("Options.jl")
+include("enums.jl")
+include("Optimizers.jl")
 include("SearchSpace.jl")
 include("Problem.jl")
 include("Candidate.jl")
 include("Population.jl")
 include("Evaluator.jl")
-include("Optimizers.jl")
 include("Results.jl")
+include("tracing.jl")
+include("Options.jl")
 
 # PSO
 include("PSO/Swarm.jl")

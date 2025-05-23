@@ -92,10 +92,18 @@ end
 Cache for the DE algorithm.
 """
 mutable struct DECache{T}
+    # Global best candidate info
     global_best_candidate::Vector{T}
     global_best_fitness::T
+
+    # Generic optimization state variables
+    iteration::Int
+    start_time::Float64
+    stall_start_time::Float64
+    stall_iteration::Int
+    stall_value::T
     function DECache{T}(num_dims::Integer) where {T}
-        return new{T}(zeros(T, num_dims), T(Inf))
+        return new{T}(zeros(T, num_dims), T(Inf), 0, 0.0, 0.0, 0, T(Inf))
     end
 end
 
@@ -128,7 +136,7 @@ struct DE{
 end
 
 """
-    SerialDE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
+    DE(prob::AbstractProblem{has_penalty,SS}; kwargs...)
 
 Construct a serial Differential Evolution (DE) algorithm with the given options.
 
@@ -138,7 +146,7 @@ Construct a serial Differential Evolution (DE) algorithm with the given options.
 # Keyword Arguments
 - `eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation()`: The method to use for evaluating the objective function.
 - `num_candidates::Integer=100`: The number of candidates in the population.
-- `population_init_method::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
+- `population_initialization::AbstractPopulationInitialization=UniformInitialization()`: The population initialization method.
 - `mutation_params::MP=SelfMutationParameters(Rand1())`: The mutation strategy parameters.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
 - `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
@@ -156,19 +164,21 @@ function DE(
     prob::AbstractProblem{has_penalty,SS};
     eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation(),
     num_candidates::Integer=100,
-    population_init_method::AbstractPopulationInitialization=UniformInitialization(),
+    population_initialization::AbstractPopulationInitialization=UniformInitialization(),
     mutation_params::MP=SelfMutationParameters(Rand1()),
     crossover_params::CP=BinomialCrossoverParameters(0.6),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Integer=1000,
-    max_time::Real=60.0,
     function_tolerance::Real=1e-6,
     max_stall_time::Real=60.0,
     max_stall_iterations::Integer=100,
+    max_time::Real=60.0,
     min_cost::Real=(-Inf),
-    function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Integer=1,
+    function_value_check::Union{Val{false},Val{true}}=Val(true),
+    show_trace::Union{Val{false},Val{true}}=Val(false),
+    save_trace::Union{Val{false},Val{true}}=Val(false),
+    save_file::String="no_file.txt",
+    trace_level::TraceLevel=TraceMinimal(1),
 ) where {
     MP<:AbstractMutationParameters,
     CP<:AbstractCrossoverParameters,
@@ -179,13 +189,17 @@ function DE(
     # Construct options
     options = DEOptions(
         GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
+            GlobalOptimizationTrace(
+                show_trace,
+                save_trace,
+                save_file,
+                trace_level,
+            ),
+            function_value_check,
             max_time,
             min_cost,
         ),
-        population_init_method,
+        population_initialization,
         mutation_params,
         crossover_params,
         intersection(search_space(prob), initial_space),
@@ -204,14 +218,14 @@ function DE(
     )
 end
 
-function optimize!(opt::DE)
-    initialize!(opt)
-    return iterate!(opt)
-end
+# ===== AbstractOptimizer interface
+
+get_iteration(opt::DE) = opt.cache.iteration
+
 
 function initialize!(opt::DE)
     # Unpack DE
-    @unpack options, evaluator, population = opt
+    @unpack options, evaluator, population, cache = opt
     @unpack pop_init_method = options
 
     # Initialize mutation and crossover parameters
@@ -224,32 +238,30 @@ function initialize!(opt::DE)
 
     # Handle fitness
     initialize_fitness!(population, evaluator)
-    check_fitness!(population.current_generation, get_general(options))
+    check_fitness!(population.current_generation, get_function_value_check(options))
+
+    # Initialize cache
     update_global_best!(opt)
+    cache.iteration = 0
+    cache.start_time = time()
+    cache.stall_start_time = cache.start_time
+    cache.stall_iteration = 0
+    cache.stall_value = cache.global_best_fitness
+
     return nothing
 end
 
 function iterate!(opt::DE)
     # Unpack DE
     @unpack options, evaluator, population, cache = opt
+    @unpack mutation_params, crossover_params = options
     search_space = evaluator.prob.ss
 
-    # Initialize DE algorithm parameters
-    @unpack mutation_params, crossover_params = options
-
-    # Initialize algorithm stopping criteria requirements
-    iteration = 0
-    start_time = time()
-    current_time = start_time
-    stall_start_time = start_time
-    stall_value = Inf
-    stall_count = 0
-
     # Begin loop
-    exit_flag = 0
-    while exit_flag == 0
+    status = IN_PROGRESS
+    while status == IN_PROGRESS
         # Update iteration counter
-        iteration += 1
+        cache.iteration += 1
 
         # Perform mutation
         mutate!(population, mutation_params)
@@ -259,54 +271,27 @@ function iterate!(opt::DE)
 
         # Perform selection
         evaluate_mutant_fitness!(population, evaluator)
-        check_fitness!(population.mutants, get_general(options))
+        check_fitness!(population.mutants, get_function_value_check(options))
         selection!(population)
 
         # Update global best
-        new_best = update_global_best!(opt)
+        improved = update_global_best!(opt)
 
         # Adapt mutation and crossover parameters if necessary
-        adapt!(mutation_params, population.improved, new_best)
-        adapt!(crossover_params, population.improved, new_best)
+        adapt!(mutation_params, population.improved, improved)
+        adapt!(crossover_params, population.improved, improved)
 
         # Handle stall
-        if stall_value - cache.global_best_fitness < options.function_tolerance
-            stall_count += 1
-        else
-            stall_count = 0
-            stall_value = cache.global_best_fitness
-            stall_start_time = time()
-        end
+        handle_stall!(opt)
 
         # Check stopping criteria
-        current_time = time()
-        if current_time - start_time >= options.general.max_time
-            exit_flag = 1
-        elseif iteration >= options.max_iterations
-            exit_flag = 2
-        elseif stall_count >= options.max_stall_iterations
-            exit_flag = 3
-        elseif current_time - stall_start_time >= options.max_stall_time
-            exit_flag = 4
-        end
+        status = check_stopping_criteria(opt)
 
         # Print information
-        display_de_status(
-            current_time - start_time,
-            iteration,
-            stall_count,
-            cache.global_best_fitness,
-            get_general(options),
-        )
+        trace(opt)
     end
 
-    return Results(
-        cache.global_best_fitness,
-        cache.global_best_candidate,
-        iteration,
-        current_time - start_time,
-        exit_flag,
-    )
+    return construct_results(opt, status)
 end
 
 function update_global_best!(opt::DE)
@@ -334,25 +319,53 @@ function update_global_best!(opt::DE)
     return updated
 end
 
-function display_de_status(
-    time, iteration, stall_count, global_fitness, options::GeneralOptions{D,FVC}
-) where {D,FVC}
-    return display_de_status(
-        time, iteration, stall_count, global_fitness, get_display_interval(options), D
+get_best_fitness(de::DE) = de.cache.global_best_fitness
+
+function handle_stall!(de::DE)
+    @unpack cache, options = de
+    if cache.stall_value - get_best_fitness(de) < options.function_tolerance
+        # Currently stalled...
+        cache.stall_iteration += 1
+    else
+        # Not stalled!!
+        cache.stall_value = get_best_fitness(de)
+        cache.stall_iteration = 0
+        cache.stall_start_time = time()
+    end
+end
+
+function check_stopping_criteria(de::DE)
+    @unpack cache, options = de
+    current_time = time()
+    if get_best_fitness(de) <= get_min_cost(options)
+        return MINIMUM_COST_ACHIEVED
+    elseif current_time - cache.start_time >= get_max_time(options)
+        return MAXIMUM_TIME_EXCEEDED
+    elseif cache.iteration >= options.max_iterations
+        return MAXIMUM_ITERATIONS_EXCEEDED
+    elseif cache.stall_iteration >= options.max_stall_iterations
+        return MAXIMUM_STALL_ITERATIONS_EXCEEDED
+    elseif current_time - cache.stall_start_time >= options.max_stall_time
+        return MAXIMUM_STALL_TIME_EXCEEDED
+    end
+    return IN_PROGRESS
+end
+
+function construct_results(de::DE, status::Status)
+    @unpack cache = de
+    return Results(
+        cache.global_best_fitness,
+        cache.global_best_candidate,
+        cache.iteration,
+        time() - cache.start_time,
+        status,
     )
 end
-function display_de_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{false}}
-)
-    return nothing
+
+function show_trace(de::DE, ::Any)
+
 end
-function display_de_status(
-    time, iteration, stall_count, global_fitness, display_interval, ::Type{Val{true}}
-)
-    if iteration % display_interval == 0
-        fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
-        fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")
-        printfmtln(fspec1, time, iteration)
-        printfmtln(fspec2, stall_count, global_fitness)
-    end
+
+function get_save_trace(de::DE, ::Any)
+
 end

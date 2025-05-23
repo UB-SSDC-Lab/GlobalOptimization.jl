@@ -22,7 +22,7 @@ For example, this will set `PSO` or `DE` to print the elapsed time, iteration nu
 iterations, and global best fitness.
 """
 function TraceMinimal(;print_frequency = 1, save_frequency = 1)
-    return TraceLevel(Val{:minimal}, print_frequency, save_frequency)
+    return TraceLevel(Val{:minimal}(), print_frequency, save_frequency)
 end
 
 """
@@ -33,7 +33,7 @@ Trace Detailed information about the optimization process (including the informa
 the minimal trace).
 """
 function TraceDetailed(;print_frequency = 1, save_frequency = 1)
-    return TraceLevel(Val{:detailed}, print_frequency, save_frequency)
+    return TraceLevel(Val{:detailed}(), print_frequency, save_frequency)
 end
 
 """
@@ -44,13 +44,12 @@ Trace All information about the optimization process (including the information 
 detailed trace). This trace option should likely only be used for debugging purposes.
 """
 function TraceAll(;print_frequency = 1, save_frequency = 1)
-    return TraceLevel(Val{:all}, print_frequency, save_frequency)
+    return TraceLevel(Val{:all}(), print_frequency, save_frequency)
 end
 
 for Tr in (:TraceMinimal, :TraceDetailed, :TraceAll)
-    @eval $(Tr)(freq) = $(TR)(;print_frequency = freq, save_frequency = freq)
+    @eval $(Tr)(freq) = $(Tr)(;print_frequency = freq, save_frequency = freq)
 end
-
 
 struct GlobalOptimizationTrace{
     SHT <: Union{Val{false}, Val{true}},
@@ -61,4 +60,38 @@ struct GlobalOptimizationTrace{
     save_trace::SAT
     save_file::String
     trace_level::TraceLevel{TM}
+end
+
+function trace(opt::AbstractOptimizer)
+    # Do nothing if tracing is not enabled
+    trace = get_trace(opt.options)
+    trace.save_trace isa Val{false} && trace.show_trace isa Val{false} && return nothing
+
+    iteration = get_iteration(opt)
+    show_now = trace.show_trace isa Val{true} &&
+        (mod1(iteration, trace.trace_level.print_frequency) == 0)
+    save_now = trace.save_trace isa Val{true} &&
+        (mod1(iteration, trace.trace_level.save_frequency) == 0)
+
+    if show_now || save_now
+        show_now && show_trace(opt, trace.trace_level.trace_mode)
+        if save_now
+            save_trace_str = get_save_trace(opt, trace.trace_level.trace_mode)
+            open(trace.save_file, "a") do io
+                println(io, save_trace_str)
+            end
+        end
+    end
+end
+
+function show_trace(opt::AbstractOptimizer, trace_mode::Val{mode}) where mode
+    throw(ArgumentError(
+        "show_trace with trace mode " * String(mode) * " not implemented for $(typeof(opt))."
+    ))
+end
+
+function get_save_trace(opt::AbstractOptimizer, trace_mode::Val{mode}) where mode
+    throw(ArgumentError(
+        "get_save_trace with trace mode " * String(mode) * " not implemented for $(typeof(opt))."
+    ))
 end

@@ -2,6 +2,15 @@
     AbstractOptimizer
 
 Abstract type of all optimization algorithms.
+
+All subtypes must define the following methods:
+- `initialize!`: Initialize the optimizer.
+- `iterate!`: Perform iterations to optimize the problem and return the results of the
+    optimization.
+- `get_iteration`: Get the current iteration number of the optimizer.
+
+All subtypes must have the following fields:
+- `options`: The options for the optimizer.
 """
 abstract type AbstractOptimizer end
 
@@ -34,5 +43,39 @@ Results:
 ```
 """
 function optimize!(opt::AbstractOptimizer)
-    throw(ArgumentError("optimize! not implemented for $(typeof(opt))."))
+    # Initialize the optimizer
+    initialize!(opt)
+
+    # Perform iterations
+    return iterate!(opt)
+end
+
+"""
+    initialize!(opt::AbstractOptimizer)
+
+Initialize the optimizer `opt`. All memory allocations that are not possible to do in the
+constructor should be done here when possible.
+"""
+function initialize!(opt::AbstractOptimizer)
+    # Initialize the optimizer
+    throw(ArgumentError("initialize! not implemented for $(typeof(opt))."))
+end
+
+"""
+    iterate!(opt::AbstractOptimizer)
+
+Perform iterations to optimize the problem and returns the results of the optimization.
+"""
+function iterate!(opt::AbstractOptimizer)
+    # Perform iterations
+    throw(ArgumentError("iterate! not implemented for $(typeof(opt))."))
+end
+
+"""
+    get_iteration(opt::AbstractOptimizer)
+
+Get the current iteration number of the optimizer `opt`.
+"""
+function get_iteration(opt::AbstractOptimizer)
+    throw(ArgumentError("get_iteration not implemented for $(typeof(opt))."))
 end

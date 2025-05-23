@@ -113,20 +113,20 @@ Constructs a PSO algorithm with the given options.
 # Keyword Arguments
 - `eval_method::AbstractFunctionEvaluationMethod=SerialFunctionEvaluation()`: The method to use for evaluating the objective function.
 - `num_particles::Int = 100`: The number of particles to use.
-- `population_init_method::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
+- `population_initialization::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
+- `velocity_update::AbstractVelocityUpdateScheme = MATLABVelocityUpdate()`: The method to use for updating the velocity of the particles.
 - `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
 - `max_iterations::Int = 1000`: The maximum number of iterations to perform.
 - `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
 - `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
 - `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
-- `inertia_range::Tuple{AbstractFloat,AbstractFloat} = (0.1, 1.0)`: The range of allowable inertia weights.
-- `minimum_neighborhood_fraction::AbstractFloat = 0.25`: The minimum neighborhood fraction to use.
-- `self_adjustment_weight::Real = 1.49`: The self adjustment weight to use.
-- `social_adjustment_weight::Real = 1.49`: The social adjustment weight to use.
-- `display::Bool = false`: Whether or not to display the status of the algorithm.
-- `display_interval::Int = 1`: The display interval to use.
-- `function_value_check::Bool = true`: Whether or not to check for bad function values (Inf or NaN).
 - `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
+- `min_cost::Real = -Inf`: The minimum cost to allow for optimization.
+- `function_value_check::Union{Val{false},Val{true}} = Val(true)`: Whether to check for bad function values.
+- `show_trace::Union{Val{false},Val{true}} = Val(false)`: Whether to show trace information.
+- `save_trace::Union{Val{false},Val{true}} = Val(false)`: Whether to save trace information.
+- `save_file::String = "no_file.txt"`: The file to save trace information to.
+- `trace_level::TraceLevel = TraceMinimal(1)`: The level of trace information to show.
 
 # Returns
 - `PSO`: The PSO algorithm.
@@ -144,16 +144,22 @@ function PSO(
     max_stall_iterations::Int=25,
     max_time::Real=60.0,
     min_cost::Real=(-Inf),
-    function_value_check::Bool=true,
-    display::Bool=false,
-    display_interval::Int=1,
+    function_value_check::Union{Val{false},Val{true}}=Val(true),
+    show_trace::Union{Val{false},Val{true}}=Val(false),
+    save_trace::Union{Val{false},Val{true}}=Val(false),
+    save_file::String="no_file.txt",
+    trace_level::TraceLevel=TraceMinimal(1),
 ) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
-            function_value_check ? Val(true) : Val(false),
-            display ? Val(true) : Val(false),
-            display_interval,
+            GlobalOptimizationTrace(
+                show_trace,
+                save_trace,
+                save_file,
+                trace_level,
+            ),
+            function_value_check,
             max_time,
             min_cost,
         ),
@@ -182,27 +188,23 @@ function PSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
     )
 end
 
-function optimize!(opt::PSO)
-    # Initialize PSO algorithm
-    initialize!(opt)
+# ===== AbstractOptimizer interface
 
-    # Perform iterations and return results
-    return iterate!(opt)
-end
+get_iteration(opt::PSO) = opt.cache.iteration
 
 function initialize!(opt::PSO)
     # Unpack PSO
     @unpack options, evaluator, swarm, cache = opt
 
+    # Initialize the velocity update scheme
+    initialize!(options.velocity_update, length(swarm))
+
     # Initialize swarm
     initialize!(swarm, options.pop_init_method, options.initial_space)
 
-    # Handel swarm fitness
+    # Handle swarm fitness
     initialize_fitness!(swarm, evaluator)
-    check_fitness!(swarm, get_general(options))
-
-    # Initialize the velocity update scheme
-    initialize!(options.velocity_update, length(swarm))
+    check_fitness!(swarm, get_function_value_check(options))
 
     # Initialize PSO cache
     update_global_best!(opt)
@@ -222,8 +224,8 @@ function iterate!(opt::PSO)
     search_space = evaluator.prob.ss
 
     # Begin loop
-    exit_flag = 0
-    while exit_flag == 0
+    status = IN_PROGRESS
+    while status == IN_PROGRESS
         # Update iteration counter
         cache.iteration += 1
 
@@ -236,7 +238,7 @@ function iterate!(opt::PSO)
 
         # Evaluate the objective function and check for bad values in fitness
         evaluate_fitness!(swarm, evaluator)
-        check_fitness!(swarm, get_general(options))
+        check_fitness!(swarm, get_function_value_check(options))
 
         # Update global best
         improved = update_global_best!(opt)
@@ -248,15 +250,17 @@ function iterate!(opt::PSO)
         handle_stall!(opt)
 
         # Check stopping criteria
-        exit_flag = check_stopping_criteria(opt)
+        status = check_stopping_criteria(opt)
 
-        # Output Status
-        display_status(opt)
+        # Tracing
+        trace(opt)
     end
 
     # Return results
-    return construct_results(opt, exit_flag)
+    return construct_results(opt, status)
 end
+
+# ===== Implementation
 
 """
     update_global_best!(pso::PSO)
@@ -288,14 +292,16 @@ function update_global_best!(pso::PSO)
     return updated
 end
 
+get_best_fitness(pso::PSO) = pso.cache.global_best_fitness
+
 function handle_stall!(pso::PSO)
     @unpack cache, options = pso
-    if cache.stall_value - cache.global_best_fitness < options.function_tolerance
+    if cache.stall_value - get_best_fitness(pso) < options.function_tolerance
         # Currently stalled...
         cache.stall_iteration += 1
     else
         # Not stalled!!
-        cache.stall_value = cache.global_best_fitness
+        cache.stall_value = get_best_fitness(pso)
         cache.stall_iteration = 0
         cache.stall_start_time = time()
     end
@@ -304,50 +310,35 @@ end
 function check_stopping_criteria(pso::PSO)
     @unpack cache, options = pso
     current_time = time()
-    if current_time - cache.start_time >= get_max_time(options)
-        return 1
+    if get_best_fitness(pso) <= get_min_cost(options)
+        return MINIMUM_COST_ACHIEVED
+    elseif current_time - cache.start_time >= get_max_time(options)
+        return MAXIMUM_TIME_EXCEEDED
     elseif cache.iteration >= options.max_iterations
-        return 2
+        return MAXIMUM_ITERATIONS_EXCEEDED
     elseif cache.stall_iteration >= options.max_stall_iterations
-        return 3
+        return MAXIMUM_STALL_ITERATIONS_EXCEEDED
     elseif current_time - cache.stall_start_time >= options.max_stall_time
-        return 4
+        return MAXIMUM_STALL_TIME_EXCEEDED
     end
-    return 0
+    return IN_PROGRESS
 end
 
-function construct_results(pso::PSO, exit_flag::Int)
+function construct_results(pso::PSO, status::Status)
     @unpack cache = pso
     return Results(
         cache.global_best_fitness,
         cache.global_best_candidate,
         cache.iteration,
         time() - cache.start_time,
-        exit_flag,
+        status,
     )
 end
 
-"""
-    display_status(pso::PSO)
+function show_trace(pso::PSO, ::Any)
 
-Displays the status of the PSO algorithm.
-"""
-@inline function display_status(
-    pso::PSO{VU,T,E,IBSS,PI,GeneralOptions{Val{false},FVC}}
-) where {VU,T,E,IBSS,PI,FVC}
-    return nothing
 end
-@inline function display_status(
-    pso::PSO{VU,T,E,IBSS,PI,GeneralOptions{Val{true},FVC}}
-) where {VU,T,E,IBSS,PI,FVC}
-    @unpack cache, options = pso
-    go = get_general(options)
 
-    if cache.iteration % go.display_interval == 0
-        fspec1 = FormatExpr("Time Elapsed: {1:f} sec, Iteration Number: {2:d}")
-        fspec2 = FormatExpr("Stall Iterations: {1:d}, Global Best: {2:e}")
-        printfmtln(fspec1, time() - cache.start_time, cache.iteration)
-        printfmtln(fspec2, cache.stall_iteration, cache.global_best_fitness)
-    end
-    return nothing
+function get_save_trace(pso::PSO, ::Any)
+
 end
