@@ -35,9 +35,7 @@ end
 
 # Define problem
 N = 3
-ss = ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N], [5.12 for i in 1:N]
-)
+ss = ContinuousRectangularSearchSpace([-5.12 for i in 1:N], [5.12 for i in 1:N])
 prob = OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO
@@ -69,9 +67,7 @@ end
 
 # Test with CSRNVelocityUpdate scheme
 N = 10
-ss2 = ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N], [5.12 for i in 1:N]
-)
+ss2 = ContinuousRectangularSearchSpace([-5.12 for i in 1:N], [5.12 for i in 1:N])
 prob2 = OptimizationProblem(layeb_1, ss2)
 csrn_pso = PSO(prob2; velocity_update=CSRNVelocityUpdate())
 Random.seed!(1234)
