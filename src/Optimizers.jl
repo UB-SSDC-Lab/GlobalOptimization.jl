@@ -187,7 +187,7 @@ Results:
  - Best candidate: [-2.587698010980842e-10, 0.0]
  - Iterations: 26
  - Time: 0.004351139068603516 seconds
- - Exit flag: 3
+ - Exit flag: MAXIMUM_STALL_ITERATIONS_EXCEEDED
 ```
 """
 function optimize!(opt::AbstractOptimizer)

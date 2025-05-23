@@ -9,10 +9,6 @@ Options for the Differential Evolution (DE) algorithms.
 - `mutation_params<:AbstractMutationParameters`: The mutation strategy parameters.
 - `crossover_params<:AbstractCrossoverParameters`: The crossover strategy parameters.
 - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
-- `max_iterations::Int`: The maximum number of iterations.
-- `function_tolerance::Float64`: The function tolerance for the stall condition.
-- `max_stall_time::Float64`: The maximum stall time for the stall condition.
-- `max_stall_iterations::Int`: The maximum number of stall iterations for the stall condition.
 """
 struct DEOptions{
     MP<:AbstractMutationParameters,
@@ -108,14 +104,17 @@ Construct a serial Differential Evolution (DE) algorithm with the given options.
 - `crossover_params::CP=BinomialCrossoverParameters(0.6)`: The crossover strategy parameters.
 - `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
 - `max_iterations::Integer=1000`: The maximum number of iterations.
-- `max_time::Real=60.0`: The maximum time to run the algorithm.
-- `function_tolerance::Real=1e-6`: The function tolerance for the stall condition.
-- `max_stall_time::Real=60.0`: The maximum stall time for the stall condition.
-- `max_stall_iterations::Integer=100`: The maximum number of stall iterations for the stall condition.
-- `min_cost::Real=-Inf`: The minimum cost for the algorithm to stop.
-- `function_value_check::Bool=true`: Whether to check the function value.
-- `display::Bool=true`: Whether to display the algorithm status.
-- `display_interval::Integer=1`: The interval at which to display the algorithm status.
+- `function_tolerance::Real=1e-6`: The function tolerance (stall-based stopping criteria).
+- `max_stall_time::Real=60.0`: The maximum stall time (in seconds).
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations.
+- `max_time::Real=60.0`: The maximum time (in seconds) to allow for optimization.
+- `min_cost::Real=(-Inf)`: The minimum cost to allow for optimization.
+- `function_value_check::Union{Val{false},Val{true}}=Val(true)`: Whether to check the function value
+    for bad values (i.e., Inf or NaN).
+- `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
+- `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
+- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 """
 function DE(
     prob::AbstractProblem{has_penalty,SS};

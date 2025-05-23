@@ -77,18 +77,19 @@ Constructs a PSO algorithm with the given options.
 - `num_particles::Int = 100`: The number of particles to use.
 - `population_initialization::AbstractPopulationInitialization = UniformInitialization()`: The method to use for initializing the population.
 - `velocity_update::AbstractVelocityUpdateScheme = MATLABVelocityUpdate()`: The method to use for updating the velocity of the particles.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace} = nothing`: The initial bounds to use when initializing particle positions.
-- `max_iterations::Int = 1000`: The maximum number of iterations to perform.
-- `function_tolerence::AbstractFloat = 1e-6`: The function value tolerence to use for stopping criteria.
-- `max_stall_time::Real = Inf`: The maximum amount of time to allow for stall time.
-- `max_stall_iterations::Int = 25`: The maximum number of stall iterations to allow.
-- `max_time::Real = 60.0`: The maximum amount of time to allow for optimization.
-- `min_cost::Real = -Inf`: The minimum cost to allow for optimization.
-- `function_value_check::Union{Val{false},Val{true}} = Val(true)`: Whether to check for bad function values.
-- `show_trace::Union{Val{false},Val{true}} = Val(false)`: Whether to show trace information.
-- `save_trace::Union{Val{false},Val{true}} = Val(false)`: Whether to save trace information.
-- `save_file::String = "no_file.txt"`: The file to save trace information to.
-- `trace_level::TraceLevel = TraceMinimal(1)`: The level of trace information to show.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `function_tolerance::Real=1e-6`: The function tolerance (stall-based stopping criteria).
+- `max_stall_time::Real=60.0`: The maximum stall time (in seconds).
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations.
+- `max_time::Real=60.0`: The maximum time (in seconds) to allow for optimization.
+- `min_cost::Real=(-Inf)`: The minimum cost to allow for optimization.
+- `function_value_check::Union{Val{false},Val{true}}=Val(true)`: Whether to check the function value
+    for bad values (i.e., Inf or NaN).
+- `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
+- `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
+- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 
 # Returns
 - `PSO`: The PSO algorithm.

@@ -19,6 +19,9 @@ Trace Minimal information about the optimization process.
 
 For example, this will set `PSO` or `DE` to print the elapsed time, iteration number, stall
 iterations, and global best fitness.
+
+# Returns
+- `TraceLevel{Val{:minimal}}`: A trace level object with the minimal trace level.
 """
 function TraceMinimal(;print_frequency = 1, save_frequency = 1)
     return TraceLevel(Val{:minimal}(), print_frequency, save_frequency)
@@ -30,6 +33,9 @@ end
 
 Trace Detailed information about the optimization process (including the information in
 the minimal trace).
+
+# Returns
+- `TraceLevel{Val{:detailed}}`: A trace level object with the detailed trace level.
 """
 function TraceDetailed(;print_frequency = 1, save_frequency = 1)
     return TraceLevel(Val{:detailed}(), print_frequency, save_frequency)
@@ -41,6 +47,9 @@ end
 
 Trace All information about the optimization process (including the information in the
 detailed trace). This trace option should likely only be used for debugging purposes.
+
+# Returns
+- `TraceLevel{Val{:all}}`: A trace level object with the all trace level.
 """
 function TraceAll(;print_frequency = 1, save_frequency = 1)
     return TraceLevel(Val{:all}(), print_frequency, save_frequency)

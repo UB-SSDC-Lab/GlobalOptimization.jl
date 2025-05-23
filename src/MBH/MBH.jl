@@ -122,14 +122,19 @@ Construct the standard Monotonic Basin Hopping (MBJ) algorithm with the specifie
     drawn. Default is `MBHAdaptiveDistribution{T}(100, 5)`.
 - `local_search::AbstractLocalSearch{T}`: The local search algorithm to use. Default is
     `LBFGSLocalSearch{T}()`.
-- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}`: The initial search space
-    to use. Default is `nothing`.
-- `function_value_check::Bool`: Whether to check the function value. Default is `true`.
-- `max_time::Real`: The maximum time to run the algorithm in seconds. Default is `60.0`.
-- `min_cost::Real`: The minimum cost to reach. Default is `-Inf`.
-- `display::Bool`: Whether to display the status of the algorithm. Default is `false`.
-- `display_interval::Int`: The interval at which to display the status of the algorithm.
-    Default is `1`.
+- `initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing`: The initial bounds for the search space.
+- `max_iterations::Integer=1000`: The maximum number of iterations.
+- `function_tolerance::Real=1e-6`: The function tolerance (stall-based stopping criteria).
+- `max_stall_time::Real=60.0`: The maximum stall time (in seconds).
+- `max_stall_iterations::Integer=100`: The maximum number of stall iterations.
+- `max_time::Real=60.0`: The maximum time (in seconds) to allow for optimization.
+- `min_cost::Real=(-Inf)`: The minimum cost to allow for optimization.
+- `function_value_check::Union{Val{false},Val{true}}=Val(true)`: Whether to check the function value
+    for bad values (i.e., Inf or NaN).
+- `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
+- `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
+- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 """
 function MBH(
     prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}};
