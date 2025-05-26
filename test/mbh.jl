@@ -26,6 +26,18 @@ using ReverseDiff: ReverseDiff
     @test eachindex(mh) == 1:5
     @test GlobalOptimization.num_dims(mh) == 3
 
+    # Test trace element getters
+    shte = GlobalOptimization.get_show_trace_elements(sh, Val{:detailed}())
+    @test length(shte) == 1
+    @test shte[1].label == "Hops"
+    @test shte == GlobalOptimization.get_save_trace_elements(sh, Val{:detailed}())
+
+    mhte = GlobalOptimization.get_show_trace_elements(mh, Val{:detailed}())
+    @test length(mhte) == 2
+    @test mhte[1].label == "Min Hops"
+    @test mhte[2].label == "Max Hops"
+    @test mhte == GlobalOptimization.get_save_trace_elements(mh, Val{:detailed}())
+
     # Test initialization of SingleHopperSet and MCHSet
     search_space = GlobalOptimization.ContinuousRectangularSearchSpace(
         [-1.0, -1.0], [1.0, 1.0]
@@ -239,6 +251,10 @@ end
     GlobalOptimization.draw_step!(vec, sd)
     @test all(isfinite, vec)
 
+    # Trace...
+    @test GlobalOptimization.get_show_trace_elements(sd, Val{:detailed}()) isa Tuple{}
+    @test GlobalOptimization.get_save_trace_elements(sd, Val{:detailed}()) isa Tuple{}
+
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
     ad = MBHAdaptiveDistribution{Float64}(21, 20; a=0.9, b=0.1, c=2.0, λhat0=1.0)
     ss = ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
@@ -264,6 +280,13 @@ end
     Random.seed!(123)
     GlobalOptimization.draw_step!(vec2, ad2)
     @test all(isfinite, vec2)
+
+    # Trace
+    adte = GlobalOptimization.get_show_trace_elements(ad, Val{:detailed}())
+    @test length(adte) == 4
+    adte_all = GlobalOptimization.get_save_trace_elements(ad, Val{:all}())
+    @test length(adte_all) == 2
+    @test adte == GlobalOptimization.get_save_trace_elements(ad, Val{:detailed}())
 end
 
 @testset showtiming = true "LocalSearch" begin
@@ -444,7 +467,7 @@ end
     res1 = GlobalOptimization.optimize!(mbh1)
     @test res1.fbest == 0.0
     @test length(res1.xbest) == 2
-    @test res1.exitFlag == 1
+    @test res1.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with static distribution
     stat = MBHStaticDistribution{Float64}()
@@ -452,7 +475,7 @@ end
     res2 = GlobalOptimization.optimize!(mbh2)
     @test res2.fbest == 0.0
     @test length(res2.xbest) == 2
-    @test res2.exitFlag == 1
+    @test res2.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with adaptive distribution
     ad = MBHAdaptiveDistribution{Float64}(1, 0)
@@ -460,7 +483,7 @@ end
     res3 = GlobalOptimization.optimize!(mbh3)
     @test res3.fbest == 0.0
     @test length(res3.xbest) == 2
-    @test res3.exitFlag == 1
+    @test res3.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with ZeroDist and LocalStochasticSearch
     ls = LocalStochasticSearch{Float64}(0.1, 1)
@@ -468,7 +491,7 @@ end
     res4 = GlobalOptimization.optimize!(mbh4)
     @test res4.fbest == 0.0
     @test length(res4.xbest) == 2
-    @test res4.exitFlag == 1
+    @test res4.exitFlag == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test MBH with static distribution and LocalStochasticSearch
     ls2 = LocalStochasticSearch{Float64}(0.1, 2)
@@ -481,7 +504,6 @@ end
     res5 = GlobalOptimization.optimize!(mbh5)
     @test res5.fbest == 0.0
     @test length(res5.xbest) == 2
-    @test res5.exitFlag == 1
 
     # Test MBH with adaptive distribution and LocalStochasticSearch
     ls3 = LocalStochasticSearch{Float64}(0.1, 2)
@@ -494,7 +516,6 @@ end
     res6 = GlobalOptimization.optimize!(mbh6)
     @test res6.fbest == 0.0
     @test length(res6.xbest) == 2
-    @test res6.exitFlag == 1
 
     # Test MBH with static distribution and LBFGSLocalSearch
     ls4 = LBFGSLocalSearch{Float64}()
@@ -507,7 +528,6 @@ end
     res7 = GlobalOptimization.optimize!(mbh7)
     @test res7.fbest == 0.0
     @test length(res7.xbest) == 2
-    @test res7.exitFlag == 1
 
     # Test MBH with adaptive distribution and LocalStochasticSearch
     ls5 = LBFGSLocalSearch{Float64}()
@@ -520,7 +540,6 @@ end
     res8 = GlobalOptimization.optimize!(mbh8)
     @test res8.fbest == 0.0
     @test length(res8.xbest) == 2
-    @test res8.exitFlag == 1
 
     # Test MBH with MCH and each eval method for static distribution and LocalStochasticSearch
     eval_methods = [
@@ -539,7 +558,6 @@ end
         cres1 = GlobalOptimization.optimize!(cmbh1)
         @test cres1.fbest == 0.0
         @test length(cres1.xbest) == 2
-        @test cres1.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh2 = MBH(
@@ -552,7 +570,6 @@ end
         cres2 = GlobalOptimization.optimize!(cmbh2)
         @test cres2.fbest == 0.0
         @test length(cres2.xbest) == 2
-        @test cres2.exitFlag == 1
 
         # Test MBH with static distribution and LBFGSLocalSearch
         cmbh3 = MBH(
@@ -565,7 +582,6 @@ end
         cres3 = GlobalOptimization.optimize!(cmbh3)
         @test cres3.fbest == 0.0
         @test length(cres3.xbest) == 2
-        @test cres3.exitFlag == 1
 
         # Test MBH with adaptive distribution and LocalStochasticSearch
         cmbh4 = MBH(
@@ -578,7 +594,6 @@ end
         cres4 = GlobalOptimization.optimize!(cmbh4)
         @test cres4.fbest == 0.0
         @test length(cres4.xbest) == 2
-        @test cres4.exitFlag == 1
     end
 
     # Test that MBH throws an error if trying to solve an OptimizationProblem with

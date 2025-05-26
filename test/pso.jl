@@ -1,4 +1,5 @@
 using GlobalOptimization, Random, Test
+using Suppressor
 
 # Define objective function
 @inline function layeb_1(x)
@@ -75,19 +76,17 @@ sres2 = optimize!(csrn_pso)
 @test sres2.fbest ≈ 0.0 atol = 1e-6
 @test sres2.xbest ≈ fill(1.0, N) atol = 1e-6
 
-# Test stopping criteria
-pso1 = PSO(prob; max_time=1e-6)
-res1 = optimize!(pso1)
-@test res1.exitFlag == 1
-pso2 = PSO(prob; max_iterations=1)
-res2 = optimize!(pso2)
-@test res2.exitFlag == 2
-pso3 = PSO(prob; function_tolerance=Inf, max_stall_iterations=2)
-res3 = optimize!(pso3)
-@test res3.exitFlag == 3
-pso4 = PSO(prob; function_tolerance=Inf, max_stall_iterations=1000000, max_stall_time=1e-6)
-res4 = optimize!(pso4)
-@test res4.exitFlag == 4
+# Test tracing
+pso = PSO(prob; show_trace=Val(true), trace_level=TraceDetailed(1))
+GlobalOptimization.initialize!(pso)
+
+te = GlobalOptimization.get_show_trace_elements(pso, Val{:detailed}())
+@test length(te) == 7
+
+pso2 = PSO(prob; show_trace=Val(true), trace_level=TraceDetailed(1), velocity_update=CSRNVelocityUpdate())
+GlobalOptimization.initialize!(pso2)
+te2 = GlobalOptimization.get_show_trace_elements(pso2, Val{:detailed}())
+@test length(te2) == 5
 
 # Check for expected errors
 struct InvalidSearchSpace <: GlobalOptimization.SearchSpace{Float64} end

@@ -162,6 +162,18 @@ CovarianceTransformation(::Any,::Any,::Any)
     Private = false
 ```
 
+## Trace Options
+Each algorithm provides the ability trace solve information to the terminal 
+or a specified file through setting the keyword arguments `show_trace = Val(true)`
+and `save_trace = Val(true)`, respectively. Additionally, the amount of information
+provided in the trace can be controlled by setting the `trace_level` keyword argument
+with one of the following `TraceLevel` constructors:
+```@docs
+TraceMinimal(;print_frequency=::Any, save_frequency=::Any)
+TraceDetailed(;print_frequency=::Any, save_frequency=::Any)
+TraceAll(;print_frequency=::Any, save_frequency=::Any)
+```
+
 ## Index
 ```@index
 Pages = ["public.md"]

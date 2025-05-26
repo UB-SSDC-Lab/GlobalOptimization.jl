@@ -307,10 +307,39 @@ function adapt!(vu::MATLABVelocityUpdate, improved::Bool, stall_iteration::Int)
     end
     return nothing
 end
+
 function adapt!(vu::CSRNVelocityUpdate, improved::Bool, stall_iteration::Int)
     w = vu.w
     w = ifelse(stall_iteration < 2, 2.0*w, w)
     w = ifelse(stall_iteration > 5, 0.5*w, w)
     vu.w = clamp(w, vu.inertia_range[1], vu.inertia_range[2])
     return nothing
+end
+
+function get_show_trace_elements(
+    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return (
+        TraceElement("w", 'f', 6, 2, vu.w),
+        TraceElement("N", 'd', 4, 0, vu.N),
+        TraceElement("c", 'd', 4, 0, vu.c),
+    )
+end
+function get_save_trace_elements(
+    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return get_show_trace_elements(vu, trace_mode)
+end
+
+function get_show_trace_elements(
+    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return (
+        TraceElement("w", 'f', 6, 2, vu.w),
+    )
+end
+function get_save_trace_elements(
+    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return get_show_trace_elements(vu, trace_mode)
 end

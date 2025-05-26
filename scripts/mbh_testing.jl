@@ -25,19 +25,12 @@ function waveDrop(x)
 end
 
 function layeb_1(x)
-    obj = zero(eltype(x))
-    for val in x
-        xm1sq = (val - 1)^2
-        obj += 10000.0 * sqrt(abs(exp(xm1sq) - 1.0))
-    end
-    return obj, 0.0
+    obj = sum(xx->10000.0*sqrt(abs(exp((xx - 1.0)^2) - 1.0)), x)
+    return obj
 end
 
 function rastrigin(x; A=10)
-    obj = A * length(x)
-    for val in x
-        obj += val^2 - A * cos(2 * pi * val)
-    end
+    obj = A * length(x) + sum(xx -> xx^2 - A*cos(2 * pi * xx), x)
     return obj, 0.0
 end
 
@@ -49,21 +42,27 @@ function simple_nonlinearleastsquares_equation(x)
 end
 
 # Setup Problem
-N = 2
-ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
+N = 10
+ss = ContinuousRectangularSearchSpace(
+    [-5.12 for i in 1:N], [5.12 for i in 1:N]
+)
 prob = OptimizationProblem(rastrigin, ss)
 #prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
-dist = MBHAdaptiveDistribution{Float64}(1000, 5; a=0.97, b=0.1, c=1.0, λhat0=0.01)
+dist = MBHAdaptiveDistribution{Float64}(
+    20, 5;
+    λhat0=0.01,
+    use_mad=true,
+)
 lsgb = LBFGSLocalSearch{Float64}(;
     iters_per_solve=5,
     percent_decrease_tol=30.0,
     m=10,
-    max_solve_time=0.1,
+    max_solve_time=0.5,
     ad=AutoForwardDiff(),
 )
-lss = LocalStochasticSearch{Float64}(1e-2, 100)
+lss = LocalStochasticSearch{Float64}(1e-2, 1000)
 nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
     NonlinearSolve.NewtonRaphson();
     iters_per_solve=5,
@@ -74,14 +73,17 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 mbh = MBH(
     prob;
     hopper_type=MCH(;
-        num_hoppers=50, eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
+        num_hoppers=50,
+        eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
     ),
     hop_distribution=dist,
-    #local_search=nls,
+    local_search=lsgb,
     max_time=20.0,
-    min_cost=1e-20,
-    display=true,
-    display_interval=10,
+    min_cost=1e-6,
+    max_stall_time = Inf,
+    max_stall_iterations = 10000,
+    show_trace=Val(true),
+    trace_level=TraceAll(1),
 )
 
 res = optimize!(mbh);

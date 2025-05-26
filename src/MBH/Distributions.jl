@@ -64,14 +64,16 @@ function step_MAD_median(step_memory::MBHStepMemory{T}, var_idx::Integer) where 
 
     # Copy steps
     steps_copy = step_memory.mad_cache
-    copyto!(steps_copy, steps)
+    steps_copy[1:step_memory.steps_in_memory] .= steps
 
     # Compute median
-    median = median!(steps_copy)
+    median = median!(view(steps_copy, 1:step_memory.steps_in_memory))
 
     # Compute MAD median
-    steps_copy .= abs.(steps_copy .- median)
-    mad = mean(steps_copy)
+    @inbounds for i in 1:step_memory.steps_in_memory
+        steps_copy[i] = abs(steps[i] - median)
+    end
+    mad = mean(view(steps_copy, 1:step_memory.steps_in_memory))
 
     return mad
 end
@@ -406,4 +408,41 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
     end
 
     return nothing
+end
+
+function get_show_trace_elements(
+    dist::MBHStaticDistribution,
+    trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return ()
+end
+function get_show_trace_elements(
+    dist::MBHAdaptiveDistribution,
+    trace_mode::Val{:detailed}
+)
+    # Get minimum and maximum elements of the estimated scale parameter
+    min_λhat_idx = argmin(dist.λhat)
+    max_λhat_idx = argmax(dist.λhat)
+
+    return (
+        TraceElement("argmin(λ̂)", 'd', 14, 0, min_λhat_idx),
+        TraceElement("min(λ̂)", 'e', 16, 8, dist.λhat[min_λhat_idx]),
+        TraceElement("argmax(λ̂)", 'd', 14, 0, max_λhat_idx),
+        TraceElement("max(λ̂)", 'e', 16, 8, dist.λhat[max_λhat_idx]),
+    )
+end
+function get_show_trace_elements(
+    dist::MBHAdaptiveDistribution,
+    trace_mode::Val{:all},
+)
+    return map(
+        i -> TraceElement("λ̂[$i]", 'e', 16, 8, dist.λhat[i]),
+        eachindex(dist.λhat)
+    )
+end
+function get_save_trace_elements(
+    dist::AbstractMBHDistribution,
+    trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return get_show_trace_elements(dist, trace_mode)
 end

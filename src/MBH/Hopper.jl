@@ -65,8 +65,11 @@ mutable struct SingleHopperSet{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
+    # The number of hops performed before accepting
+    num_hops::Int
+
     function SingleHopperSet{T}(nDims::Integer) where {T}
-        new{T}(Hopper{T}(nDims), zeros(T, nDims), T(Inf))
+        new{T}(Hopper{T}(nDims), zeros(T, nDims), T(Inf), 0)
     end
 end
 
@@ -78,11 +81,15 @@ mutable struct MCHSet{T} <: AbstractHopperSet{T}
     best_candidate::Vector{T}
     best_candidate_fitness::T
 
+    # The number of hops performed by each hopper before accepting
+    num_hops::Vector{Int}
+
     function MCHSet{T}(nDims::Integer, nHoppers::Integer) where {T}
         hoppers = [Hopper{T}(nDims) for _ in 1:nHoppers]
         best_candidate = Vector{T}(undef, nDims)
         best_candidate_fitness = T(Inf)
-        return new{T}(hoppers, best_candidate, best_candidate_fitness)
+        num_hops = Vector{Int}(undef, nHoppers)
+        return new{T}(hoppers, best_candidate, best_candidate_fitness, num_hops)
     end
 end
 
@@ -192,15 +199,10 @@ end
     check_fitness!(c::AbstractHopperSet, options::Union{GeneralOptions,Val{true},Val{false}})
 
 Checks the fitness of the candidate `c` to ensure that it is valid
-iff options <: Union{GeneralOptions{D,Val{true}}, Val{true}}, otherwise, does nothing.
+iff the option has been enabled.
 """
-@inline function check_fitness!(
-    hs::AbstractHopperSet, options::GeneralOptions{D,FVC}
-) where {D,FVC}
-    check_fitness!(hs, FVC)
-end
-@inline check_fitness!(hs::AbstractHopperSet, ::Type{Val{false}}) = nothing
-function check_fitness!(hs::AbstractHopperSet, ::Type{Val{true}})
+check_fitness!(hs::AbstractHopperSet, ::Val{false}) = nothing
+function check_fitness!(hs::AbstractHopperSet, ::Val{true})
     isfinite(hs.best_candidate_fitness) ||
         error("Hopper set has an invalid fitness ($(hs.best_candidate_fitness)).")
     return nothing
@@ -326,4 +328,97 @@ Note: This just subtracts the last step from the candidate.
 function reset!(hopper::Hopper)
     hopper.candidate .-= hopper.candidate_step
     return nothing
+end
+
+"""
+    hop!(hopper::Union{Hopper, AbstractHopperSet}, ss, eval, dist, ls)
+
+Performs a single hop for the hopper `hopper` in the search space `ss` using the
+evaluator `eval`, the distribution `dist`, and the local search `ls`.
+"""
+function hop!(hopper::Hopper, ss, eval, dist, ls)
+    step_accepted = false
+    draw_count = 0
+    while !step_accepted
+        # Draw update
+        # This perturbs the candidate by a realization from dist
+        draw_update!(hopper, dist)
+
+        # Update counter
+        draw_count += 1
+
+        # Check if we're in feasible search space
+        if feasible(candidate(hopper), ss)
+            # We're in the search space, so we're about to accept the step,
+            # but we need to check if we're also
+            # in the feasible region defined by the penalty parameter
+            fitness, penalty = evaluate_with_penalty(eval, candidate(hopper))
+
+            if abs(penalty) - eps() <= 0.0
+                # We're in the feasible region, so we can accept the step
+                step_accepted = true
+
+                # Set fitness of candidate
+                set_fitness!(hopper, fitness)
+
+                # Break from the loop
+                break
+            end
+        end
+
+        # If we get here, we need to reject the step by calling reset!
+        reset!(hopper)
+    end
+
+    # Perform local search
+    local_search!(hopper, eval, ls)
+
+    return draw_count
+end
+
+function hop!(hopper_set::SingleHopperSet, ss, eval, bhe, dist, ls)
+    hopper_set.num_hops = hop!(hopper_set.hopper, ss, eval, dist, ls)
+    return nothing
+end
+
+function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
+    # Unpack the hoppers
+    @unpack hoppers = hopper_set
+
+    job! = let hs=hopper_set, ss=ss, eval=eval, dist=dist, ls=ls
+        i -> begin
+            hs.num_hops[i] = hop!(hs.hoppers[i], ss, eval, dist, ls[i])
+            nothing
+        end
+    end
+    evaluate!(job!, eachindex(hopper_set), bhe)
+
+    return nothing
+end
+
+function get_show_trace_elements(
+    hopper_set::SingleHopperSet,
+    trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return (
+        TraceElement("Hops", 'd', 8, 0, hopper_set.num_hops),
+    )
+end
+function get_show_trace_elements(
+    hopper_set::MCHSet,
+    trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    min_hops = minimum(hopper_set.num_hops)
+    max_hops = maximum(hopper_set.num_hops)
+    return (
+        TraceElement("Min Hops", 'd', 12, 0, min_hops),
+        TraceElement("Max Hops", 'd', 12, 0, max_hops),
+    )
+end
+
+function get_save_trace_elements(
+    hopper_set::AbstractHopperSet,
+    trace_mode::Union{Val{:detailed}, Val{:all}}
+)
+    return get_show_trace_elements(hopper_set, trace_mode)
 end
