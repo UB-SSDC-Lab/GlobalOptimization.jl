@@ -155,6 +155,35 @@ end
 end
 
 @testset showtiming = true "Trace" begin
+    # Test TraceElement methods
+    te_int = GlobalOptimization.TraceElement("Int", 'd', 8, 0, 10)
+    te_flt = GlobalOptimization.TraceElement("Float", 'e', 16, 8, Float64(pi))
+    te_vec = map(xx->GlobalOptimization.TraceElement("Vec", 'f', 6, 2, xx), [1.0, 2.0])
+    @test GlobalOptimization.get_label_str(te_int, Val{true}()) == " Int    "
+    @test GlobalOptimization.get_label_str(te_int, Val{false}()) == "Int"
+    @test GlobalOptimization.get_label_str(te_flt, Val{true}()) == " Float          "
+    @test GlobalOptimization.get_label_str(te_flt, Val{false}()) == "Float"
+    @test GlobalOptimization.get_label_str(te_vec, Val{true}()) == " Vec    Vec  "
+    @test GlobalOptimization.get_label_str(te_vec, Val{false}()) == "Vec,Vec"
+
+    @test GlobalOptimization.get_line_str(te_int) == "-----   "
+    @test GlobalOptimization.get_line_str(te_vec) == "-----  ----- "
+
+    @test GlobalOptimization.get_str(te_int, Val{true}()) == "10      "
+    @test GlobalOptimization.get_str(te_int, Val{false}()) == "10"
+    @test GlobalOptimization.get_str(te_flt, Val{true}()) == "3.14159265e+00  "
+    @test GlobalOptimization.get_str(te_flt, Val{false}()) == "3.141593e+00"
+    @test GlobalOptimization.get_str(te_vec, Val{true}()) == "1.00   2.00  "
+
+    # Utility methods
+    a = (1, 2)
+    b = [3, 4]
+    @test GlobalOptimization.cat_elements(a, a) == (1, 2, 1, 2)
+    @test GlobalOptimization.cat_elements(a, b) == (1, 2, [3, 4])
+    @test GlobalOptimization.cat_elements(b, a) == ([3, 4], 1, 2)
+    @test GlobalOptimization.cat_elements(b, b) == ([3, 4], [3, 4])
+
+    # Test GlobalOptimizationTrace
     trace_file = "./trace.txt"
     TraceLevelConstructors = [:TraceMinimal, :TraceDetailed, :TraceAll]
     trace_modes = [:minimal, :detailed, :all]
@@ -179,6 +208,11 @@ end
             ),
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
+
+        output = @capture_out begin
+            GlobalOptimization.top_level_trace(do_no_trace)
+        end
+        @test isempty(output)
 
         output = @capture_out begin
             GlobalOptimization.trace(do_no_trace, false)
@@ -206,6 +240,14 @@ end
             ),
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
+
+        output = @capture_out begin
+            GlobalOptimization.top_level_trace(do_only_show_trace)
+        end
+        labels = ["Iter","Time","S","Best Fitness"]
+        for l in labels
+            @test contains(output, l)
+        end
 
         do_only_show_trace.cache.iteration = 1
         output = @capture_out begin
@@ -246,14 +288,23 @@ end
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
 
+        output = @capture_out begin
+            GlobalOptimization.top_level_trace(do_only_save_trace)
+        end
+        @test isempty(output)
+        lines = readlines(trace_file)
+        @test length(lines) == 1
+        @test lines[1] == "Iter,Time,S,Best Fitness"
+
         do_only_save_trace.cache.iteration = 1
         output = @capture_out begin
             GlobalOptimization.trace(do_only_save_trace, false)
         end
         @test isempty(output)
         lines = readlines(trace_file)
-        @test length(lines) == 1
-        @test lines[1] == "1,0.000000,0,0.000000e+00"
+        @test length(lines) == 2
+        @test lines[1] == "Iter,Time,S,Best Fitness"
+        @test lines[2] == "1,0.000000,0,0.000000e+00"
 
         do_only_save_trace.cache.iteration = 2
         output = @capture_out begin
@@ -261,8 +312,9 @@ end
         end
         @test isempty(output)
         lines = readlines(trace_file)
-        @test length(lines) == 1
-        @test lines[1] == "1,0.000000,0,0.000000e+00"
+        @test length(lines) == 2
+        @test lines[1] == "Iter,Time,S,Best Fitness"
+        @test lines[2] == "1,0.000000,0,0.000000e+00"
 
         do_only_save_trace.cache.iteration = 3
         output = @capture_out begin
@@ -270,9 +322,10 @@ end
         end
         @test isempty(output)
         lines = readlines(trace_file)
-        @test length(lines) == 2
-        @test lines[1] == "1,0.000000,0,0.000000e+00"
-        @test lines[2] == "3,0.000000,0,0.000000e+00"
+        @test length(lines) == 3
+        @test lines[1] == "Iter,Time,S,Best Fitness"
+        @test lines[2] == "1,0.000000,0,0.000000e+00"
+        @test lines[3] == "3,0.000000,0,0.000000e+00"
         rm(trace_file)
     end
 
