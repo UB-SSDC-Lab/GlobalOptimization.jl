@@ -1,6 +1,7 @@
 
 # Optimization Status
-@enum(Status::Int8,
+@enum(
+    Status::Int8,
     IN_PROGRESS = 0,
     MINIMUM_COST_ACHIEVED = 1,
     MAXIMUM_TIME_EXCEEDED = 2,

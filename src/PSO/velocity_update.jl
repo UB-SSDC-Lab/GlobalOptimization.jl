@@ -317,7 +317,7 @@ function adapt!(vu::CSRNVelocityUpdate, improved::Bool, stall_iteration::Int)
 end
 
 function get_show_trace_elements(
-    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return (
         TraceElement("w", 'f', 6, 2, vu.w),
@@ -326,20 +326,18 @@ function get_show_trace_elements(
     )
 end
 function get_save_trace_elements(
-    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+    vu::MATLABVelocityUpdate, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return get_show_trace_elements(vu, trace_mode)
 end
 
 function get_show_trace_elements(
-    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed},Val{:all}}
 )
-    return (
-        TraceElement("w", 'f', 6, 2, vu.w),
-    )
+    return (TraceElement("w", 'f', 6, 2, vu.w),)
 end
 function get_save_trace_elements(
-    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed}, Val{:all}}
+    vu::CSRNVelocityUpdate, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return get_show_trace_elements(vu, trace_mode)
 end

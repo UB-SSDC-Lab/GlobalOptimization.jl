@@ -147,7 +147,8 @@ must update the `iteration` field each iteration in `iterate!(opt)`. Additionall
 `global_best_candidate` and `global_best_fitness` fields must be updated in each iteration
 when appropriate (i.e., when the global best candidate improves) in `iterate!(opt)`.
 """
-mutable struct MinimalPopulationBasedOptimizerCache{T} <: AbstractPopulationBasedOptimizerCache
+mutable struct MinimalPopulationBasedOptimizerCache{T} <:
+               AbstractPopulationBasedOptimizerCache
     # Global best candidate info
     global_best_candidate::Vector{T}
     global_best_fitness::T
@@ -341,7 +342,6 @@ function handle_stall!(opt::AbstractOptimizer)
     end
 end
 
-
 """
     check_stopping_criteria(opt::AbstractOptimizer)
 
@@ -393,18 +393,24 @@ function get_save_trace_elements(opt::AbstractOptimizer, trace_mode::Val{:minima
     return get_show_trace_elements(opt, trace_mode)
 end
 
-get_val_type(::Val{type}) where type = type
+get_val_type(::Val{type}) where {type} = type
 function get_show_trace_elements(
-    opt::AbstractOptimizer,
-    trace_mode::Union{Val{:detailed}, Val{:all}},
+    opt::AbstractOptimizer, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     mode = get_val_type(trace_mode)
-    throw(ArgumentError("get_show_trace_elements not implemented for $(typeof(opt)) with trace mode $mode."))
+    throw(
+        ArgumentError(
+            "get_show_trace_elements not implemented for $(typeof(opt)) with trace mode $mode.",
+        ),
+    )
 end
 function get_save_trace_elements(
-    opt::AbstractOptimizer,
-    trace_mode::Union{Val{:detailed}, Val{:all}},
+    opt::AbstractOptimizer, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     mode = get_val_type(trace_mode)
-    throw(ArgumentError("get_save_trace_elements not implemented for $(typeof(opt)) with trace mode $mode."))
+    throw(
+        ArgumentError(
+            "get_save_trace_elements not implemented for $(typeof(opt)) with trace mode $mode.",
+        ),
+    )
 end

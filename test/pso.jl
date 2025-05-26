@@ -83,7 +83,12 @@ GlobalOptimization.initialize!(pso)
 te = GlobalOptimization.get_show_trace_elements(pso, Val{:detailed}())
 @test length(te) == 7
 
-pso2 = PSO(prob; show_trace=Val(true), trace_level=TraceDetailed(1), velocity_update=CSRNVelocityUpdate())
+pso2 = PSO(
+    prob;
+    show_trace=Val(true),
+    trace_level=TraceDetailed(1),
+    velocity_update=CSRNVelocityUpdate(),
+)
 GlobalOptimization.initialize!(pso2)
 te2 = GlobalOptimization.get_show_trace_elements(pso2, Val{:detailed}())
 @test length(te2) == 5

@@ -43,18 +43,12 @@ end
 
 # Setup Problem
 N = 10
-ss = ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N], [5.12 for i in 1:N]
-)
+ss = ContinuousRectangularSearchSpace([-5.12 for i in 1:N], [5.12 for i in 1:N])
 prob = OptimizationProblem(rastrigin, ss)
 #prob = NonlinearProblem(simple_nonlinear_equation, ss)
 
 # Instantiate MBH
-dist = MBHAdaptiveDistribution{Float64}(
-    20, 5;
-    λhat0=0.01,
-    use_mad=true,
-)
+dist = MBHAdaptiveDistribution{Float64}(20, 5; λhat0=0.01, use_mad=true)
 lsgb = LBFGSLocalSearch{Float64}(;
     iters_per_solve=5,
     percent_decrease_tol=30.0,
@@ -73,15 +67,14 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 mbh = MBH(
     prob;
     hopper_type=MCH(;
-        num_hoppers=50,
-        eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
+        num_hoppers=50, eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
     ),
     hop_distribution=dist,
     local_search=lsgb,
     max_time=20.0,
     min_cost=1e-6,
-    max_stall_time = Inf,
-    max_stall_iterations = 10000,
+    max_stall_time=Inf,
+    max_stall_iterations=10000,
     show_trace=Val(true),
     trace_level=TraceAll(1),
 )

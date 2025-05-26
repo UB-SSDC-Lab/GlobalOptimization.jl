@@ -6,9 +6,9 @@ Options for the Monotonic Basin Hopping (MBH) algorithm.
 """
 struct MBHOptions{
     D<:AbstractMBHDistribution,
-    LS<:Union{AbstractLocalSearch, Vector{<:AbstractLocalSearch}},
+    LS<:Union{AbstractLocalSearch,Vector{<:AbstractLocalSearch}},
     ISS<:Union{Nothing,ContinuousRectangularSearchSpace},
-    GO<:GeneralOptions
+    GO<:GeneralOptions,
 } <: AbstractAlgorithmSpecificOptions
     # The general options
     general::GO
@@ -23,17 +23,9 @@ struct MBHOptions{
     initial_space::ISS
 
     function MBHOptions(
-        general::GO,
-        distribution::D,
-        local_search::LS,
-        initial_space::ISS,
+        general::GO, distribution::D, local_search::LS, initial_space::ISS
     ) where {D,LS,ISS,GO}
-        return new{D,LS,ISS,GO}(
-            general,
-            distribution,
-            local_search,
-            initial_space,
-        )
+        return new{D,LS,ISS,GO}(general, distribution, local_search, initial_space)
     end
 end
 
@@ -46,10 +38,10 @@ This implementation employs a single candidate rather than a population.
 """
 struct MBH{
     D<:AbstractMBHDistribution,
-    LS<:Union{AbstractLocalSearch, Vector{<:AbstractLocalSearch}},
+    LS<:Union{AbstractLocalSearch,Vector{<:AbstractLocalSearch}},
     T<:AbstractFloat,
     E<:FeasibilityHandlingEvaluator,
-    BHE<:Union{Nothing, BatchJobEvaluator},
+    BHE<:Union{Nothing,BatchJobEvaluator},
     IBSS,
     H<:AbstractHopperSet{T},
     GO<:GeneralOptions,
@@ -90,7 +82,9 @@ end
 Returns the batch job evaluator for a given hopper type.
 """
 get_batch_evaluator(hopper_type::SingleHopper) = nothing
-get_batch_evaluator(hopper_type::MCH) = construct_batch_job_evaluator(hopper_type.eval_method)
+function get_batch_evaluator(hopper_type::MCH)
+    construct_batch_job_evaluator(hopper_type.eval_method)
+end
 
 """
     get_hopper_set(prob::AbstractProblem, hopper_type::AbstractHopperType)
@@ -104,8 +98,7 @@ function get_hopper_set(
     return SingleHopperSet{T}(num_dims(prob))
 end
 function get_hopper_set(
-    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}},
-    hopper_type::MCH,
+    prob::AbstractProblem{has_penalty,ContinuousRectangularSearchSpace{T}}, hopper_type::MCH
 ) where {has_penalty,T}
     return MCHSet{T}(num_dims(prob), hopper_type.num_hoppers)
 end
@@ -173,12 +166,7 @@ function MBH(
     # Construct the options
     options = MBHOptions(
         GeneralOptions(
-            GlobalOptimizationTrace(
-                show_trace,
-                save_trace,
-                save_file,
-                trace_level,
-            ),
+            GlobalOptimizationTrace(show_trace, save_trace, save_file, trace_level),
             function_value_check,
             min_cost,
             max_time,
@@ -234,9 +222,7 @@ function step!(opt::MBH)
     search_space = evaluator.prob.ss
 
     # Take a hop
-    hop!(
-        hopper_set, search_space, evaluator, bhe, distribution, local_search
-    )
+    hop!(hopper_set, search_space, evaluator, bhe, distribution, local_search)
     check_fitness!(hopper_set, get_function_value_check(options))
 
     # Update fitness
@@ -245,7 +231,7 @@ function step!(opt::MBH)
     return nothing
 end
 
-function get_show_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_show_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed},Val{:all}})
     # Get minimal trace elements
     minimal_elements = get_show_trace_elements(opt, Val{:minimal}())
 
@@ -258,6 +244,6 @@ function get_show_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val
     return cat_elements(cat_elements(minimal_elements, hopper_elements), dist_elements)
 end
 
-function get_save_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_save_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed},Val{:all}})
     return get_show_trace_elements(opt, trace_mode)
 end

@@ -10,10 +10,7 @@ abstract type AbstractOptions end
 
 General options for all optimizers
 """
-struct GeneralOptions{
-    FVC <: Union{Val{false}, Val{true}},
-    TR,
-} <: AbstractOptions
+struct GeneralOptions{FVC<:Union{Val{false},Val{true}},TR} <: AbstractOptions
     # Trace
     trace::TR
 
@@ -92,7 +89,9 @@ get_max_time(opts::AbstractAlgorithmSpecificOptions) = get_max_time(get_general(
 Returns the max iterations option from an algorithm options type.
 """
 get_max_iterations(opts::GeneralOptions) = opts.max_iterations
-get_max_iterations(opts::AbstractAlgorithmSpecificOptions) = get_max_iterations(get_general(opts))
+function get_max_iterations(opts::AbstractAlgorithmSpecificOptions)
+    get_max_iterations(get_general(opts))
+end
 
 """
     get_function_tolerance(opts::AbstractAlgorithmSpecificOptions)
@@ -100,7 +99,9 @@ get_max_iterations(opts::AbstractAlgorithmSpecificOptions) = get_max_iterations(
 Returns the function tolerance option from an algorithm options type.
 """
 get_function_tolerance(opts::GeneralOptions) = opts.function_tolerance
-get_function_tolerance(opts::AbstractAlgorithmSpecificOptions) = get_function_tolerance(get_general(opts))
+function get_function_tolerance(opts::AbstractAlgorithmSpecificOptions)
+    get_function_tolerance(get_general(opts))
+end
 
 """
     get_max_stall_time(opts::AbstractAlgorithmSpecificOptions)
@@ -108,7 +109,9 @@ get_function_tolerance(opts::AbstractAlgorithmSpecificOptions) = get_function_to
 Returns the max stall time option from an algorithm options type.
 """
 get_max_stall_time(opts::GeneralOptions) = opts.max_stall_time
-get_max_stall_time(opts::AbstractAlgorithmSpecificOptions) = get_max_stall_time(get_general(opts))
+function get_max_stall_time(opts::AbstractAlgorithmSpecificOptions)
+    get_max_stall_time(get_general(opts))
+end
 
 """
     get_max_stall_iterations(opts::AbstractAlgorithmSpecificOptions)

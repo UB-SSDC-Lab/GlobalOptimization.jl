@@ -20,14 +20,12 @@ GlobalOptimization.get_best_fitness(opt::DummyOptimizer) = 0.0
 GlobalOptimization.get_best_candidate(opt::DummyOptimizer) = [0.0, 0.0]
 GlobalOptimization.get_elapsed_time(opt::DummyOptimizer) = 0.0
 function GlobalOptimization.get_show_trace_elements(
-    opt::DummyOptimizer,
-    trace_mode::Union{Val{:detailed}, Val{:all}},
+    opt::DummyOptimizer, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return GlobalOptimization.get_show_trace_elements(opt, Val{:minimal}())
 end
 function GlobalOptimization.get_save_trace_elements(
-    opt::DummyOptimizer,
-    trace_mode::Union{Val{:detailed}, Val{:all}},
+    opt::DummyOptimizer, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return GlobalOptimization.get_save_trace_elements(opt, Val{:minimal}())
 end
@@ -204,7 +202,7 @@ end
                     1e-4,
                     2.0,
                     5,
-                )
+                ),
             ),
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
@@ -236,7 +234,7 @@ end
                     1e-4,
                     2.0,
                     5,
-                )
+                ),
             ),
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
@@ -244,7 +242,7 @@ end
         output = @capture_out begin
             GlobalOptimization.top_level_trace(do_only_show_trace)
         end
-        labels = ["Iter","Time","S","Best Fitness"]
+        labels = ["Iter", "Time", "S", "Best Fitness"]
         for l in labels
             @test contains(output, l)
         end
@@ -283,7 +281,7 @@ end
                     1e-4,
                     2.0,
                     5,
-                )
+                ),
             ),
             GlobalOptimization.MinimalOptimizerCache{Float64}(),
         )
@@ -344,11 +342,15 @@ end
     # Test GeneralOptions constructors and accessors
     go_tt = GlobalOptimization.GeneralOptions(
         GlobalOptimization.GlobalOptimizationTrace(
-            Val(true),
-            Val(false),
-            "trace.txt",
-            GlobalOptimization.TraceMinimal(1),
-        ), Val(true), 0.0, 10.0, 100, 1e-4, 2.0, 5
+            Val(true), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
+        ),
+        Val(true),
+        0.0,
+        10.0,
+        100,
+        1e-4,
+        2.0,
+        5,
     )
     @test GlobalOptimization.get_max_time(go_tt) == 10.0
     @test GlobalOptimization.get_min_cost(go_tt) == 0.0
@@ -360,11 +362,15 @@ end
 
     go_tf = GlobalOptimization.GeneralOptions(
         GlobalOptimization.GlobalOptimizationTrace(
-            Val(true),
-            Val(false),
-            "trace.txt",
-            GlobalOptimization.TraceMinimal(1),
-        ), Val(false), 0.0, 10.0, 100, 1e-4, 2.0, 5
+            Val(true), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
+        ),
+        Val(false),
+        0.0,
+        10.0,
+        100,
+        1e-4,
+        2.0,
+        5,
     )
     @test GlobalOptimization.get_max_time(go_tf) == 10.0
     @test GlobalOptimization.get_min_cost(go_tf) == 0.0
@@ -419,10 +425,7 @@ end
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 0.0,
@@ -431,7 +434,7 @@ end
                 1e-4,
                 2.0,
                 5,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
@@ -451,17 +454,15 @@ end
     @test dummy_opt.cache.stall_value == 0.0
 
     # Test minimum cost stopping criterion
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt) == GlobalOptimization.MINIMUM_COST_ACHIEVED
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt) ==
+        GlobalOptimization.MINIMUM_COST_ACHIEVED
 
     # Test maximum time stopping criterion
     dummy_opt2 = DummyOptimizer(
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 -Inf,
@@ -470,22 +471,20 @@ end
                 1e-4,
                 Inf,
                 5,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
     GlobalOptimization.initialize!(dummy_opt2.cache, 1e-8)
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt2) == GlobalOptimization.MAXIMUM_TIME_EXCEEDED
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt2) ==
+        GlobalOptimization.MAXIMUM_TIME_EXCEEDED
 
     # Test maximum iterations stopping criterion
     dummy_opt3 = DummyOptimizer(
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 -Inf,
@@ -494,23 +493,21 @@ end
                 1e-4,
                 Inf,
                 5,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
     GlobalOptimization.initialize!(dummy_opt3.cache, 1e-8)
     dummy_opt3.cache.iteration = 1
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt3) == GlobalOptimization.MAXIMUM_ITERATIONS_EXCEEDED
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt3) ==
+        GlobalOptimization.MAXIMUM_ITERATIONS_EXCEEDED
 
     # Test maximum stall iterations exceeded
     dummy_opt4 = DummyOptimizer(
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 -Inf,
@@ -519,23 +516,21 @@ end
                 1e-4,
                 Inf,
                 1,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
     GlobalOptimization.initialize!(dummy_opt4.cache, 1e-8)
     dummy_opt4.cache.stall_iteration = 1
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt4) == GlobalOptimization.MAXIMUM_STALL_ITERATIONS_EXCEEDED
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt4) ==
+        GlobalOptimization.MAXIMUM_STALL_ITERATIONS_EXCEEDED
 
     # Test maximum stall time exceeded
     dummy_opt5 = DummyOptimizer(
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 -Inf,
@@ -544,22 +539,20 @@ end
                 1e-4,
                 0.0,
                 100,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
     GlobalOptimization.initialize!(dummy_opt5.cache, 1e-8)
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt5) == GlobalOptimization.MAXIMUM_STALL_TIME_EXCEEDED
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt5) ==
+        GlobalOptimization.MAXIMUM_STALL_TIME_EXCEEDED
 
     # Check no stopping criteria
     dummy_opt6 = DummyOptimizer(
         DummyOptimizerOptions(
             GlobalOptimization.GeneralOptions(
                 GlobalOptimization.GlobalOptimizationTrace(
-                    Val(false),
-                    Val(false),
-                    "trace.txt",
-                    GlobalOptimization.TraceMinimal(1),
+                    Val(false), Val(false), "trace.txt", GlobalOptimization.TraceMinimal(1)
                 ),
                 Val(true),
                 -Inf,
@@ -568,12 +561,13 @@ end
                 Inf,
                 Inf,
                 100,
-            )
+            ),
         ),
         GlobalOptimization.MinimalOptimizerCache{Float64}(),
     )
     GlobalOptimization.initialize!(dummy_opt6.cache, 1e-8)
-    @test GlobalOptimization.check_stopping_criteria(dummy_opt6) == GlobalOptimization.IN_PROGRESS
+    @test GlobalOptimization.check_stopping_criteria(dummy_opt6) ==
+        GlobalOptimization.IN_PROGRESS
 end
 
 @testset showtiming = true "Candidate" begin

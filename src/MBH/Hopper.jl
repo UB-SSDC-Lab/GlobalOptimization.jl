@@ -397,16 +397,12 @@ function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
 end
 
 function get_show_trace_elements(
-    hopper_set::SingleHopperSet,
-    trace_mode::Union{Val{:detailed}, Val{:all}}
+    hopper_set::SingleHopperSet, trace_mode::Union{Val{:detailed},Val{:all}}
 )
-    return (
-        TraceElement("Hops", 'd', 8, 0, hopper_set.num_hops),
-    )
+    return (TraceElement("Hops", 'd', 8, 0, hopper_set.num_hops),)
 end
 function get_show_trace_elements(
-    hopper_set::MCHSet,
-    trace_mode::Union{Val{:detailed}, Val{:all}}
+    hopper_set::MCHSet, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     min_hops = minimum(hopper_set.num_hops)
     max_hops = maximum(hopper_set.num_hops)
@@ -417,8 +413,7 @@ function get_show_trace_elements(
 end
 
 function get_save_trace_elements(
-    hopper_set::AbstractHopperSet,
-    trace_mode::Union{Val{:detailed}, Val{:all}}
+    hopper_set::AbstractHopperSet, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return get_show_trace_elements(hopper_set, trace_mode)
 end

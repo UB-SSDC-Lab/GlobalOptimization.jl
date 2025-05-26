@@ -411,15 +411,11 @@ function draw_step!(step::AbstractVector{T}, dist::MBHAdaptiveDistribution{T}) w
 end
 
 function get_show_trace_elements(
-    dist::MBHStaticDistribution,
-    trace_mode::Union{Val{:detailed}, Val{:all}}
+    dist::MBHStaticDistribution, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return ()
 end
-function get_show_trace_elements(
-    dist::MBHAdaptiveDistribution,
-    trace_mode::Val{:detailed}
-)
+function get_show_trace_elements(dist::MBHAdaptiveDistribution, trace_mode::Val{:detailed})
     # Get minimum and maximum elements of the estimated scale parameter
     min_λhat_idx = argmin(dist.λhat)
     max_λhat_idx = argmax(dist.λhat)
@@ -431,18 +427,11 @@ function get_show_trace_elements(
         TraceElement("max(λ̂)", 'e', 16, 8, dist.λhat[max_λhat_idx]),
     )
 end
-function get_show_trace_elements(
-    dist::MBHAdaptiveDistribution,
-    trace_mode::Val{:all},
-)
-    return map(
-        i -> TraceElement("λ̂[$i]", 'e', 16, 8, dist.λhat[i]),
-        eachindex(dist.λhat)
-    )
+function get_show_trace_elements(dist::MBHAdaptiveDistribution, trace_mode::Val{:all})
+    return map(i -> TraceElement("λ̂[$i]", 'e', 16, 8, dist.λhat[i]), eachindex(dist.λhat))
 end
 function get_save_trace_elements(
-    dist::AbstractMBHDistribution,
-    trace_mode::Union{Val{:detailed}, Val{:all}}
+    dist::AbstractMBHDistribution, trace_mode::Union{Val{:detailed},Val{:all}}
 )
     return get_show_trace_elements(dist, trace_mode)
 end

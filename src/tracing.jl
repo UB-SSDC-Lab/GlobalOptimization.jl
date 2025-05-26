@@ -3,9 +3,7 @@
 
 A structure to with information about the tracing of the global optimization process.
 """
-struct TraceLevel{
-    TM <: Union{Val{:minimal}, Val{:detailed}, Val{:all}}
-}
+struct TraceLevel{TM<:Union{Val{:minimal},Val{:detailed},Val{:all}}}
     trace_mode::TM
     print_frequency::Int
     save_frequency::Int
@@ -23,7 +21,7 @@ iterations, and global best fitness.
 # Returns
 - `TraceLevel{Val{:minimal}}`: A trace level object with the minimal trace level.
 """
-function TraceMinimal(;print_frequency = 1, save_frequency = 1)
+function TraceMinimal(; print_frequency=1, save_frequency=1)
     return TraceLevel(Val{:minimal}(), print_frequency, save_frequency)
 end
 
@@ -37,7 +35,7 @@ the minimal trace).
 # Returns
 - `TraceLevel{Val{:detailed}}`: A trace level object with the detailed trace level.
 """
-function TraceDetailed(;print_frequency = 1, save_frequency = 1)
+function TraceDetailed(; print_frequency=1, save_frequency=1)
     return TraceLevel(Val{:detailed}(), print_frequency, save_frequency)
 end
 
@@ -51,12 +49,12 @@ detailed trace). This trace option should likely only be used for debugging purp
 # Returns
 - `TraceLevel{Val{:all}}`: A trace level object with the all trace level.
 """
-function TraceAll(;print_frequency = 1, save_frequency = 1)
+function TraceAll(; print_frequency=1, save_frequency=1)
     return TraceLevel(Val{:all}(), print_frequency, save_frequency)
 end
 
 for Tr in (:TraceMinimal, :TraceDetailed, :TraceAll)
-    @eval $(Tr)(freq) = $(Tr)(;print_frequency = freq, save_frequency = freq)
+    @eval $(Tr)(freq) = $(Tr)(; print_frequency=freq, save_frequency=freq)
 end
 
 """
@@ -71,9 +69,7 @@ A structure to hold the global optimization trace settings.
 - `trace_level::TraceLevel{TM}`: The trace level settings, which can be `TraceMinimal`, `TraceDetailed`, or `TraceAll`.
 """
 struct GlobalOptimizationTrace{
-    SHT <: Union{Val{false}, Val{true}},
-    SAT <: Union{Val{false}, Val{true}},
-    TM
+    SHT<:Union{Val{false},Val{true}},SAT<:Union{Val{false},Val{true}},TM
 }
     show_trace::SHT
     save_trace::SAT
@@ -111,7 +107,7 @@ end
 function get_label_str(te::TraceElement, fmt::Val{false})
     return te.label
 end
-function get_label_str(te::AbstractVector{TE}, fmt::Val) where {TE <: TraceElement}
+function get_label_str(te::AbstractVector{TE}, fmt::Val) where {TE<:TraceElement}
     str = ""
     for i in eachindex(te)
         str *= get_label_str(te[i], fmt)
@@ -127,7 +123,7 @@ function get_line_str(te::TraceElement)
     fmt_str = Format("%-$(te.length)s")
     return format(fmt_str, '-'^(length(te.label) + 2))
 end
-function get_line_str(te::AbstractVector{TE}) where {TE <: TraceElement}
+function get_line_str(te::AbstractVector{TE}) where {TE<:TraceElement}
     str = ""
     for i in eachindex(te)
         str *= get_line_str(te[i])
@@ -138,22 +134,22 @@ function get_line_str(te::AbstractVector{TE}) where {TE <: TraceElement}
     return str
 end
 
-function get_str(te::TraceElement{T}, fmt::Val{true}) where {T <: Integer}
+function get_str(te::TraceElement{T}, fmt::Val{true}) where {T<:Integer}
     fmt_str = Format("%-$(te.length)d")
     return format(fmt_str, te.value)
 end
-function get_str(te::TraceElement{T}, fmt::Val{true}) where {T <: AbstractFloat}
+function get_str(te::TraceElement{T}, fmt::Val{true}) where {T<:AbstractFloat}
     fmt_str = Format("%-$(te.length).$(te.precision)$(te.flag)")
     return format(fmt_str, te.value)
 end
-function get_str(te::TraceElement{T}, fmt::Val{false}) where {T <: Integer}
+function get_str(te::TraceElement{T}, fmt::Val{false}) where {T<:Integer}
     return string(te.value)
 end
-function get_str(te::TraceElement{T}, fmt::Val{false}) where {T <: AbstractFloat}
+function get_str(te::TraceElement{T}, fmt::Val{false}) where {T<:AbstractFloat}
     fmt_str = Format("%$(te.flag)")
     return format(fmt_str, te.value)
 end
-function get_str(te::AbstractVector{TE}, fmt::Val) where {TE <: TraceElement}
+function get_str(te::AbstractVector{TE}, fmt::Val) where {TE<:TraceElement}
     str = ""
     for i in eachindex(te)
         str *= get_str(te[i], fmt)
@@ -249,9 +245,11 @@ function trace(opt, final)
     trace.save_trace isa Val{false} && trace.show_trace isa Val{false} && return nothing
 
     iteration = get_iteration(opt)
-    show_now = trace.show_trace isa Val{true} &&
+    show_now =
+        trace.show_trace isa Val{true} &&
         ((mod1(iteration, trace.trace_level.print_frequency) == 1) || final)
-    save_now = trace.save_trace isa Val{true} &&
+    save_now =
+        trace.save_trace isa Val{true} &&
         ((mod1(iteration, trace.trace_level.save_frequency) == 1) || final)
 
     if show_now || save_now

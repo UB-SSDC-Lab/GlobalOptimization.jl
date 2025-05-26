@@ -45,19 +45,9 @@ struct DEOptions{
     - `initial_space<:Union{Nothing,ContinuousRectangularSearchSpace}`: The initial space to initialize the population.
     """
     function DEOptions(
-        general::GO,
-        pim::PI,
-        mutation::MP,
-        crossover::CP,
-        initial_space::ISS,
+        general::GO, pim::PI, mutation::MP, crossover::CP, initial_space::ISS
     ) where {MP<:AbstractMutationParameters,CP<:AbstractCrossoverParameters,GO,PI,ISS}
-        return new{MP,CP,ISS,PI,GO}(
-            general,
-            pim,
-            mutation,
-            crossover,
-            initial_space,
-        )
+        return new{MP,CP,ISS,PI,GO}(general, pim, mutation, crossover, initial_space)
     end
 end
 
@@ -145,12 +135,7 @@ function DE(
     # Construct options
     options = DEOptions(
         GeneralOptions(
-            GlobalOptimizationTrace(
-                show_trace,
-                save_trace,
-                save_file,
-                trace_level,
-            ),
+            GlobalOptimizationTrace(show_trace, save_trace, save_file, trace_level),
             function_value_check,
             min_cost,
             max_time,
@@ -228,10 +213,10 @@ function step!(opt::DE)
     return nothing
 end
 
-function get_show_trace_elements(opt::DE, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_show_trace_elements(opt::DE, trace_mode::Union{Val{:detailed},Val{:all}})
     return get_show_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
 end
 
-function get_save_trace_elements(opt::DE, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_save_trace_elements(opt::DE, trace_mode::Union{Val{:detailed},Val{:all}})
     return get_save_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
 end

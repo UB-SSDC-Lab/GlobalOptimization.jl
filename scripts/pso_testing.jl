@@ -40,9 +40,7 @@ end
 
 # Setup Problem
 N = 10
-ss = ContinuousRectangularSearchSpace(
-    [-5.12 for i in 1:N], [5.12 for i in 1:N]
-)
+ss = ContinuousRectangularSearchSpace([-5.12 for i in 1:N], [5.12 for i in 1:N])
 prob = OptimizationProblem(layeb_1, ss)
 
 # Instantiate PSO

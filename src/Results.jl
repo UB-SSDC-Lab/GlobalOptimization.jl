@@ -34,11 +34,7 @@ struct Results{T<:AbstractFloat}
     - `Results{T}`
     """
     function Results(
-        fbest::T,
-        xbest::AbstractVector{T},
-        iters,
-        time,
-        exitFlag::Status
+        fbest::T, xbest::AbstractVector{T}, iters, time, exitFlag::Status
     ) where {T}
         return new{T}(fbest, copy(xbest), iters, time, exitFlag)
     end

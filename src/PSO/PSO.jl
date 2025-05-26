@@ -24,17 +24,9 @@ struct PSOOptions{
     initial_space::ISS
 
     function PSOOptions(
-        general::GO,
-        pim::PI,
-        velocity_update::VU,
-        initial_space::ISS,
+        general::GO, pim::PI, velocity_update::VU, initial_space::ISS
     ) where {VU,ISS,PI,GO}
-        return new{VU,ISS,PI,GO}(
-            general,
-            pim,
-            velocity_update,
-            initial_space,
-        )
+        return new{VU,ISS,PI,GO}(general, pim, velocity_update, initial_space)
     end
 end
 
@@ -116,12 +108,7 @@ function PSO(
     # Construct the options
     options = PSOOptions(
         GeneralOptions(
-            GlobalOptimizationTrace(
-                show_trace,
-                save_trace,
-                save_file,
-                trace_level,
-            ),
+            GlobalOptimizationTrace(show_trace, save_trace, save_file, trace_level),
             function_value_check,
             min_cost,
             max_time,
@@ -201,7 +188,7 @@ function step!(opt::PSO)
     return nothing
 end
 
-function get_show_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_show_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed},Val{:all}})
     # Get minimal trace elements
     minimal_elements = get_show_trace_elements(opt, Val{:minimal}())
 
@@ -211,7 +198,7 @@ function get_show_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed}, Val
     return (minimal_elements..., vu_elements...)
 end
 
-function get_save_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed}, Val{:all}})
+function get_save_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed},Val{:all}})
     # Get minimal trace elements
     minimal_elements = get_save_trace_elements(opt, Val{:minimal}())
 
