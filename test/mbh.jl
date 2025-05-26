@@ -26,6 +26,18 @@ using ReverseDiff: ReverseDiff
     @test eachindex(mh) == 1:5
     @test GlobalOptimization.num_dims(mh) == 3
 
+    # Test trace element getters
+    shte = GlobalOptimization.get_show_trace_elements(sh, Val{:detailed}())
+    @test length(shte) == 1
+    @test shte[1].label == "Hops"
+    @test shte == GlobalOptimization.get_save_trace_elements(sh, Val{:detailed}())
+
+    mhte = GlobalOptimization.get_show_trace_elements(mh, Val{:detailed}())
+    @test length(mhte) == 2
+    @test mhte[1].label == "Min Hops"
+    @test mhte[2].label == "Max Hops"
+    @test mhte == GlobalOptimization.get_save_trace_elements(mh, Val{:detailed}())
+
     # Test initialization of SingleHopperSet and MCHSet
     search_space = GlobalOptimization.ContinuousRectangularSearchSpace(
         [-1.0, -1.0], [1.0, 1.0]
@@ -239,6 +251,10 @@ end
     GlobalOptimization.draw_step!(vec, sd)
     @test all(isfinite, vec)
 
+    # Trace...
+    @test GlobalOptimization.get_show_trace_elements(sd, Val{:detailed}()) isa Tuple{}
+    @test GlobalOptimization.get_save_trace_elements(sd, Val{:detailed}()) isa Tuple{}
+
     # Test MBHAdaptiveDistribution constructor and push_accepted_step!
     ad = MBHAdaptiveDistribution{Float64}(21, 20; a=0.9, b=0.1, c=2.0, λhat0=1.0)
     ss = ContinuousRectangularSearchSpace([-1.0, -1.0], [1.0, 1.0])
@@ -264,6 +280,13 @@ end
     Random.seed!(123)
     GlobalOptimization.draw_step!(vec2, ad2)
     @test all(isfinite, vec2)
+
+    # Trace
+    adte = GlobalOptimization.get_show_trace_elements(ad, Val{:detailed}())
+    @test length(adte) == 4
+    adte_all = GlobalOptimization.get_save_trace_elements(ad, Val{:all}())
+    @test length(adte_all) == 2
+    @test adte == GlobalOptimization.get_save_trace_elements(ad, Val{:detailed}())
 end
 
 @testset showtiming = true "LocalSearch" begin
