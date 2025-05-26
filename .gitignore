@@ -6,6 +6,7 @@
 *.jl.cov
 *.mem
 *.cov
+*.txt
 lcov.info
 test_coverage.sh
 format.sh

@@ -65,6 +65,7 @@ de = DE(
     max_stall_iterations=100,
     mutation_params=mutation_strategy,
     crossover_params=crossover_strategy,
+    show_trace=Val(true),
 )
 
 res = optimize!(de)

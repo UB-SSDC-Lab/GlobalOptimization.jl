@@ -3,11 +3,11 @@ module GlobalOptimization
 using ADTypes: AbstractADType
 using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
 using Distributions: Cauchy, Laplace, MixtureModel
-using Format: printfmtln, FormatExpr
 using LatinHypercubeSampling: scaleLHC, LHCoptim
 using LinearAlgebra: dot, eigen!, mul!
 using LineSearches: HagerZhang, InitialStatic
 using Polyester: @batch
+using Printf: format, Format
 using StaticArrays: SA, SVector
 using Statistics: cov, mean, median!, std
 using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG

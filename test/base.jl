@@ -291,7 +291,7 @@ end
         GlobalOptimization.GlobalOptimizationTrace(
             Val(true),
             Val(false),
-            "no_file.txt",
+            "trace.txt",
             GlobalOptimization.TraceMinimal(1),
         ), Val(true), 0.0, 10.0, 100, 1e-4, 2.0, 5
     )
@@ -307,7 +307,7 @@ end
         GlobalOptimization.GlobalOptimizationTrace(
             Val(true),
             Val(false),
-            "no_file.txt",
+            "trace.txt",
             GlobalOptimization.TraceMinimal(1),
         ), Val(false), 0.0, 10.0, 100, 1e-4, 2.0, 5
     )
@@ -366,7 +366,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),
@@ -405,7 +405,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),
@@ -429,7 +429,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),
@@ -454,7 +454,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),
@@ -479,7 +479,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),
@@ -503,7 +503,7 @@ end
                 GlobalOptimization.GlobalOptimizationTrace(
                     Val(false),
                     Val(false),
-                    "no_file.txt",
+                    "trace.txt",
                     GlobalOptimization.TraceMinimal(1),
                 ),
                 Val(true),

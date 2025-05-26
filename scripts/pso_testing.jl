@@ -49,12 +49,15 @@ prob = OptimizationProblem(layeb_1, ss)
 spso = PSO(
     prob;
     velocity_update=CSRNVelocityUpdate(),
+    show_trace=Val(true),
+    save_trace=Val(true),
+    trace_level=TraceDetailed(10),
 )
 tpso = PSO(prob; eval_method=ThreadedFunctionEvaluation(), max_time=20.0)
 ppso = PSO(prob; eval_method=PolyesterFunctionEvaluation(), max_time=20.0)
 
 Random.seed!(1234)
-res = optimize!(tpso)
+res = optimize!(spso)
 # res = optimize!(spso); display(res)
 # res = optimize!(tpso); display(res)
 # res = optimize!(ppso); display(res)

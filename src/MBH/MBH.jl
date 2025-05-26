@@ -133,7 +133,7 @@ Construct the standard Monotonic Basin Hopping (MBJ) algorithm with the specifie
     for bad values (i.e., Inf or NaN).
 - `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
 - `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
-- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `save_file::String="trace.txt"`: The file to save the trace to.
 - `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 """
 function MBH(
@@ -151,7 +151,7 @@ function MBH(
     function_value_check::Union{Val{false},Val{true}}=Val(true),
     show_trace::Union{Val{false},Val{true}}=Val(false),
     save_trace::Union{Val{false},Val{true}}=Val(false),
-    save_file::String="no_file.txt",
+    save_file::String="trace.txt",
     trace_level::TraceLevel=TraceMinimal(1),
 ) where {T<:Number,has_penalty}
     # Check arguments
@@ -245,12 +245,18 @@ function step!(opt::MBH)
     return nothing
 end
 
-function show_trace(mbh::MBH, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+function get_show_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val{:all}})
+    # Get minimal trace elements
+    minimal_elements = get_show_trace_elements(opt, Val{:minimal}())
 
+    # Get distribution trace elements
+    dist_elements = get_show_trace_elements(opt.options.distribution, trace_mode)
+
+    return cat_elements(minimal_elements, dist_elements)
 end
 
-function get_save_trace(mbh::MBH, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
-
+function get_save_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val{:all}})
+    return get_show_trace_elements(opt, trace_mode)
 end
 
 # ===== Implementation Specific Methods

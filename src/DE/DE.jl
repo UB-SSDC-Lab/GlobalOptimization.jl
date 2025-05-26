@@ -113,7 +113,7 @@ Construct a serial Differential Evolution (DE) algorithm with the given options.
     for bad values (i.e., Inf or NaN).
 - `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
 - `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
-- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `save_file::String="trace.txt"`: The file to save the trace to.
 - `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 """
 function DE(
@@ -133,7 +133,7 @@ function DE(
     function_value_check::Union{Val{false},Val{true}}=Val(true),
     show_trace::Union{Val{false},Val{true}}=Val(false),
     save_trace::Union{Val{false},Val{true}}=Val(false),
-    save_file::String="no_file.txt",
+    save_file::String="trace.txt",
     trace_level::TraceLevel=TraceMinimal(1),
 ) where {
     MP<:AbstractMutationParameters,
@@ -175,6 +175,8 @@ function DE(
 end
 
 # ===== AbstractPopulationBasedOptimizer interface
+get_population(opt::DE) = opt.population.current_generation
+
 function initialize!(opt::DE)
     # Unpack DE
     @unpack options, evaluator, population, cache = opt
@@ -226,42 +228,10 @@ function step!(opt::DE)
     return nothing
 end
 
-function show_trace(de::DE, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
-
+function get_show_trace_elements(opt::DE, trace_mode::Union{Val{:detailed}, Val{:all}})
+    return get_show_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
 end
 
-function get_save_trace(de::DE, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
-
-end
-
-# ===== Implementation Specific Methods
-
-"""
-    update_global_best!(opt::DE)
-
-Updates the global best candidate in the DE algorithm `opt` if a better candidate is found.
-"""
-function update_global_best!(opt::DE)
-    # Grab info
-    @unpack population, cache = opt
-    @unpack current_generation = population
-
-    # Find index and value of global best fitness if better than previous best
-    global_best_fitness = cache.global_best_fitness
-    global_best_idx = 0
-    @inbounds for (i, fitness) in enumerate(current_generation.candidates_fitness)
-        if fitness < global_best_fitness
-            global_best_idx = i
-            global_best_fitness = fitness
-        end
-    end
-
-    # Check if we've found a new global best
-    updated = false
-    if global_best_idx > 0
-        updated = true
-        cache.global_best_candidate .= current_generation.candidates[global_best_idx]
-        cache.global_best_fitness = global_best_fitness
-    end
-    return updated
+function get_save_trace_elements(opt::DE, trace_mode::Union{Val{:detailed}, Val{:all}})
+    return get_save_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
 end

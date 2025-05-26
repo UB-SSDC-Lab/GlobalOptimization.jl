@@ -14,14 +14,14 @@ All subtypes must define the following methods:
 - `step!(opt<:AbstractOptimizer)`: Perform a single step/iteration with the optimizer.
 - `get_best_fitness(opt<:AbstractOptimizer)`: Get the best fitness of the optimizer.
 - `get_best_candidate(opt<:AbstractOptimizer)`: Get the best candidate of the optimizer.
-- `show_trace(opt<:AbstractOptimizer, Union{Val{:minimal},Val{:detailed},Val{:all}})`: Print
-    the trace of the optimizer to the terminal at the current iteration. Note that a single
-    method can by implemented using the `Union` type, or individual methods can be
-    implemented for each trace level.
-- `get_save_trace(opt<:AbstractOptimizer, Union{Val{:minimal},Val{:detailed},Val{:all}})`:
-    Get the trace of the optimizer as a string at the current iteration, which will be
-    appended to the optimally specified file. Note that a single method can by implemented
-    using the `Union` type, or individual methods can be implemented for each trace level.
+- `get_show_trace_elements(opt<:AbstractOptimizer, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns a Tuple of `TraceElement`s and, if necessary, `Vector{TraceElement}`s, of data
+    to be printed to the terminal. Note that separate methods should be defined for
+    `Val{:detailed}` and `Val{:all}` if applicable.
+- `get_save_trace_elements(opt<:AbstractOptimizer, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns a Tuple of `TraceElement`s and, if necessary, `Vector{TraceElement}`s, of data
+    to be saved to the trace file. Note that separate methods should be defined for
+    `Val{:detailed}` and `Val{:all}` if applicable.
 """
 abstract type AbstractOptimizer end
 
@@ -40,14 +40,16 @@ All subtypes must define the following methods:
 - `initialize!(<:AbstractPopulationBasedOptimizer)`: Initialize the optimizer.
 - `step!(<:AbstractPopulationBasedOptimizer)`: Perform a single step/iteration with the
     optimizer.
-- `show_trace(opt<:AbstractOptimizer, Union{Val{:minimal},Val{:detailed},Val{:all}})`: Print
-    the trace of the optimizer to the terminal at the current iteration. Note that a single
-    method can by implemented using the `Union` type, or individual methods can be
-    implemented for each trace level.
-- `get_save_trace(opt<:AbstractOptimizer, Union{Val{:minimal},Val{:detailed},Val{:all}})`:
-    Get the trace of the optimizer as a string at the current iteration, which will be
-    appended to the optimally specified file. Note that a single method can by implemented
-    using the `Union` type, or individual methods can be implemented for each trace level.
+- `get_population(opt<:AbstractPopulationBasedOptimizer)`: Get the population of the
+    optimizer. This should return a subtype of `AbstractPopulation`.
+- `get_show_trace_elements(opt<:AbstractOptimizer, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns a Tuple of `TraceElement`s and, if necessary, `Vector{TraceElement}`s, of data
+    to be printed to the terminal. Note that separate methods should be defined for
+    `Val{:detailed}` and `Val{:all}` if applicable.
+- `get_save_trace_elements(opt<:AbstractOptimizer, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns a Tuple of `TraceElement`s and, if necessary, `Vector{TraceElement}`s, of data
+    to be saved to the trace file. Note that separate methods should be defined for
+    `Val{:detailed}` and `Val{:all}` if applicable.
 
 Note that the `get_best_fitness` and `get_best_candidate` methods required by the
 `AbstractOptimizer` interface are provided for subtypes of
@@ -194,6 +196,9 @@ function optimize!(opt::AbstractOptimizer)
     # Initialize the optimizer
     initialize!(opt)
 
+    # Top level trace
+    top_level_trace(opt)
+
     # Perform iterations
     status = IN_PROGRESS
     while status == IN_PROGRESS
@@ -210,7 +215,7 @@ function optimize!(opt::AbstractOptimizer)
         status = check_stopping_criteria(opt)
 
         # Tracing
-        trace(opt)
+        trace(opt, status != IN_PROGRESS)
     end
     return construct_results(opt, status)
 end
@@ -278,6 +283,49 @@ function get_best_candidate(opt::AbstractPopulationBasedOptimizer)
 end
 
 """
+    get_population(opt::AbstractPopulationBasedOptimizer)
+
+Returns the population of the optimizer `opt`. This should return a subtype of
+`AbstractPopulation`.
+"""
+function get_population(opt::AbstractPopulationBasedOptimizer)
+    throw(ArgumentError("get_population not implemented for $(typeof(opt))."))
+end
+
+"""
+    update_global_best!(opt::AbstractPopulationBasedOptimizer)
+
+Updates the global best candidate and fitness in the cache of the population based optimizer
+`opt` when a better candidate is found. Returns `true` if the global best candidate was
+updated, `false` otherwise.
+"""
+function update_global_best!(opt::AbstractPopulationBasedOptimizer)
+    # Grab info
+    cache = opt.cache
+    pop = get_population(opt)
+    @unpack candidates, candidates_fitness = pop
+    @unpack global_best_candidate, global_best_fitness = cache
+
+    # Find index and value of global best fitness if better than previous best
+    global_best_idx = 0
+    @inbounds for (i, fitness) in enumerate(candidates_fitness)
+        if fitness < global_best_fitness
+            global_best_idx = i
+            global_best_fitness = fitness
+        end
+    end
+
+    # Check if we've found a better solution
+    updated = false
+    if global_best_idx > 0
+        updated = true
+        global_best_candidate .= candidates[global_best_idx]
+        cache.global_best_fitness = global_best_fitness
+    end
+    return updated
+end
+
+"""
     handle_stall!(opt::AbstractOptimizer)
 
 Handles updating the stall related fields of the `AbstractOptimizerCache` for `opt`.
@@ -331,4 +379,32 @@ function construct_results(opt::AbstractOptimizer, status::Status)
         get_elapsed_time(opt),
         status,
     )
+end
+
+function get_show_trace_elements(opt::AbstractOptimizer, trace_mode::Val{:minimal})
+    return (
+        TraceElement("Iter", 'd', 8, 0, get_iteration(opt)),
+        TraceElement("Time", 'f', 8, 2, get_elapsed_time(opt)),
+        TraceElement("S", 'd', 4, 0, opt.cache.stall_iteration),
+        TraceElement("Best Fitness", 'e', 16, 8, get_best_fitness(opt)),
+    )
+end
+function get_save_trace_elements(opt::AbstractOptimizer, trace_mode::Val{:minimal})
+    return get_show_trace_elements(opt, trace_mode)
+end
+
+get_val_type(::Val{type}) where type = type
+function get_show_trace_elements(
+    opt::AbstractOptimizer,
+    trace_mode::Union{Val{:detailed}, Val{:all}},
+)
+    mode = get_val_type(trace_mode)
+    throw(ArgumentError("get_show_trace_elements not implemented for $(typeof(opt)) with trace mode $mode."))
+end
+function get_save_trace_elements(
+    opt::AbstractOptimizer,
+    trace_mode::Union{Val{:detailed}, Val{:all}},
+)
+    mode = get_val_type(trace_mode)
+    throw(ArgumentError("get_save_trace_elements not implemented for $(typeof(opt)) with trace mode $mode."))
 end

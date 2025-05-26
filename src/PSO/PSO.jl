@@ -88,7 +88,7 @@ Constructs a PSO algorithm with the given options.
     for bad values (i.e., Inf or NaN).
 - `show_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to show the trace.
 - `save_trace::Union{Val{false},Val{true}}=Val(false)`: Whether to save the trace.
-- `save_file::String="no_file.txt"`: The file to save the trace to.
+- `save_file::String="trace.txt"`: The file to save the trace to.
 - `trace_level::TraceLevel=TraceMinimal(1)`: The trace level to use.
 
 # Returns
@@ -110,7 +110,7 @@ function PSO(
     function_value_check::Union{Val{false},Val{true}}=Val(true),
     show_trace::Union{Val{false},Val{true}}=Val(false),
     save_trace::Union{Val{false},Val{true}}=Val(false),
-    save_file::String="no_file.txt",
+    save_file::String="trace.txt",
     trace_level::TraceLevel=TraceMinimal(1),
 ) where {T<:AbstractFloat,SS<:ContinuousRectangularSearchSpace{T},has_penalty}
     # Construct the options
@@ -152,6 +152,8 @@ function PSO(prob::AbstractProblem{hp,SS}; kwargs...) where {hp,SS<:SearchSpace}
 end
 
 # ===== AbstractPopulationBasedOptimizer interface
+get_population(opt::PSO) = opt.swarm
+
 function initialize!(opt::PSO)
     # Unpack PSO
     @unpack options, evaluator, swarm, cache = opt
@@ -199,42 +201,22 @@ function step!(opt::PSO)
     return nothing
 end
 
-function show_trace(pso::PSO, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+function get_show_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed}, Val{:all}})
+    # Get minimal trace elements
+    minimal_elements = get_show_trace_elements(opt, Val{:minimal}())
 
+    # Get velocity update trace elements
+    vu_elements = get_show_trace_elements(opt.options.velocity_update, trace_mode)
+
+    return (minimal_elements..., vu_elements...)
 end
 
-function get_save_trace(pso::PSO, ::Union{Val{:minimal}, Val{:detailed}, Val{:all}})
+function get_save_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed}, Val{:all}})
+    # Get minimal trace elements
+    minimal_elements = get_save_trace_elements(opt, Val{:minimal}())
 
-end
+    # Get velocity update trace elements
+    vu_elements = get_save_trace_elements(opt.options.velocity_update, trace_mode)
 
-# ===== Implementation Specific Methods
-
-"""
-    update_global_best!(pso::PSO)
-
-Updates the global best candidate in the PSO algorithm `pso` if a better candidate is found.
-"""
-function update_global_best!(pso::PSO)
-    # Grab information
-    @unpack swarm, cache = pso
-    @unpack best_candidates, best_candidates_fitness = swarm
-    @unpack global_best_candidate, global_best_fitness = cache
-
-    # Find index and value of global best fitness if better than previous best
-    global_best_idx = 0
-    @inbounds for (i, fitness) in enumerate(best_candidates_fitness)
-        if fitness < global_best_fitness
-            global_best_idx = i
-            global_best_fitness = fitness
-        end
-    end
-
-    # Check if we've found a better solution
-    updated = false
-    if global_best_idx > 0
-        updated = true
-        global_best_candidate .= best_candidates[global_best_idx]
-        cache.global_best_fitness = global_best_fitness
-    end
-    return updated
+    return (minimal_elements..., vu_elements...)
 end
