@@ -234,7 +234,7 @@ function step!(opt::MBH)
     search_space = evaluator.prob.ss
 
     # Take a hop
-    draw_count = hop!(
+    hop!(
         hopper_set, search_space, evaluator, bhe, distribution, local_search
     )
     check_fitness!(hopper_set, get_function_value_check(options))
@@ -249,68 +249,15 @@ function get_show_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val
     # Get minimal trace elements
     minimal_elements = get_show_trace_elements(opt, Val{:minimal}())
 
+    # Get hopper set trace elements
+    hopper_elements = get_show_trace_elements(opt.hopper_set, trace_mode)
+
     # Get distribution trace elements
     dist_elements = get_show_trace_elements(opt.options.distribution, trace_mode)
 
-    return cat_elements(minimal_elements, dist_elements)
+    return cat_elements(cat_elements(minimal_elements, hopper_elements), dist_elements)
 end
 
 function get_save_trace_elements(opt::MBH, trace_mode::Union{Val{:detailed}, Val{:all}})
     return get_show_trace_elements(opt, trace_mode)
-end
-
-# ===== Implementation Specific Methods
-
-function hop!(hopper::Hopper, ss, eval, dist, ls)
-    step_accepted = false
-    draw_count = 0
-    while !step_accepted
-        # Draw update
-        # This perturbs the candidate by a realization from dist
-        draw_update!(hopper, dist)
-
-        # Update counter
-        draw_count += 1
-
-        # Check if we're in feasible search space
-        if feasible(candidate(hopper), ss)
-            # We're in the search space, so we're about to accept the step,
-            # but we need to check if we're also
-            # in the feasible region defined by the penalty parameter
-            fitness, penalty = evaluate_with_penalty(eval, candidate(hopper))
-
-            if abs(penalty) - eps() <= 0.0
-                # We're in the feasible region, so we can accept the step
-                step_accepted = true
-
-                # Set fitness of candidate
-                set_fitness!(hopper, fitness)
-
-                # Break from the loop
-                break
-            end
-        end
-
-        # If we get here, we need to reject the step by calling reset!
-        reset!(hopper)
-    end
-
-    # Perform local search
-    local_search!(hopper, eval, ls)
-
-    return draw_count
-end
-function hop!(hopper_set::SingleHopperSet, ss, eval, bhe, dist, ls)
-    return hop!(hopper_set.hopper, ss, eval, dist, ls)
-end
-function hop!(hopper_set::MCHSet, ss, eval, bhe, dist, ls)
-    # Unpack the hoppers
-    @unpack hoppers = hopper_set
-
-    job! = let hs=hopper_set, ss=ss, eval=eval, dist=dist, ls=ls
-        i -> hop!(hs.hoppers[i], ss, eval, dist, ls[i])
-    end
-    evaluate!(job!, eachindex(hopper_set), bhe)
-
-    return 0
 end

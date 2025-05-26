@@ -425,10 +425,10 @@ function get_show_trace_elements(
     max_λhat_idx = argmax(dist.λhat)
 
     return (
-        TraceElement("argmin(λhat)", 'd', 16, 0, min_λhat_idx),
-        TraceElement("min(λhat)", 'e', 16, 8, dist.λhat[min_λhat_idx]),
-        TraceElement("argmax(λhat)", 'd', 16, 0, max_λhat_idx),
-        TraceElement("max(λhat)", 'e', 16, 8, dist.λhat[max_λhat_idx]),
+        TraceElement("argmin(λ̂)", 'd', 14, 0, min_λhat_idx),
+        TraceElement("min(λ̂)", 'e', 16, 8, dist.λhat[min_λhat_idx]),
+        TraceElement("argmax(λ̂)", 'd', 14, 0, max_λhat_idx),
+        TraceElement("max(λ̂)", 'e', 16, 8, dist.λhat[max_λhat_idx]),
     )
 end
 function get_show_trace_elements(
@@ -436,7 +436,7 @@ function get_show_trace_elements(
     trace_mode::Val{:all},
 )
     return map(
-        i -> TraceElement("λhat[$i]", 'e', 16, 8, dist.λhat[i]),
+        i -> TraceElement("λ̂[$i]", 'e', 16, 8, dist.λhat[i]),
         eachindex(dist.λhat)
     )
 end
