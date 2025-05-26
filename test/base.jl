@@ -16,21 +16,20 @@ struct DummyOptimizer <: GlobalOptimization.AbstractOptimizer
     options::DummyOptimizerOptions
     cache::GlobalOptimization.MinimalOptimizerCache{Float64}
 end
-function GlobalOptimization.get_best_fitness(opt::DummyOptimizer)
-    return 0.0
-end
-function GlobalOptimization.get_best_candidate(opt::DummyOptimizer)
-    return [0.0, 0.0]
-end
-function GlobalOptimization.show_trace(opt::DummyOptimizer, ::Val{mode}) where mode
-    println(stdout, "Printing " * String(mode) * " trace...")
-    return nothing
-end
-function GlobalOptimization.get_save_trace(
+GlobalOptimization.get_best_fitness(opt::DummyOptimizer) = 0.0
+GlobalOptimization.get_best_candidate(opt::DummyOptimizer) = [0.0, 0.0]
+GlobalOptimization.get_elapsed_time(opt::DummyOptimizer) = 0.0
+function GlobalOptimization.get_show_trace_elements(
     opt::DummyOptimizer,
-    ::Val{mode}
-) where mode
-    return "Saving " * String(mode) * " trace..."
+    trace_mode::Union{Val{:detailed}, Val{:all}},
+)
+    return GlobalOptimization.get_show_trace_elements(opt, Val{:minimal}())
+end
+function GlobalOptimization.get_save_trace_elements(
+    opt::DummyOptimizer,
+    trace_mode::Union{Val{:detailed}, Val{:all}},
+)
+    return GlobalOptimization.get_save_trace_elements(opt, Val{:minimal}())
 end
 
 @testset showtiming = true "SearchSpace" begin
@@ -182,7 +181,7 @@ end
         )
 
         output = @capture_out begin
-            GlobalOptimization.trace(do_no_trace)
+            GlobalOptimization.trace(do_no_trace, false)
         end
         @test isempty(output)
 
@@ -210,21 +209,21 @@ end
 
         do_only_show_trace.cache.iteration = 1
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_show_trace)
+            GlobalOptimization.trace(do_only_show_trace, false)
         end
-        @test output == "Printing " * String(trace_modes[i]) * " trace...\n"
+        @test output == "1        0.00     0    0.00000000e+00  \n"
 
         do_only_show_trace.cache.iteration = 2
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_show_trace)
+            GlobalOptimization.trace(do_only_show_trace, false)
         end
         @test isempty(output)
 
         do_only_show_trace.cache.iteration = 3
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_show_trace)
+            GlobalOptimization.trace(do_only_show_trace, false)
         end
-        @test output == "Printing " * String(trace_modes[i]) * " trace...\n"
+        @test output == "3        0.00     0    0.00000000e+00  \n"
 
         do_only_save_trace = DummyOptimizer(
             DummyOptimizerOptions(
@@ -249,31 +248,31 @@ end
 
         do_only_save_trace.cache.iteration = 1
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_save_trace)
+            GlobalOptimization.trace(do_only_save_trace, false)
         end
         @test isempty(output)
         lines = readlines(trace_file)
         @test length(lines) == 1
-        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
+        @test lines[1] == "1,0.000000,0,0.000000e+00"
 
         do_only_save_trace.cache.iteration = 2
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_save_trace)
+            GlobalOptimization.trace(do_only_save_trace, false)
         end
         @test isempty(output)
         lines = readlines(trace_file)
         @test length(lines) == 1
-        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
+        @test lines[1] == "1,0.000000,0,0.000000e+00"
 
         do_only_save_trace.cache.iteration = 3
         output = @capture_out begin
-            GlobalOptimization.trace(do_only_save_trace)
+            GlobalOptimization.trace(do_only_save_trace, false)
         end
         @test isempty(output)
         lines = readlines(trace_file)
         @test length(lines) == 2
-        @test lines[1] == "Saving " * String(trace_modes[i]) * " trace..."
-        @test lines[2] == "Saving " * String(trace_modes[i]) * " trace..."
+        @test lines[1] == "1,0.000000,0,0.000000e+00"
+        @test lines[2] == "3,0.000000,0,0.000000e+00"
         rm(trace_file)
     end
 
@@ -281,8 +280,11 @@ end
     struct NotImplementedOptimizer <: GlobalOptimization.AbstractOptimizer end
 
     nio = NotImplementedOptimizer()
-    @test_throws ArgumentError GlobalOptimization.show_trace(nio, Val{:minimal}())
-    @test_throws ArgumentError GlobalOptimization.get_save_trace(nio, Val{:minimal}())
+    vals = (Val{:detailed}(), Val{:all}())
+    for val in vals
+        @test_throws ArgumentError GlobalOptimization.get_show_trace_elements(nio, val)
+        @test_throws ArgumentError GlobalOptimization.get_save_trace_elements(nio, val)
+    end
 end
 
 @testset showtiming = true "Options" begin
