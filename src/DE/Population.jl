@@ -109,3 +109,21 @@ function selection!(population::DEPopulation)
     end
     return nothing
 end
+
+"""
+    get_best_candidate_in_subset(population::DEPopulation, idxs)
+
+Get the best candidate in the selected subset of population (as specified by the indices
+in `idxs`).
+"""
+function get_best_candidate_in_subset(population::DEPopulation, idxs)
+    # Get the index of the best candidate in the selected subset of population
+    best_idx = argmin(
+        let gen_fitness = population.current_generation.candidates_fitness
+            i -> gen_fitness[i]
+        end,
+        idxs,
+    )
+
+    return population.current_generation.candidates[best_idx]
+end

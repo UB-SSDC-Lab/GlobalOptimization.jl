@@ -1,8 +1,46 @@
 
+"""
+    AbstractCrossoverParameters
+
+An abstract type representing the parameters for a crossover strategy in Differential Evolution (DE).
+
+Subtypes of this abstract type should define the following methods:
+- `get_parameter(params::AbstractCrossoverParameters, i)`: Returns the crossover parameter for the `i`-th candidate.
+- `initialize!(params::AbstractCrossoverParameters, num_dims, population_size)`: Initializes the crossover parameters.
+- `adapt!(params::AbstractCrossoverParameters, improved, global_best_improved)`: Adapts the crossover parameters based on the improvement status of the candidates.
+- `crossover!(population::DEPopulation, crossover_params, search_space)`: Performs the crossover operation on the population using the specified crossover parameters.
+"""
 abstract type AbstractCrossoverParameters{AS<:AbstractAdaptationStrategy} end
+
+"""
+    AbstractBinomialCrossoverParameters
+
+An abstract type representing the parameters for a binomial crossover strategy in Differential Evolution (DE).
+The `crossover!` method is provided for subtypes of this abstract type, however, the
+`get_parameter`, `initialize!`, and `adapt!` methods are must still be defined.
+"""
 abstract type AbstractBinomialCrossoverParameters{AS} <: AbstractCrossoverParameters{AS} end
 
+"""
+    AbstractCrossoverTransformation
+
+An abstract type representing a transformation applied to a candidate prior to applying the
+crossover operator.
+
+Subtypes of this abstract type should define the following methods:
+- `initialize!(transformation::AbstractCrossoverTransformation, population_size)`: Initializes the transformation with the population
+- `update_transformation!(transformation::AbstractCrossoverTransformation, population)`: Updates the transformation based on the current population
+- `to_transformed(transformation::AbstractCrossoverTransformation, c, m)`: Transforms the candidate `c` and mutant `m` to an
+    alternative representation, returning the transformed candidate, transformed mutant, and a boolean indicating whether the transformation was applied.
+- `from_transformed!(transformation::AbstractCrossoverTransformation, mt, m)`: Transforms the mutant `mt` back to the original representation `m`.
+"""
 abstract type AbstractCrossoverTransformation end
+
+"""
+    NoTransformation
+
+A transformation that does not apply any transformation to the candidate or mutant.
+"""
 struct NoTransformation <: AbstractCrossoverTransformation end
 
 """

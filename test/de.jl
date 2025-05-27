@@ -209,7 +209,7 @@ end
     @test sp2.Fs[2] != original_Fs[2]
     @test sp2.Fs[3] == original_Fs[3]
 
-    # Test get_best_candidate_in_selection
+    # Test get_best_candidate_in_subset
     pop = GlobalOptimization.DEPopulation(4, 3)
     pop.current_generation.candidates .= [
         SVector(0.1, 0.2, 0.3),
@@ -218,7 +218,7 @@ end
         SVector(1.0, 1.1, 1.2),
     ]
     pop.current_generation.candidates_fitness .= [0.5, 0.2, 0.8, 0.1]
-    best = GlobalOptimization.get_best_candidate_in_selection(pop, [1, 3, 4])
+    best = GlobalOptimization.get_best_candidate_in_subset(pop, [1, 3, 4])
     @test best == SVector(1.0, 1.1, 1.2)
 
     # Test mutate! no-op behavior with zero parameters
