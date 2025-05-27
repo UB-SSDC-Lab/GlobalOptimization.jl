@@ -1,4 +1,16 @@
-abstract type AbstractMutationStrategy end
+"""
+    AbstractMutationOperator
+
+The abstract type for all DE mutation strategies. This type is used to define the
+mutation strategies available in the DE algorithm.
+
+Subtypes of this type should implement the following method:
+- `get_parameters(strategy::AbstractMutationOperator, dist)`: Returns the mutation
+    parameters for the given strategy and distribution. The parameters should be returned
+    as a `SVector{4, Float64}` containing the F₁, F₂, F₃, and F₄ weights for the unified
+    mutation strategy.
+"""
+abstract type AbstractMutationOperator end
 
 """
     Rand1
@@ -11,7 +23,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 ``j``-th candidate, ``F`` is a scaling factor, and ``r_1``, ``r_2``, and ``r_3`` are
 randomly selected integers in the set returned by the selector.
 """
-struct Rand1 <: AbstractMutationStrategy end
+struct Rand1 <: AbstractMutationOperator end
 
 """
     Rand2
@@ -26,7 +38,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 ``j``-th candidate, ``F`` is a scaling factor, and ``r_1``, ``r_2``, ``r_3``, ``r_4``,
 and ``r_5`` are randomly selected integers in the set returned by the selector.
 """
-struct Rand2 <: AbstractMutationStrategy end
+struct Rand2 <: AbstractMutationOperator end
 
 """
     Best1
@@ -40,7 +52,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 (in terms of the objective/fitness function), and ``r_1`` and ``r_2`` are randomly selected
 integers in the set returned by the selector.
 """
-struct Best1 <: AbstractMutationStrategy end
+struct Best1 <: AbstractMutationOperator end
 
 """
     Best2
@@ -55,7 +67,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 and ``r_1``, ``r_2``, ``r_3``, and ``r_4`` are randomly selected integers in the set
 returned by the selector.
 """
-struct Best2 <: AbstractMutationStrategy end
+struct Best2 <: AbstractMutationOperator end
 
 """
     CurrentToBest1
@@ -70,7 +82,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 best candidate, and ``r_1`` and ``r_2`` are randomly selected integers in the set
 returned by the selector.
 """
-struct CurrentToBest1 <: AbstractMutationStrategy end
+struct CurrentToBest1 <: AbstractMutationOperator end
 
 """
     CurrentToBest2
@@ -86,7 +98,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 best candidate, and ``r_1``, ``r_2``, ``r_3``, and ``r_4`` are randomly selected integers
 in the set returned by the selector.
 """
-struct CurrentToBest2 <: AbstractMutationStrategy end
+struct CurrentToBest2 <: AbstractMutationOperator end
 
 """
     CurrentToRand1
@@ -100,7 +112,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 ``j``-th candidate, ``F_{cs}`` and ``F`` are a scaling factors, and ``r_1``, ``r_2``, and
 ``r_3`` are randomly selected integers in the set returned by the selector.
 """
-struct CurrentToRand1 <: AbstractMutationStrategy end
+struct CurrentToRand1 <: AbstractMutationOperator end
 
 """
     CurrentToRand2
@@ -116,7 +128,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 ``r_3``, ``r_4``, and ``r_5`` are randomly selected integers in the set returned by the
 selector.
 """
-struct CurrentToRand2 <: AbstractMutationStrategy end
+struct CurrentToRand2 <: AbstractMutationOperator end
 
 """
     RandToBest1
@@ -131,7 +143,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 best candidate, and ``r_1``, ``r_2``, and ``r_3`` are randomly selected integers in the set
 returned by the selector.
 """
-struct RandToBest1 <: AbstractMutationStrategy end
+struct RandToBest1 <: AbstractMutationOperator end
 
 """
     RandToBest2
@@ -147,7 +159,7 @@ where ``\\mathbf{v}_i`` is the target (``i``-th) mutant, ``\\mathbf{x}_j`` denot
 best candidate, and ``r_1``, ``r_2``, ``r_3``, ``r_4``, and ``r_5`` are randomly selected
 integers in the set returned by the selector.
 """
-struct RandToBest2 <: AbstractMutationStrategy end
+struct RandToBest2 <: AbstractMutationOperator end
 
 """
     Unified
@@ -172,7 +184,7 @@ Note that in the underlying implementation, all mutation strategies are implemen
 this formulation, where each unique strategy has a different set of
 ``\\{F_i : i \\in \\{1,2,3,4\\}\\}`` that are set to 0.0.
 """
-struct Unified <: AbstractMutationStrategy end
+struct Unified <: AbstractMutationOperator end
 
 function get_parameters(strategy::Rand1, dist)
     F2 = 1.0
@@ -239,12 +251,31 @@ function get_parameters(strategy::Unified, dist)
     return SA[F1, F2, F3, F4]
 end
 
+"""
+    AbstractMutationParameters
+
+The abstract type for all DE mutation parameters. This type is used to define the
+mutation parameters available in the DE algorithm.
+
+Subtypes of this type should implement the following methods:
+- `get_parameters(params::AbstractMutationParameters, i)`: Returns the mutation
+    parameters for the given mutation parameters object and index `i`. The parameters should
+    be returned as a tuple of four `Float64` values representing the F₁, F₂, F₃, and F₄
+    weights for the unified mutation strategy.
+- `initialize!(params::AbstractMutationParameters, population_size)`: Initializes the
+    mutation parameters for the given population size.
+- `adapt!(params::AbstractMutationParameters, improved, global_best_improved)`: Adapts
+    the mutation parameters based on whether the population has improved and whether the
+    global best candidate has improved.
+- `mutate!(population::DEPopulation, F::AbstractMutationParameters)`: Mutates the
+    population using the mutation parameters.
+"""
 abstract type AbstractMutationParameters{AS<:AbstractAdaptationStrategy} end
 
 """
     MutationParameters{
         AS<:AbstractAdaptationStrategy,
-        MS<:AbstractMutationStrategy,
+        MS<:AbstractMutationOperator,
         S<:AbstractSelector,
         D,
     }
@@ -265,7 +296,7 @@ in the population.
     requirement is that rand(dist) returns a floating point value.
 """
 mutable struct MutationParameters{
-    AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
+    AS<:AbstractAdaptationStrategy,MS<:AbstractMutationOperator,S<:AbstractSelector,D
 } <: AbstractMutationParameters{AS}
     F1::Float64
     F2::Float64
@@ -367,7 +398,7 @@ mutable struct MutationParameters{
     """
     function MutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()
-    ) where {MS<:AbstractMutationStrategy}
+    ) where {MS<:AbstractMutationOperator}
         Fs = get_parameters(strategy, dist)
         return new{RandomAdaptation,MS,typeof(sel),typeof(dist)}(
             Fs[1], Fs[2], Fs[3], Fs[4], sel, dist
@@ -378,7 +409,7 @@ end
 """
     SelfMutationParameters{
         AS<:AbstractAdaptationStrategy,
-        MS<:AbstractMutationStrategy,
+        MS<:AbstractMutationOperator,
         S<:AbstractSelector,
         D,
     }
@@ -397,7 +428,7 @@ parameters for each candidate in the population.
     requirement is that rand(dist) returns a floating point value.
 """
 struct SelfMutationParameters{
-    AS<:AbstractAdaptationStrategy,MS<:AbstractMutationStrategy,S<:AbstractSelector,D
+    AS<:AbstractAdaptationStrategy,MS<:AbstractMutationOperator,S<:AbstractSelector,D
 } <: AbstractMutationParameters{AS}
     Fs::Vector{SVector{4,Float64}}
     sel::S
@@ -450,7 +481,7 @@ struct SelfMutationParameters{
     """
     function SelfMutationParameters(
         strategy::MS; dist=default_mutation_dist, sel=SimpleSelector()
-    ) where {MS<:AbstractMutationStrategy}
+    ) where {MS<:AbstractMutationOperator}
         Fs = Vector{SVector{4,Float64}}(undef, 0)
         return new{RandomAdaptation,MS,typeof(sel),typeof(dist)}(Fs, sel, dist)
     end
@@ -516,24 +547,6 @@ function adapt!(
 end
 
 """
-    get_best_candidate_in_selection(population::DEPopulation, idxs)
-
-Get the best candidate in the selected subset of population (as specified by the indices
-in `idxs`).
-"""
-function get_best_candidate_in_selection(population::DEPopulation, idxs)
-    # Get the index of the best candidate in the selected subset of population
-    best_idx = argmin(
-        let gen_fitness = population.current_generation.candidates_fitness
-            i -> gen_fitness[i]
-        end,
-        idxs,
-    )
-
-    return population.current_generation.candidates[best_idx]
-end
-
-"""
     mutate!(population::DEPopulation{T}, F)
 
 Mutates the population `population` using the DE mutation strategy.
@@ -566,7 +579,7 @@ function mutate!(population::DEPopulation, F::MP) where {MP<:AbstractMutationPar
         # Update mutant based on values of F1, F2, F3, F4
         if F1 > 0.0
             # Get the best candidate in the selected subset of population
-            best_candidate = get_best_candidate_in_selection(population, idxs)
+            best_candidate = get_best_candidate_in_subset(population, idxs)
 
             @. mutants.candidates[i] +=
                 F1 * (best_candidate - current_generation.candidates[i])

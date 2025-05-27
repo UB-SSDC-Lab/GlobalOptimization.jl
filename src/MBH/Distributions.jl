@@ -118,6 +118,21 @@ end
     AbstractMBHDistribution{T}
 
 Abstract type for MBH distributions.
+
+All subtypes of `AbstractMBHDistribution` must implement the following methods:
+- `initialize!(dist::AbstractMBHDistribution, ss::ContinuousRectangularSearchSpace)`:
+    Initializes the distribution with the search space.
+- `draw_step!(step::AbstractVector{T}, dist::AbstractMBHDistribution{T})`: Draws a step from the distribution
+    and stores it in `step`.
+- `get_show_trace_elements(dist::AbstractMBHDistribution{T}, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns the trace elements for the distribution to be shown in the terminal terminal terminal terminal terminal terminal terminal terminal terminal.
+- `get_save_trace_elements(dist::AbstractMBHDistribution{T}, trace_mode::Union{Val{:detailed}, Val{:all}})`:
+    Returns the trace elements for the distribution to be saved to a file.
+
+Note: The `AbstractMBHDistribution` interface is tightly coupled with the `AbstractHopperSet`
+interface and could use some refactoring to decouple the two. If an additional adaptive
+distribution is added, a new abstract type, such as `AbstractAdaptiveMBHDistribution`,
+should be added, and `MBHAdaptiveDistribution` should be re-named to something more specific.
 """
 abstract type AbstractMBHDistribution{T} end
 

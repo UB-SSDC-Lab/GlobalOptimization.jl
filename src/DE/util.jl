@@ -16,12 +16,37 @@ const default_binomial_crossover_dist = MixtureModel(
     Cauchy, [(0.1, 0.1), (0.95, 0.1)], [0.5, 0.5]
 )
 
-# Types used to indicate adaptivity (modify to support new adaptation methods as necessary)
+"""
+    AbstractAdaptationStrategy
+
+Subtypes of this type should be used in conjunction with subtypes of `AbstractMutationParameters`
+and `AbstractCrossoverParameters` to control how the parameters are adapted in their
+respective `adapt!` methods.
+"""
 abstract type AbstractAdaptationStrategy end
+
+"""
+    RandomAdaptation
+
+Parameters are randomly adapted.
+"""
 struct RandomAdaptation <: AbstractAdaptationStrategy end
+
+"""
+    NoAdaptation
+
+Parameters are not adapted at all.
+"""
 struct NoAdaptation <: AbstractAdaptationStrategy end
 
-# Generic selection types
+"""
+    AbstractSelector
+
+Subtypes of this type should be used to select candidates from the population and must
+implement the following methods:
+- `initialize!(s::AbstractSelector, population_size::Int)`: Initializes the selector with the population size.
+- `select(s::AbstractSelector, target::Int, pop_size::Int)`: Selects candidates based on the target index and population size.
+"""
 abstract type AbstractSelector end
 
 """

@@ -3,6 +3,18 @@
     AbstractVelocityUpdateScheme
 
 Abstract type for velocity update schemes in Particle Swarm Optimization (PSO).
+
+All subtypes much define the following methods:
+- `initialize!(vu::AbstractVelocityUpdateScheme, swarm_size::Int)`: Initialize the velocity
+    update scheme for a given swarm size.
+- `update_velocity!(swarm::Swarm, vu::AbstractVelocityUpdateScheme)`: Update the velocity of
+    each candidate in the swarm using the specified velocity update scheme.
+- `adapt!(vu::AbstractVelocityUpdateScheme, improved::Bool, stall_iteration::Int)`: Adapt
+    the velocity update scheme based on the improvement status of the swarm and the stall iteration counter.
+- `get_show_trace_elements(vu::AbstractVelocityUpdateScheme, trace_mode::Union{Val{:detailed},Val{:all}})`:
+    Get the elements to show in the trace for the velocity update scheme.
+- `get_save_trace_elements(vu::AbstractVelocityUpdateScheme, trace_mode::Union{Val{:detailed},Val{:all}})`:
+    Get the elements to save in the trace for the velocity update scheme.
 """
 abstract type AbstractVelocityUpdateScheme end
 
@@ -11,6 +23,9 @@ abstract type AbstractVelocityUpdateScheme end
 
 Abstract type for a velocity update scheme that randomly selects the particles in the
 neighborhood of a given particle.
+
+Subtypes of this abstract type have an implementation of the `update_velocity!` method
+provided, but must still define the `initialize!` and `adapt!` methods.
 """
 abstract type AbstractRandomNeighborhoodVelocityUpdateScheme <: AbstractVelocityUpdateScheme end
 

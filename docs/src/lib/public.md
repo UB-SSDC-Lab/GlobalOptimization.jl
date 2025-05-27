@@ -104,9 +104,9 @@ CSRNVelocityUpdate(; kwargs...)
 ```@docs 
 MutationParameters 
 MutationParameters(::Any, ::Any, ::Any, ::Any; sel=::Any)
-MutationParameters(::GlobalOptimization.AbstractMutationStrategy; dist=::Any, sel=::Any)
+MutationParameters(::GlobalOptimization.AbstractMutationOperator; dist=::Any, sel=::Any)
 SelfMutationParameters 
-SelfMutationParameters(::GlobalOptimization.AbstractMutationStrategy; dist=::Any, sel=:Any)
+SelfMutationParameters(::GlobalOptimization.AbstractMutationOperator; dist=::Any, sel=:Any)
 Rand1
 Rand2
 Best1
