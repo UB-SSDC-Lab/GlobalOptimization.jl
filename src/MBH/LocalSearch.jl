@@ -95,6 +95,8 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
 - `alg::AT`: The `LBFGS` algorithm with the `Fminbox` wrapper.
 - `options::OT`: The Optim.jl options. Only used to enforce the number of iterations
     performed in each local search.
+- `use_timeout::UTO`: A flag indicating whether to use a timeout for the solve. If `Val{true}`,
+    then the `max_solve_time` is used to limit the time spent on each solve.
 - `max_solve_time::Float64`: The maximum time per solve in seconds. If a solve does not
     finish in this time, the solve process is terminated.
 - `cache::LocalSearchSolutionCache{T}`: The solution cache for storing the solution from
@@ -103,7 +105,9 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
     used. Can be any of the autodiff methods from
     [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 """
-struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocalSearch{T,AD}
+struct LBFGSLocalSearch{
+    T,AT,OT,UTO<:Union{Val{true},Val{false}},AD<:Union{AbstractADType,Nothing}
+} <: OptimLocalSearch{T,AD}
 
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
@@ -115,6 +119,7 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
     options::OT
 
     # Max time per solve
+    use_timeout::UTO
     max_solve_time::Float64
 
     # Solution cache
@@ -131,6 +136,7 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
             alphaguess=LineSearches.InitialStatic(),
             linesearch=LineSearches.HagerZhang(),
             manifold=Optim.Flat(),
+            use_timeout::VT=Val{true}(),
             max_solve_time::Float64=0.1,
             ad=nothing,
         )
@@ -148,6 +154,8 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
         `LineSearches.InitialStatic()`.
     - `linesearch`: The line search method to use. Default is `LineSearches.HagerZhang()`.
     - `manifold`: The manifold to use. Default is `Optim.Flat()`.
+    - `use_timeout::VT`: A flag indicating whether to use a timeout for the solve. If `Val{true}`,
+        then the `max_solve_time` is used to limit the time spent on each solve.
     - `max_solve_time::Float64`: The maximum time per solve in seconds. If a solve does not
         finish in this time, the solve process is terminated.
     - `ad`: The autodiff method to use. If `nothing`, then the default of ForwardDiff.jl is
@@ -161,19 +169,21 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
         alphaguess=InitialStatic(),
         linesearch=HagerZhang(),
         manifold=Optim.Flat(),
+        use_timeout::VT=Val{true}(),
         max_solve_time=0.1,
         ad=nothing,
-    ) where {T<:AbstractFloat}
+    ) where {T<:AbstractFloat, VT<:Union{Val{true},Val{false}}}
         alg = Optim.Fminbox(
             Optim.LBFGS(;
                 m=m, alphaguess=alphaguess, linesearch=linesearch, manifold=manifold
             ),
         )
         opts = Optim.Options(; iterations=iters_per_solve)
-        return new{T,typeof(alg),typeof(opts),typeof(ad)}(
+        return new{T,typeof(alg),typeof(opts),VT,typeof(ad)}(
             T(percent_decrease_tol),
             alg,
             opts,
+            use_timeout,
             max_solve_time,
             LocalSearchSolutionCache{T}(),
             ad,
@@ -202,12 +212,16 @@ terminated.
 - `abs_tol::Float64`: The absolute tolerance for the solver. Default is `1e-8`.
 - `max_solve_iters::Int`: The maximum number of iterations to perform in each local search.
     Default is `5`.
+- `use_timeout::UTO`: A flag indicating whether to use a timeout for the solve. If `Val{true}`,
+    then the `max_solve_time` is used to limit the time spent on each solve.
 - `max_solve_time::Float64`: The maximum time per solve in seconds. If a solve does not
     finish in this time, the solve process is terminated. Default is `0.1`.
 - `cache::LocalSearchSolutionCache{T}`: The solution cache for storing the solution from
     solving with NonlinearSolve.jl.
 """
-struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
+struct NonlinearSolveLocalSearch{
+    T,A,UTO<:Union{Val{true},Val{false}}
+} <: DerivativeBasedLocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -217,6 +231,7 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     abs_tol::Float64
 
     # Max solve iters
+    use_timeout::UTO
     max_solve_iters::Int
 
     # Max time per solve
@@ -229,6 +244,7 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
         NonlinearSolveLocalSearch{T,A}(
             alg::A;
             iters_per_solve::Int=5,
+            use_timeout::VT=Val{true}(),
             time_per_solve::Float64=0.1,
             percent_decrease_tol::Number=50.0,
             abs_tol::Float64=1e-8,
@@ -240,6 +256,8 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     - `alg::A`: The NonlinearSolve.jl algorithm to use. For example,
         `NonlinearSolve.NewtonRaphson()` of `NonlinearSolve.TrustRegion()`.
     - `iters_per_solve::Int`: The number of iterations to perform in each local search.
+    - `use_timeout::VT`: A flag indicating whether to use a timeout for the solve. If `Val{true}`,
+        then the `time_per_solve` is used to limit the time spent on each solve.
     - `time_per_solve::Float64`: The maximum time per solve in seconds. If a solve does not
         finish in this time, the solve process is terminated.
     - `percent_decrease_tol::Number`: The tolerance on the percent decrease of the objective
@@ -251,15 +269,17 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     function NonlinearSolveLocalSearch{T}(
         alg::A;
         iters_per_solve::Int=5,
+        use_timeout::VT=Val{true}(),
         time_per_solve::Float64=0.1,
         percent_decrease_tol::Number=50.0,
         abs_tol::Float64=1e-8,
-    ) where {T,A}
-        return new{T,A}(
+    ) where {T,A,VT<:Union{Val{true},Val{false}}}
+        return new{T,A,VT}(
             T(percent_decrease_tol),
             alg,
             abs_tol,
             iters_per_solve,
+            use_timeout,
             time_per_solve,
             LocalSearchSolutionCache{T}(),
         )
@@ -379,9 +399,23 @@ function get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A
     return solve!
 end
 
+function call(
+    solve!::F, candidate, use_timeout::Val{true}, max_solve_time,
+) where F <: Function
+    # Call the solve function with a timeout
+    return timeout(solve!, candidate, max_solve_time, false)
+end
+function call(
+    solve!::F, candidate, use_timeout::Val{false}, max_solve_time,
+) where F <: Function
+    solve!(candidate)
+    return true
+end
+
 function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     @unpack candidate, candidate_fitness = hopper
     @unpack percent_decrease_tolerance, max_solve_time, cache = ls
+    use_timeout = ls.use_timeout
 
     # Create solve call
     solve! = get_solve_fun(evaluator, ls)
@@ -390,9 +424,10 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     current_fitness = candidate_fitness
     done = false
     while !done
-        # Perform optimization with optim and terminate if we don't finish in max_solve_time seconds
-        solve_finished = timeout(solve!, candidate, max_solve_time, false)
-
+        # Perform solve
+        display(candidate)
+        solve_finished = call(solve!, candidate, use_timeout, max_solve_time)
+        display(cache.x)
         if solve_finished && feasible(cache.x, evaluator, ls)
             # Solve finished in time, so check fitness
             new_fitness = cache.cost
