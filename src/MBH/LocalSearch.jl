@@ -5,24 +5,34 @@ abstract type OptimLocalSearch{T,AD} <: DerivativeBasedLocalSearch{T} end
 # Timeout function
 struct TimeOutInterruptException <: Exception end
 function timeout(f, arg, seconds, fail)
-    tsk = @task f(arg)
-    schedule(tsk)
-    Timer(seconds) do timer
-        istaskdone(tsk) || Base.throwto(tsk, TimeOutInterruptException())
-    end
-    try
+    tsk = @async f(arg)
+    if timedwait(()->istaskdone(tsk), seconds; pollint=0.1*seconds) == :ok
         return fetch(tsk)
-    catch e
-        if isa(e, TaskFailedException)
-            if isa(e.task.exception, TimeOutInterruptException)
-                return fail
-            else
-                rethrow(e.task.exception)
-            end
-        else
-            rethrow(e)
-        end
+    else
+        # If the task is not done, throw a timeout exception
+        Base.throwto(tsk, TimeOutInterruptException())
+        return fail
     end
+
+    # tsk = @task f(arg)
+    # schedule(tsk)
+    # Timer(seconds) do timer
+    #     istaskdone(tsk) || Base.throwto(tsk, TimeOutInterruptException())
+    # end
+    # try
+    #     return fetch(tsk)
+    # catch e
+    #     println("timeout")
+    #     if isa(e, TaskFailedException)
+    #         if isa(e.task.exception, TimeOutInterruptException)
+    #             return fail
+    #         else
+    #             rethrow(e.task.exception)
+    #         end
+    #     else
+    #         rethrow(e)
+    #     end
+    # end
 end
 
 """
@@ -424,10 +434,9 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     current_fitness = candidate_fitness
     done = false
     while !done
-        # Perform solve
-        display(candidate)
+        # Call solve with optional timeout of the call if `use_timeout` is `Val{true}`
         solve_finished = call(solve!, candidate, use_timeout, max_solve_time)
-        display(cache.x)
+
         if solve_finished && feasible(cache.x, evaluator, ls)
             # Solve finished in time, so check fitness
             new_fitness = cache.cost
