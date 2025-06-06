@@ -5,23 +5,14 @@ abstract type OptimLocalSearch{T,AD} <: DerivativeBasedLocalSearch{T} end
 # Timeout function
 struct TimeOutInterruptException <: Exception end
 function timeout(f, arg, seconds, fail)
-<<<<<<< Updated upstream
-    tsk = @task f(arg)
-    schedule(tsk)
-=======
     tsk = @async f(arg)
-    #schedule(tsk)
->>>>>>> Stashed changes
     Timer(seconds) do timer
         istaskdone(tsk) || Base.throwto(tsk, TimeOutInterruptException())
     end
     try
         return fetch(tsk)
     catch e
-<<<<<<< Updated upstream
-=======
         println("timeout")
->>>>>>> Stashed changes
         if isa(e, TaskFailedException)
             if isa(e.task.exception, TimeOutInterruptException)
                 return fail
@@ -112,7 +103,7 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
     used. Can be any of the autodiff methods from
     [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 """
-struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocalSearch{T,AD}
+struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing},UTO<:Union{Val{true},Val{false}}} <: OptimLocalSearch{T,AD}
 
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
@@ -124,6 +115,7 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
     options::OT
 
     # Max time per solve
+    use_timeout::UTO
     max_solve_time::Float64
 
     # Solution cache
@@ -170,19 +162,21 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing}} <: OptimLocal
         alphaguess=InitialStatic(),
         linesearch=HagerZhang(),
         manifold=Optim.Flat(),
+        use_timeout::VT=Val{true}(),
         max_solve_time=0.1,
         ad=nothing,
-    ) where {T<:AbstractFloat}
+    ) where {T<:AbstractFloat,VT<:Union{Val{true},Val{false}}}
         alg = Optim.Fminbox(
             Optim.LBFGS(;
                 m=m, alphaguess=alphaguess, linesearch=linesearch, manifold=manifold
             ),
         )
         opts = Optim.Options(; iterations=iters_per_solve)
-        return new{T,typeof(alg),typeof(opts),typeof(ad)}(
+        return new{T,typeof(alg),typeof(opts),typeof(ad),VT}(
             T(percent_decrease_tol),
             alg,
             opts,
+            use_timeout,
             max_solve_time,
             LocalSearchSolutionCache{T}(),
             ad,
@@ -216,7 +210,7 @@ terminated.
 - `cache::LocalSearchSolutionCache{T}`: The solution cache for storing the solution from
     solving with NonlinearSolve.jl.
 """
-struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
+struct NonlinearSolveLocalSearch{T,A,UTO<:Union{Val{true},Val{false}}} <: DerivativeBasedLocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -261,15 +255,17 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     function NonlinearSolveLocalSearch{T}(
         alg::A;
         iters_per_solve::Int=5,
+        use_timeout::VT=Val{true}(),
         time_per_solve::Float64=0.1,
         percent_decrease_tol::Number=50.0,
         abs_tol::Float64=1e-8,
-    ) where {T,A}
-        return new{T,A}(
+    ) where {T,A,VT<:Union{Val{true},Val{false}}}
+        return new{T,A,VT}(
             T(percent_decrease_tol),
             alg,
             abs_tol,
             iters_per_solve,
+            use_timeout,
             time_per_solve,
             LocalSearchSolutionCache{T}(),
         )
@@ -437,8 +433,6 @@ function get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A
     return solve!
 end
 
-<<<<<<< Updated upstream
-=======
 function get_solve_fun(evaluator, ls::BOBYQALocalSearch{T}) where {T}
     @unpack prob = evaluator
     @unpack max_fevals, cache = ls
@@ -461,10 +455,9 @@ function call(
     return true
 end
 
->>>>>>> Stashed changes
 function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     @unpack candidate, candidate_fitness = hopper
-    @unpack percent_decrease_tolerance, max_solve_time, cache = ls
+    @unpack percent_decrease_tolerance, max_solve_time, use_timeout, cache = ls
 
     # Create solve call
     solve! = get_solve_fun(evaluator, ls)
@@ -474,7 +467,8 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     done = false
     while !done
         # Perform optimization with optim and terminate if we don't finish in max_solve_time seconds
-        solve_finished = timeout(solve!, candidate, max_solve_time, false)
+        #solve_finished = timeout(solve!, candidate, max_solve_time, false)
+        solve_finished = call(solve!, candidate, use_timeout, max_solve_time)
 
         if solve_finished && feasible(cache.x, evaluator, ls)
             # Solve finished in time, so check fitness

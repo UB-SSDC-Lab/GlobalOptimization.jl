@@ -71,6 +71,7 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 mbh = MBH(
     prob;
     hopper_type=SingleHopper(),
+    #hopper_type=MCH(; num_hoppers=4, eval_method=ThreadedFunctionEvaluation()),
     hop_distribution=dist,
     local_search=lsbobyqa,
     max_time=20.0,
