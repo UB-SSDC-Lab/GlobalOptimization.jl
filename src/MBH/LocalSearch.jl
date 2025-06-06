@@ -5,14 +5,23 @@ abstract type OptimLocalSearch{T,AD} <: DerivativeBasedLocalSearch{T} end
 # Timeout function
 struct TimeOutInterruptException <: Exception end
 function timeout(f, arg, seconds, fail)
+<<<<<<< Updated upstream
     tsk = @task f(arg)
     schedule(tsk)
+=======
+    tsk = @async f(arg)
+    #schedule(tsk)
+>>>>>>> Stashed changes
     Timer(seconds) do timer
         istaskdone(tsk) || Base.throwto(tsk, TimeOutInterruptException())
     end
     try
         return fetch(tsk)
     catch e
+<<<<<<< Updated upstream
+=======
+        println("timeout")
+>>>>>>> Stashed changes
         if isa(e, TaskFailedException)
             if isa(e.task.exception, TimeOutInterruptException)
                 return fail
@@ -220,6 +229,7 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     max_solve_iters::Int
 
     # Max time per solve
+    use_timeout::UTO
     max_solve_time::Float64
 
     # Solution cache
@@ -266,6 +276,36 @@ struct NonlinearSolveLocalSearch{T,A} <: DerivativeBasedLocalSearch{T}
     end
 end
 
+struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <: DerivativeBasedLocalSearch{T}
+    # Tollerance on percent decrease of objective function for performing another local search
+    percent_decrease_tolerance::T
+
+    # Max solve function evaluations
+    max_fevals::Int
+
+    # Max time per solve
+    use_timeout::UTO
+    max_solve_time::Float64
+
+    # Solution cache
+    cache::LocalSearchSolutionCache{T}
+
+    function BOBYQALocalSearch{T}(;
+        percent_decrease_tol::Number=50.0,
+        max_fevals::Int=1000,
+        use_timeout::VT= Val{true}(),
+        max_solve_time::Float64=0.1,
+    ) where {T<:AbstractFloat,VT<:Union{Val{true},Val{false}}}
+        return new{T,VT}(
+            T(percent_decrease_tol),
+            max_fevals,
+            use_timeout,
+            max_solve_time,
+            LocalSearchSolutionCache{T}(),
+        )
+    end
+end
+
 function initialize!(ls::LocalStochasticSearch, num_dims)
     resize!(ls.step, num_dims)
     return nothing
@@ -275,6 +315,10 @@ function initialize!(ls::LBFGSLocalSearch, num_dims)
     return nothing
 end
 function initialize!(ls::NonlinearSolveLocalSearch, num_dims)
+    initialize!(ls.cache, num_dims)
+    return nothing
+end
+function initialize!(ls::BOBYQALocalSearch, num_dims)
     initialize!(ls.cache, num_dims)
     return nothing
 end
@@ -347,6 +391,20 @@ function nonlinear_solve!(
     return true
 end
 
+function bobyqa_solve!(
+    cache::LocalSearchSolutionCache, prob, x0, max_fevals
+)
+    x, info = PRIMA.bobyqa(
+        get_scalar_function(prob), x0;
+        maxfun = max_fevals,
+        xl = prob.ss.dim_min,
+        xu = prob.ss.dim_max,
+    )
+    cache.x .= x
+    cache.cost = info.fx
+    return true
+end
+
 function get_solve_fun(evaluator, ls::OptimLocalSearch{T,Nothing}) where {T}
     @unpack prob = evaluator
     @unpack alg, options, cache = ls
@@ -379,6 +437,31 @@ function get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A
     return solve!
 end
 
+<<<<<<< Updated upstream
+=======
+function get_solve_fun(evaluator, ls::BOBYQALocalSearch{T}) where {T}
+    @unpack prob = evaluator
+    @unpack max_fevals, cache = ls
+    solve! = let cache = cache, prob = prob, max_fevals = max_fevals
+        x -> bobyqa_solve!(cache, prob, x, max_fevals)
+    end
+    return solve!
+end
+
+function call(
+    solve!::F, candidate, use_timeout::Val{true}, max_solve_time,
+) where F <: Function
+    # Call the solve function with a timeout
+    return timeout(solve!, candidate, max_solve_time, false)
+end
+function call(
+    solve!::F, candidate, use_timeout::Val{false}, max_solve_time,
+) where F <: Function
+    solve!(candidate)
+    return true
+end
+
+>>>>>>> Stashed changes
 function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     @unpack candidate, candidate_fitness = hopper
     @unpack percent_decrease_tolerance, max_solve_time, cache = ls
@@ -421,7 +504,7 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     return nothing
 end
 
-function feasible(x, eval, ls::OptimLocalSearch{T}) where {T}
+function feasible(x, eval, ls::Union{OptimLocalSearch{T}, BOBYQALocalSearch{T}}) where {T}
     _, penalty = evaluate_with_penalty(eval, x)
     if abs(penalty) - eps(T) <= zero(T)
         return true

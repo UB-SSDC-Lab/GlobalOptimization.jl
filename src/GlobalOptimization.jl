@@ -15,6 +15,7 @@ using UnPack: @unpack
 
 using Base: Base
 using NonlinearSolve: NonlinearSolve
+using PRIMA: PRIMA
 using Optim: Optim
 
 # Base
