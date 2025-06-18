@@ -259,15 +259,16 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         transformation.B .= real.(E.vectors)
     else
 
+        # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        idxs_cart = findall(x->x >= transformation.a && x != 1.0, cor_mat); #list of cartesian indexes
+        idxs_cart = findall(x->x >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
         
         idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart
             if !in(pair.I[1], idxs_to_remove)
-                Base.push!(idxs_to_remove, pair[1])
+                Base.push!(idxs_to_remove, pair[1]) # for each pair, remove the element in the first position
             end
         end
 
