@@ -4,12 +4,12 @@ using ADTypes: AbstractADType
 using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
 using Distributions: Cauchy, Laplace, MixtureModel
 using LatinHypercubeSampling: scaleLHC, LHCoptim
-using LinearAlgebra: dot, eigen!, mul!
+using LinearAlgebra: dot, eigen!, mul!, tril!
 using LineSearches: HagerZhang, InitialStatic
 using Polyester: @batch
 using Printf: format, Format
 using StaticArrays: SA, SVector
-using Statistics: cov, mean, median!, std
+using Statistics: cov, mean, median!, std, cor
 using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using UnPack: @unpack
 
@@ -64,7 +64,7 @@ export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
 export CurrentToRand1, CurrentToRand2, RandToBest1, RandToBest2, Unified
 export MutationParameters, SelfMutationParameters
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
-export CovarianceTransformation
+export CovarianceTransformation, CorrelatedCovarianceTransformation
 
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
