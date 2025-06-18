@@ -268,7 +268,7 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart
             if !in(pair.I[1], idxs_to_remove)
-                Base.push!(idxs_to_remove, pair[1]) # for each pair, remove the element in the first position
+                Base.push!(idxs_to_remove, pair[1]) # for each pair, select element in first position to remove
             end
         end
 
