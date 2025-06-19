@@ -114,7 +114,7 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
 end
 
 """
-    UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+    CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
 A transformation for performing crossover in the eigen-space of the covariance matrix of the
 best candidates in the population which are also not too closely correlated.
@@ -136,7 +136,7 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 """
-struct UncorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
+struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
     ps::Float64
     pb::Float64
     a::Float64
@@ -151,7 +151,7 @@ struct UncorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
 
 
     @doc """
-        UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+        CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
     A transformation for performing crossover in the eigen-space of the covariance matrix of the
     best candidates in the population which are also not too closely correlated.
@@ -173,17 +173,17 @@ struct UncorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
         Defaults to 1.0 (i.e., all uncorrelated candidates are considered)
 
     # Returns
-    - `UncorrelatedCovarianceTransformation`: A `UncorrelatedCovarianceTransformation` object with the specified
+    - `CorrelatedCovarianceTransformation`: A `CorrelatedCovarianceTransformation` object with the specified
         parameters.
 
     # Examples
     ```julia-repl
     julia> using GlobalOptimization
-    julia> transformation = UncorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
-    UncorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    julia> transformation = CorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
+    CorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     ```
     """
-    function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
+    function CorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
         end
@@ -205,7 +205,7 @@ function initialize!(transformation::CovarianceTransformation, population_size)
     transformation.idxs .= 1:population_size
     return nothing
 end
-function initialize!(transformation::UncorrelatedCovarianceTransformation, population_size)
+function initialize!(transformation::CorrelatedCovarianceTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
@@ -230,7 +230,7 @@ function update_transformation!(transformation::CovarianceTransformation, popula
 
     return nothing
 end
-function update_transformation!(transformation::UncorrelatedCovarianceTransformation, population)
+function update_transformation!(transformation::CorrelatedCovarianceTransformation, population)
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
 
@@ -266,14 +266,11 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         # remove candidates (note setdiff preserved order of transformation.idxs,
         # so remaining_idxs is already in the correct order)
         remaining_idxs = setdiff(transformation.idxs, idxs_to_remove)
-        remaining_pop_fitness = view(population.current_generation.candidates_fitness, remaining_idxs)
 
         # get number of candidates to use for covariance based on remaining candidates
         n = clamp(ceil(Int, transformation.ps * length(remaining_idxs)), 2, length(remaining_idxs))
 
         # Get indices of n best remaining candidates
-        #sortperm!(remaining_idxs, remaining_pop_fitness)
-        #idxs = view(transformation.idxs, remaining_idxs[1:n])
         idxs  = view(remaining_idxs, 1:n)
 
         # Calculate the covariance matrix for n best candidates
@@ -297,7 +294,7 @@ function to_transformed(transformation::CovarianceTransformation, c, m)
         return c, m, false
     end
 end
-function to_transformed(transformation::UncorrelatedCovarianceTransformation, c, m)
+function to_transformed(transformation::CorrelatedCovarianceTransformation, c, m)
         if rand() < transformation.pb
         mul!(transformation.ct, transpose(transformation.B), c)
         mul!(transformation.mt, transpose(transformation.B), m)
@@ -312,7 +309,7 @@ function from_transformed!(transformation::CovarianceTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
-function from_transformed!(transformation::UncorrelatedCovarianceTransformation, mt, m)
+function from_transformed!(transformation::CorrelatedCovarianceTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
