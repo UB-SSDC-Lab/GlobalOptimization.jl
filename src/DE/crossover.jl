@@ -113,50 +113,6 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
     end
 end
 
-initialize!(transformation::NoTransformation, population_size) = nothing
-function initialize!(transformation::CovarianceTransformation, population_size)
-    resize!(transformation.idxs, population_size)
-    transformation.idxs .= 1:population_size
-    return nothing
-end
-
-update_transformation!(transformation::NoTransformation, population) = nothing
-function update_transformation!(transformation::CovarianceTransformation, population)
-
-    # Get number of candidates to consider in the covariance matrix
-    n = clamp(ceil(Int, transformation.ps * length(population)), 2, length(population))
-
-    # Get indices of n best candidates
-    sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
-    idxs = view(transformation.idxs, 1:n)
-
-    # Calculate the covariance matrix for n best candidates
-    C = cov(view(population.current_generation.candidates, idxs))
-
-    # Compute eigen decomposition
-    E = eigen!(C)
-    transformation.B .= real.(E.vectors)
-
-    return nothing
-end
-
-to_transformed(transformation::NoTransformation, c, m) = c, m, false
-function to_transformed(transformation::CovarianceTransformation, c, m)
-    if rand() < transformation.pb
-        mul!(transformation.ct, transpose(transformation.B), c)
-        mul!(transformation.mt, transpose(transformation.B), m)
-        return transformation.ct, transformation.mt, true
-    else
-        return c, m, false
-    end
-end
-
-from_transformed!(transformation::NoTransformation, mt, m) = nothing
-function from_transformed!(transformation::CovarianceTransformation, mt, m)
-    mul!(m, transformation.B, mt)
-    return nothing
-end
-
 """
     CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
@@ -175,7 +131,7 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
     for a population size of `N` with `M` candidates remaining after the correlation check, the covariance matrix is calculated using the
     `clamp(ceil(ps * M), 2, M)` best candidates.
 - `pb::Float64`: The probability of applying the transformation.
-- `a::Float64`: The correlation threshold for which two candidates are considered 'too close' to both be used in the covariance matrix construction. 
+- `a::Float64`: The correlation threshold for which two candidates are considered 'too close' to both be used in the covariance matrix construction.
 - `B::Matrix{Float64}`: The real part of the eigenvectors of the covariance matrix.
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
@@ -193,8 +149,8 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
     # Preallocate storage for calculating transformation
     idxs::Vector{UInt16}
 
-    
-        @doc """
+
+    @doc """
         CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
     A transformation for performing crossover in the eigen-space of the covariance matrix of the
@@ -240,12 +196,37 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
 
 end
 
+initialize!(transformation::NoTransformation, population_size) = nothing
+function initialize!(transformation::CovarianceTransformation, population_size)
+    resize!(transformation.idxs, population_size)
+    transformation.idxs .= 1:population_size
+    return nothing
+end
 function initialize!(transformation::CorrelatedCovarianceTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
 end
 
+update_transformation!(transformation::NoTransformation, population) = nothing
+function update_transformation!(transformation::CovarianceTransformation, population)
+
+    # Get number of candidates to consider in the covariance matrix
+    n = clamp(ceil(Int, transformation.ps * length(population)), 2, length(population))
+
+    # Get indices of n best candidates
+    sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
+    idxs = view(transformation.idxs, 1:n)
+
+    # Calculate the covariance matrix for n best candidates
+    C = cov(view(population.current_generation.candidates, idxs))
+
+    # Compute eigen decomposition
+    E = eigen!(C)
+    transformation.B .= real.(E.vectors)
+
+    return nothing
+end
 function update_transformation!(transformation::CorrelatedCovarianceTransformation, population)
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
@@ -264,7 +245,7 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
 
         #  find points where two candidates are strongly correlated
         idxs_cart = findall(x->x >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
-        
+
         idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart
             if !in(pair.I[1], idxs_to_remove)
@@ -278,7 +259,7 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
 
         # get number of candidates to use for covariance based on remaining candidates
         n = clamp(ceil(Int, transformation.ps * length(remaining_idxs)), 2, length(remaining_idxs))
-        
+
         # Get indices of n best remaining candidates
         sortperm!(remaining_idxs, remaining_pop_fitness)
         idxs = view(transformation.idxs, remaining_idxs[1:n])
@@ -289,11 +270,21 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         E = eigen!(C)
         transformation.B .= real.(E.vectors)
     end
-    
-    
+
+
     return nothing
 end
 
+to_transformed(transformation::NoTransformation, c, m) = c, m, false
+function to_transformed(transformation::CovarianceTransformation, c, m)
+    if rand() < transformation.pb
+        mul!(transformation.ct, transpose(transformation.B), c)
+        mul!(transformation.mt, transpose(transformation.B), m)
+        return transformation.ct, transformation.mt, true
+    else
+        return c, m, false
+    end
+end
 function to_transformed(transformation::CorrelatedCovarianceTransformation, c, m)
         if rand() < transformation.pb
         mul!(transformation.ct, transpose(transformation.B), c)
@@ -304,10 +295,16 @@ function to_transformed(transformation::CorrelatedCovarianceTransformation, c, m
     end
 end
 
+from_transformed!(transformation::NoTransformation, mt, m) = nothing
+function from_transformed!(transformation::CovarianceTransformation, mt, m)
+    mul!(m, transformation.B, mt)
+    return nothing
+end
 function from_transformed!(transformation::CorrelatedCovarianceTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
+
 """
     BinomialCrossoverParameters{
         AS<:AbstractAdaptationStrategy,
