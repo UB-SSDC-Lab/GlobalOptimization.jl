@@ -55,7 +55,7 @@ mutation_strategy = SelfMutationParameters(
 crossover_strategy = SelfBinomialCrossoverParameters(;
     dist=Uniform(0.0, 1.0),
     #transform = GlobalOptimization.NoTransformation()
-    transform = GlobalOptimization.UncorrelatedCovarianceTransformation(0.1, 0.5, 0.8, N),
+    transform = GlobalOptimization.UncorrelatedCovarianceTransformation(0.5, 0.8, N; ps = 1.0),
     #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N)
 )
 
