@@ -164,10 +164,13 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
     DOI: https://doi.org/10.4236/ijis.2021.111002
 
     # Arguments
-    - `ps::Float64`: The proportion of candidates to consider in the covariance matrix.
     - `pb::Float64`: The probability of applying the transformation.
     - `a::Float64`: The correlation threshold for two candidates being 'too close'.
     - `num_dims::Int`: The number of dimensions in the search space.
+
+    # Keyword Arguments:
+    - `ps::Float64`: The proportion of candidates to consider in the covariance matrix.
+        Defaults to 1.0 (i.e., all uncorrelated candidates are considered)
 
     # Returns
     - `CorrelatedCovarianceTransformation`: A `CorrelatedCovarianceTransformation` object with the specified
@@ -176,11 +179,11 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
     # Examples
     ```julia-repl
     julia> using GlobalOptimization
-    julia> transformation = CorrelatedCovarianceTransformation(0.5, 0.5, .95, 10)
+    julia> transformation = CorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
     CorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     ```
     """
-    function CorrelatedCovarianceTransformation(ps, pb, a, num_dims)
+    function CorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
         end
