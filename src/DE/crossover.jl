@@ -37,6 +37,14 @@ Subtypes of this abstract type should define the following methods:
 abstract type AbstractCrossoverTransformation end
 
 """
+    RotationMatrixBasedCrossoverTransformation
+
+An abstract type representing a transformation applied to a candidate prior to applying
+the crossover operator which uses an orthogonal rotation matrix.
+"""
+abstract type RotationMatrixBasedCrossoverTransformation <: AbstractCrossoverTransformation end
+
+"""
     NoTransformation
 
 A transformation that does not apply any transformation to the candidate or mutant.
@@ -62,7 +70,7 @@ DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 """
-struct CovarianceTransformation <: AbstractCrossoverTransformation
+struct CovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
     pb::Float64
     B::Matrix{Float64}
@@ -114,7 +122,7 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
 end
 
 """
-    CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+    UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
 A transformation for performing crossover in the eigen-space of the covariance matrix of the
 best candidates in the population which are also not too closely correlated.
@@ -136,7 +144,7 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 """
-struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
+struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
     pb::Float64
     a::Float64
@@ -151,7 +159,7 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
 
 
     @doc """
-        CorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+        UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
 
     A transformation for performing crossover in the eigen-space of the covariance matrix of the
     best candidates in the population which are also not too closely correlated.
@@ -173,17 +181,17 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
         Defaults to 1.0 (i.e., all uncorrelated candidates are considered)
 
     # Returns
-    - `CorrelatedCovarianceTransformation`: A `CorrelatedCovarianceTransformation` object with the specified
+    - `UncorrelatedCovarianceTransformation`: A `UncorrelatedCovarianceTransformation` object with the specified
         parameters.
 
     # Examples
     ```julia-repl
     julia> using GlobalOptimization
-    julia> transformation = CorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
-    CorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    julia> transformation = UncorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
+    UncorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     ```
     """
-    function CorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
+    function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
         end
@@ -200,12 +208,7 @@ struct CorrelatedCovarianceTransformation <: AbstractCrossoverTransformation
 end
 
 initialize!(transformation::NoTransformation, population_size) = nothing
-function initialize!(transformation::CovarianceTransformation, population_size)
-    resize!(transformation.idxs, population_size)
-    transformation.idxs .= 1:population_size
-    return nothing
-end
-function initialize!(transformation::CorrelatedCovarianceTransformation, population_size)
+function initialize!(transformation::RotationMatrixBasedCrossoverTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
@@ -230,7 +233,7 @@ function update_transformation!(transformation::CovarianceTransformation, popula
 
     return nothing
 end
-function update_transformation!(transformation::CorrelatedCovarianceTransformation, population)
+function update_transformation!(transformation::UncorrelatedCovarianceTransformation, population)
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
 
@@ -285,17 +288,8 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
 end
 
 to_transformed(transformation::NoTransformation, c, m) = c, m, false
-function to_transformed(transformation::CovarianceTransformation, c, m)
+function to_transformed(transformation::RotationMatrixBasedCrossoverTransformation, c, m)
     if rand() < transformation.pb
-        mul!(transformation.ct, transpose(transformation.B), c)
-        mul!(transformation.mt, transpose(transformation.B), m)
-        return transformation.ct, transformation.mt, true
-    else
-        return c, m, false
-    end
-end
-function to_transformed(transformation::CorrelatedCovarianceTransformation, c, m)
-        if rand() < transformation.pb
         mul!(transformation.ct, transpose(transformation.B), c)
         mul!(transformation.mt, transpose(transformation.B), m)
         return transformation.ct, transformation.mt, true
@@ -305,11 +299,7 @@ function to_transformed(transformation::CorrelatedCovarianceTransformation, c, m
 end
 
 from_transformed!(transformation::NoTransformation, mt, m) = nothing
-function from_transformed!(transformation::CovarianceTransformation, mt, m)
-    mul!(m, transformation.B, mt)
-    return nothing
-end
-function from_transformed!(transformation::CorrelatedCovarianceTransformation, mt, m)
+function from_transformed!(transformation::RotationMatrixBasedCrossoverTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
