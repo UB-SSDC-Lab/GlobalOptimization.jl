@@ -231,7 +231,7 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
 
-    if all(x -> x >= transformation.a, cor_mat) # if all candidates are sufficiently correlated, use all in the cov matrix
+    if all_correlated(cor_mat, transformation.a) # if all candidates are sufficiently correlated, use all in the cov matrix
         # Calculate the covariance matrix for n best candidates
         C = cov(view(population.current_generation.candidates, transformation.idxs))
 
@@ -239,12 +239,11 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         E = eigen!(C)
         transformation.B .= real.(E.vectors)
     else
-
         # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        idxs_cart = findall(x->x >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
+        idxs_cart = findall(x -> abs(x) >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
 
         idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart

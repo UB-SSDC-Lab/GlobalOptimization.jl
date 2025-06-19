@@ -18,6 +18,7 @@ using NonlinearSolve: NonlinearSolve
 using Optim: Optim
 
 # Base
+include("utils.jl")
 include("enums.jl")
 include("tracing.jl")
 include("Options.jl")
