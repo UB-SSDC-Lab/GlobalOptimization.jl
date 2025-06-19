@@ -232,12 +232,11 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
     cor_mat = cor(stack(population.current_generation.candidates))
 
     if all_correlated(cor_mat, transformation.a) # if all candidates are sufficiently correlated, use all in the cov matrix
-        # Calculate the covariance matrix for n best candidates
-        C = cov(view(population.current_generation.candidates, transformation.idxs))
-
-        # Compute eigen decomposition
-        E = eigen!(C)
-        transformation.B .= real.(E.vectors)
+        # If all correlated, let's just set the transformation to identity as it doesn't
+        # really make sense to compute the covariance matrix transformation given this
+        # transformation is for specifically avoiding using correlated candidates when
+        # computing the transformation.
+        fill_identity!(transformation.B)
     else
         # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
         tril!(cor_mat, -1)
@@ -252,7 +251,17 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
             end
         end
 
-        # remove candidates
+        # if we're removing all but one idx, set transformation to identity and return
+        if length(idxs_to_remove) >= length(transformation.idxs) - 1
+            fill_identity!(transformation.B)
+            return nothing
+        end
+
+        # sort transformation.idxs in order of best candidate to worst candidate
+        sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
+
+        # remove candidates (note setdiff preserved order of transformation.idxs,
+        # so remaining_idxs is already in the correct order)
         remaining_idxs = setdiff(transformation.idxs, idxs_to_remove)
         remaining_pop_fitness = view(population.current_generation.candidates_fitness, remaining_idxs)
 
@@ -260,8 +269,10 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         n = clamp(ceil(Int, transformation.ps * length(remaining_idxs)), 2, length(remaining_idxs))
 
         # Get indices of n best remaining candidates
-        sortperm!(remaining_idxs, remaining_pop_fitness)
-        idxs = view(transformation.idxs, remaining_idxs[1:n])
+        #sortperm!(remaining_idxs, remaining_pop_fitness)
+        #idxs = view(transformation.idxs, remaining_idxs[1:n])
+        idxs  = view(remaining_idxs, 1:n)
+
         # Calculate the covariance matrix for n best candidates
         C = cov(view(population.current_generation.candidates, idxs))
 
@@ -269,7 +280,6 @@ function update_transformation!(transformation::CorrelatedCovarianceTransformati
         E = eigen!(C)
         transformation.B .= real.(E.vectors)
     end
-
 
     return nothing
 end
