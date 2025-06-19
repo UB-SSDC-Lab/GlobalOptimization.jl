@@ -65,7 +65,7 @@ export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
 export CurrentToRand1, CurrentToRand2, RandToBest1, RandToBest2, Unified
 export MutationParameters, SelfMutationParameters
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
-export CovarianceTransformation, CorrelatedCovarianceTransformation
+export CovarianceTransformation, UncorrelatedCovarianceTransformation
 
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
