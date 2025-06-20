@@ -70,7 +70,7 @@ de = DE(
     show_trace=Val(false),
 )
 
-res = optimize!(de)
+res = @benchmark optimize!(de)
 #iters_per_solve = map(i->optimize!(deepcopy(de)).iters, 1:100);
 
 # bb_res = bboptimize(

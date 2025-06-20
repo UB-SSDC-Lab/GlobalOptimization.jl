@@ -248,7 +248,8 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        idxs_cart = findall(x -> abs(x) >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
+        #idxs_cart = findall(x -> abs(x) >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
+        idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
 
         idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart
