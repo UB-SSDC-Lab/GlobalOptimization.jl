@@ -37,6 +37,14 @@ Subtypes of this abstract type should define the following methods:
 abstract type AbstractCrossoverTransformation end
 
 """
+    RotationMatrixBasedCrossoverTransformation
+
+An abstract type representing a transformation applied to a candidate prior to applying
+the crossover operator which uses an orthogonal rotation matrix.
+"""
+abstract type RotationMatrixBasedCrossoverTransformation <: AbstractCrossoverTransformation end
+
+"""
     NoTransformation
 
 A transformation that does not apply any transformation to the candidate or mutant.
@@ -62,7 +70,7 @@ DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 """
-struct CovarianceTransformation <: AbstractCrossoverTransformation
+struct CovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
     pb::Float64
     B::Matrix{Float64}
@@ -113,8 +121,94 @@ struct CovarianceTransformation <: AbstractCrossoverTransformation
     end
 end
 
+"""
+    UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+
+A transformation for performing crossover in the eigen-space of the covariance matrix of the
+best candidates in the population which are also not too closely correlated.
+
+This is an implementation of the method proposed by Wang and Li in "Differential Evolution
+Based on Covariance Matrix Learning and Bimodal Distribution Parameter Setting, " 2014,
+DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
+
+Correlation alteration based on "Covariance Matrix Learning Differential Evolution Algorithm Based on Correlation"
+DOI: https://doi.org/10.4236/ijis.2021.111002
+
+# Fields
+- `ps::Float64`: The proportion of candidates to consider in the covariance matrix. That is,
+    for a population size of `N` with `M` candidates remaining after the correlation check, the covariance matrix is calculated using the
+    `clamp(ceil(ps * M), 2, M)` best candidates.
+- `pb::Float64`: The probability of applying the transformation.
+- `a::Float64`: The correlation threshold for which two candidates are considered 'too close' to both be used in the covariance matrix construction.
+- `B::Matrix{Float64}`: The real part of the eigenvectors of the covariance matrix.
+- `ct::Vector{Float64}`: The transformed candidate.
+- `mt::Vector{Float64}`: The transformed mutant.
+"""
+struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
+    ps::Float64
+    pb::Float64
+    a::Float64
+    B::Matrix{Float64}
+
+    # Preallocate storage for transformed candidate and mutant
+    ct::Vector{Float64}
+    mt::Vector{Float64}
+
+    # Preallocate storage for calculating transformation
+    idxs::Vector{UInt16}
+
+
+    @doc """
+        UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
+
+    A transformation for performing crossover in the eigen-space of the covariance matrix of the
+    best candidates in the population which are also not too closely correlated.
+
+    This is an implementation of the method proposed by Wang and Li in "Differential Evolution
+    Based on Covariance Matrix Learning and Bimodal Distribution Parameter Setting, " 2014,
+    DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
+
+    Correlation alteration based on "Covariance Matrix Learning Differential Evolution Algorithm Based on Correlation"
+    DOI: https://doi.org/10.4236/ijis.2021.111002
+
+    # Arguments
+    - `pb::Float64`: The probability of applying the transformation.
+    - `a::Float64`: The correlation threshold for two candidates being 'too close'.
+    - `num_dims::Int`: The number of dimensions in the search space.
+
+    # Keyword Arguments:
+    - `ps::Float64`: The proportion of candidates to consider in the covariance matrix.
+        Defaults to 1.0 (i.e., all uncorrelated candidates are considered)
+
+    # Returns
+    - `UncorrelatedCovarianceTransformation`: A `UncorrelatedCovarianceTransformation` object with the specified
+        parameters.
+
+    # Examples
+    ```julia-repl
+    julia> using GlobalOptimization
+    julia> transformation = UncorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
+    UncorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    ```
+    """
+    function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
+        if ps <= 0.0 || ps > 1.0
+            throw(ArgumentError("ps must be in the range (0, 1]."))
+        end
+        if pb <= 0.0 || pb > 1.0
+            throw(ArgumentError("pb must be in the range (0, 1]."))
+        end
+        if a <= 0.0 || a > 1.0
+            throw(ArgumentError("a must be in the range (0, 1]."))
+        end
+        B = Matrix{Float64}(undef, num_dims, num_dims)
+        return new(ps, pb, a, B, zeros(num_dims), zeros(num_dims), Vector{UInt16}(undef, 0))
+    end
+
+end
+
 initialize!(transformation::NoTransformation, population_size) = nothing
-function initialize!(transformation::CovarianceTransformation, population_size)
+function initialize!(transformation::RotationMatrixBasedCrossoverTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
@@ -122,6 +216,7 @@ end
 
 update_transformation!(transformation::NoTransformation, population) = nothing
 function update_transformation!(transformation::CovarianceTransformation, population)
+
     # Get number of candidates to consider in the covariance matrix
     n = clamp(ceil(Int, transformation.ps * length(population)), 2, length(population))
 
@@ -138,9 +233,63 @@ function update_transformation!(transformation::CovarianceTransformation, popula
 
     return nothing
 end
+function update_transformation!(transformation::UncorrelatedCovarianceTransformation, population)
+    # get correlation for each pair of vectors in population
+    cor_mat = cor(stack(population.current_generation.candidates))
+
+    if all_correlated(cor_mat, transformation.a) # if all candidates are sufficiently correlated, use all in the cov matrix
+        # If all correlated, let's just set the transformation to identity as it doesn't
+        # really make sense to compute the covariance matrix transformation given this
+        # transformation is for specifically avoiding using correlated candidates when
+        # computing the transformation.
+        fill_identity!(transformation.B)
+    else
+        # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
+        tril!(cor_mat, -1)
+
+        #  find points where two candidates are strongly correlated
+        #idxs_cart = findall(x -> abs(x) >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
+        idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
+
+        idxs_to_remove = Vector{Int}(undef, 0)
+        for pair in idxs_cart
+            if !in(pair.I[1], idxs_to_remove)
+                Base.push!(idxs_to_remove, pair[1]) # for each pair, select element in first position to remove
+            end
+        end
+
+        # if we're removing all but one idx, set transformation to identity and return
+        if length(idxs_to_remove) >= length(transformation.idxs) - 1
+            fill_identity!(transformation.B)
+            return nothing
+        end
+
+        # sort transformation.idxs in order of best candidate to worst candidate
+        sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
+
+        # remove candidates (note setdiff preserved order of transformation.idxs,
+        # so remaining_idxs is already in the correct order)
+        remaining_idxs = setdiff(transformation.idxs, idxs_to_remove)
+
+        # get number of candidates to use for covariance based on remaining candidates
+        n = clamp(ceil(Int, transformation.ps * length(remaining_idxs)), 2, length(remaining_idxs))
+
+        # Get indices of n best remaining candidates
+        idxs  = view(remaining_idxs, 1:n)
+
+        # Calculate the covariance matrix for n best candidates
+        C = cov(view(population.current_generation.candidates, idxs))
+
+        # Compute eigen decomposition
+        E = eigen!(C)
+        transformation.B .= real.(E.vectors)
+    end
+
+    return nothing
+end
 
 to_transformed(transformation::NoTransformation, c, m) = c, m, false
-function to_transformed(transformation::CovarianceTransformation, c, m)
+function to_transformed(transformation::RotationMatrixBasedCrossoverTransformation, c, m)
     if rand() < transformation.pb
         mul!(transformation.ct, transpose(transformation.B), c)
         mul!(transformation.mt, transpose(transformation.B), m)
@@ -151,7 +300,7 @@ function to_transformed(transformation::CovarianceTransformation, c, m)
 end
 
 from_transformed!(transformation::NoTransformation, mt, m) = nothing
-function from_transformed!(transformation::CovarianceTransformation, mt, m)
+function from_transformed!(transformation::RotationMatrixBasedCrossoverTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
