@@ -363,12 +363,7 @@ end
     ct5 = GlobalOptimization.UncorrelatedCovarianceTransformation(1.0, 0.5, 3)
     GlobalOptimization.initialize!(ct5, 5)
     GlobalOptimization.update_transformation!(ct5, pop2)
-    @test any([
-        isapprox(ct5.B, [1.0 0.0; 0.0 1.0]; atol=1e-8),
-        isapprox(ct5.B, [1.0 0.0; 0.0 -1.0]; atol=1e-8),
-        isapprox(ct5.B, [-1.0 0.0; 0.0 1.0]; atol=1e-8),
-        isapprox(ct5.B, [-1.0 0.0; 0.0 -1.0]; atol=1e-8),
-    ])
+    @test isapprox(ct5.B, [1.0 0 0; 0 1.0 0; 0 0 1.0]; atol=1.0e-8)
 
 
     # Test to_transformed always transforms when pb=1.0
