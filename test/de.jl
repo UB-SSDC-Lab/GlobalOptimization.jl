@@ -301,6 +301,45 @@ end
     GlobalOptimization.from_transformed!(ct2, ctvec, newm)
     @test newm == collect(orig_c)
 
+    # Test UncorrelatedCovarianceTransformation constructors
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.0, 0.5, 2)
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.0, 0.5, 2)
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.5, 0.5, 2; ps=0.0)
+    # Make all candidates identical so covariance is zero matrix
+
+    # Test UncorrelatedCovarianceTransformation initialize
+    ct3 = GlobalOptimization.UncorrelatedCovarianceTransformation(1.0, 1.0, 2)
+    GlobalOptimization.initialize!(ct3, 3) # init with pop size 3
+    @test ct3.idxs == [1, 2, 3]
+    @test ct3.cidxs == UInt16[]
+
+    # Test UncorrelatedCovarianceTransformation update
+    pop = GlobalOptimization.DEPopulation(3, 2)
+    for i in 1:3
+        pop.current_generation.candidates[i] = SVector(5.0, 6.0)
+        pop.current_generation.candidates_fitness[i] = 0.0
+        pop.mutants.candidates[i] = SVector(7.0, 8.0)
+    end
+    GlobalOptimization.update_transformation!(ct3, pop)
+    @test any([
+        isapprox(ct3.B, [1.0 0.0; 0.0 1.0]; atol=1e-8),
+        isapprox(ct3.B, [1.0 0.0; 0.0 -1.0]; atol=1e-8),
+        isapprox(ct3.B, [-1.0 0.0; 0.0 1.0]; atol=1e-8),
+        isapprox(ct3.B, [-1.0 0.0; 0.0 -1.0]; atol=1e-8),
+    ])
+
+    # Test to_transformed always transforms when pb=1.0
+    orig_c = pop.current_generation.candidates[1]
+    orig_m = pop.mutants.candidates[1]
+    ctvec, mtvec, flag2 = GlobalOptimization.to_transformed(ct3, orig_c, orig_m)
+    @test flag2 == true
+    @test ctvec == transpose(ct3.B)*orig_c
+    @test mtvec == transpose(ct3.B)*orig_m
+    # Test from_transformed! maps back correctly
+    newm = copy(ctvec)
+    GlobalOptimization.from_transformed!(ct3, ctvec, newm)
+    @test newm == collect(orig_c)
+
     # Test BinomialCrossoverParameters constructors
     bp1 = GlobalOptimization.BinomialCrossoverParameters(0.25)
     @test bp1.CR == 0.25
