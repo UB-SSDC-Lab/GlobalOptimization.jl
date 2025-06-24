@@ -143,6 +143,8 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `B::Matrix{Float64}`: The real part of the eigenvectors of the covariance matrix.
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
+- `idxs::Vector{UInt16}`: A vector of indexes for the population
+- `cidxs::Vector{UInt16}`: A vector of `correlated` indexes for the population. Used to remove correlated candidates for the transformation.
 """
 struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
@@ -157,6 +159,7 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
     # Preallocate storage for calculating transformation
     idxs::Vector{UInt16}
 
+    cidxs::Vector{UInt16}
 
     @doc """
         UncorrelatedCovarianceTransformation{T<:AbstractCrossoverTransformation}
@@ -188,7 +191,7 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
     ```julia-repl
     julia> using GlobalOptimization
     julia> transformation = UncorrelatedCovarianceTransformation(0.5, .95, 10; ps = 1.0)
-    UncorrelatedCovarianceTransformation(0.5, 0.5, .95, [2.3352254645e-314 6.3877104275e-314 … 1.0e-323 5.0e-324; 6.3877051114e-314 6.3877104196e-314 … 6.3877054276e-314 6.387705455e-314; … ; 2.3352254645e-314 2.333217732e-314 … 0.0 6.3877095184e-314; 6.387705143e-314 2.130067282e-314 … 6.387705459e-314 6.387705463e-314], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    UncorrelatedCovarianceTransformation(1.0, 0.5, 0.95, [1.0630691323565e-311 1.0630691151907e-311 … 1.063069230316e-311 1.063069119645e-311; 1.0630691158705e-311 1.063069115333e-311 … 1.063069172704e-311 1.0630692904614e-311; … ; 1.063069115428e-311 1.063069114246e-311 … 1.063069124886e-311 1.0630694190924e-311; 1.0630691153804e-311 1.0630691141986e-311 … 1.0630691348624e-311 1.063069428614e-311], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], UInt16[], UInt16[])
     ```
     """
     function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
@@ -202,7 +205,7 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
             throw(ArgumentError("a must be in the range (0, 1]."))
         end
         B = Matrix{Float64}(undef, num_dims, num_dims)
-        return new(ps, pb, a, B, zeros(num_dims), zeros(num_dims), Vector{UInt16}(undef, 0))
+        return new(ps, pb, a, B, zeros(num_dims), zeros(num_dims), Vector{UInt16}(undef, 0), Vector{UInt16}(undef, 0))
     end
 
 end
@@ -211,6 +214,14 @@ initialize!(transformation::NoTransformation, population_size) = nothing
 function initialize!(transformation::RotationMatrixBasedCrossoverTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
+    return nothing
+end
+
+function initialize!(transformation::UncorrelatedCovarianceTransformation, population_size)
+    resize!(transformation.idxs, population_size)
+    resize!(transformation.cidxs, population_size)
+    transformation.idxs .= 1:population_size
+    empty!(transformation.cidxs)
     return nothing
 end
 
@@ -237,6 +248,9 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
 
+    # store population_size
+    pop_size = length(population)
+
     if all_correlated(cor_mat, transformation.a) # if all candidates are sufficiently correlated, use all in the cov matrix
         # If all correlated, let's just set the transformation to identity as it doesn't
         # really make sense to compute the covariance matrix transformation given this
@@ -248,18 +262,16 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        #idxs_cart = findall(x -> abs(x) >= transformation.a, cor_mat); #list of cartesian indexes of highly-correlated pairs
         idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
 
-        idxs_to_remove = Vector{Int}(undef, 0)
         for pair in idxs_cart
-            if !in(pair.I[1], idxs_to_remove)
-                Base.push!(idxs_to_remove, pair[1]) # for each pair, select element in first position to remove
+            if !in(pair.I[1], transformation.cidxs)
+                Base.push!(transformation.cidxs, pair.I[1])
             end
         end
 
         # if we're removing all but one idx, set transformation to identity and return
-        if length(idxs_to_remove) >= length(transformation.idxs) - 1
+        if length(transformation.cidxs) >= length(transformation.idxs) - 1
             fill_identity!(transformation.B)
             return nothing
         end
@@ -267,15 +279,14 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         # sort transformation.idxs in order of best candidate to worst candidate
         sortperm!(transformation.idxs, population.current_generation.candidates_fitness)
 
-        # remove candidates (note setdiff preserved order of transformation.idxs,
-        # so remaining_idxs is already in the correct order)
-        remaining_idxs = setdiff(transformation.idxs, idxs_to_remove)
+        # remove candidates (note setdiff preserves order)
+        setdiff!(transformation.idxs, transformation.cidxs)
 
         # get number of candidates to use for covariance based on remaining candidates
-        n = clamp(ceil(Int, transformation.ps * length(remaining_idxs)), 2, length(remaining_idxs))
+        n = clamp(ceil(Int, transformation.ps * length(transformation.idxs)), 2, length(transformation.idxs))
 
         # Get indices of n best remaining candidates
-        idxs  = view(remaining_idxs, 1:n)
+        idxs = view(transformation.idxs, 1:n)
 
         # Calculate the covariance matrix for n best candidates
         C = cov(view(population.current_generation.candidates, idxs))
@@ -283,6 +294,11 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         # Compute eigen decomposition
         E = eigen!(C)
         transformation.B .= real.(E.vectors)
+
+        # Reset preallocated storage
+        empty!(transformation.cidxs)
+        resize!(transformation.idxs, pop_size)
+        transformation.idxs .= 1:pop_size
     end
 
     return nothing
