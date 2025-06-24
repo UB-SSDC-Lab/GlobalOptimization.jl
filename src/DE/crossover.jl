@@ -251,12 +251,14 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
     # store population_size
     pop_size = length(population)
 
-    if all_correlated(cor_mat, transformation.a) # if all candidates are sufficiently correlated, use all in the cov matrix
-        # If all correlated, let's just set the transformation to identity as it doesn't
+    if all_correlated(cor_mat, transformation.a)
+        # If all correlated, set transform to identity and return
+        #let's just set the transformation to identity as it doesn't
         # really make sense to compute the covariance matrix transformation given this
         # transformation is for specifically avoiding using correlated candidates when
         # computing the transformation.
         fill_identity!(transformation.B)
+        return nothing
     else
         # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
         tril!(cor_mat, -1)
