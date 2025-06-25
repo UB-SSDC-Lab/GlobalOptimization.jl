@@ -144,7 +144,8 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 - `idxs::Vector{UInt16}`: A vector of indexes for the population
-- `cidxs::Vector{UInt16}`: A vector of `correlated` indexes for the population. Used to remove correlated candidates for the transformation.
+- `cidxs::Vector{UInt16}`: A vector of unique `correlated` indexes for the population set for removal
+- `pairs::Vector{SVector{2, UInt16}}`: Storage vector for all correlated pairs
 """
 struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
@@ -264,13 +265,26 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
+        #idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
 
-        for pair in idxs_cart
-            if !in(pair.I[1], transformation.cidxs)
-                Base.push!(transformation.cidxs, pair.I[1])
+        @inbounds for j in axes(cor_mat,2)
+            for i in j+1:size(cor_mat,1)
+                abs_x = abs(cor_mat[i, j])
+                if abs_x >= transformation.a
+                    #Base.push!(transformation.pairs, SVector(i, j))
+                    if !in(i, transformation.cidxs)
+                        Base.push!(transformation.cidxs, i)
+                    end
+                end
             end
         end
+
+        # for pair in idxs_cart
+        #     if !in(pair.I[1], transformation.cidxs)
+        #         Base.push!(transformation.cidxs, pair.I[1])
+        #     end
+        # end
+
 
         # if we're removing all but one idx, set transformation to identity and return
         if length(transformation.cidxs) >= length(transformation.idxs) - 1
