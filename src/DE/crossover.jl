@@ -145,7 +145,6 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `mt::Vector{Float64}`: The transformed mutant.
 - `idxs::Vector{UInt16}`: A vector of indexes for the population
 - `cidxs::Vector{UInt16}`: A vector of unique `correlated` indexes for the population set for removal
-- `pairs::Vector{SVector{2, UInt16}}`: Storage vector for all correlated pairs
 """
 struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
     ps::Float64
