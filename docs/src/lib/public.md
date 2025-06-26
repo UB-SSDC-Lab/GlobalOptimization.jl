@@ -132,6 +132,8 @@ SelfBinomialCrossoverParameters
 SelfBinomialCrossoverParameters(; dist=::Any, transform=::Any)
 CovarianceTransformation
 CovarianceTransformation(::Any,::Any,::Any)
+UncorrelatedCovarianceTransformation
+UncorrelatedCovarianceTransformation(::Any,::Any,::Any)
 ```
 
 ### Monotonic Basin Hopping

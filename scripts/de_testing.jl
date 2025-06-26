@@ -42,7 +42,7 @@ function rastrigin(x; A=10)
 end
 
 # Setup Problem
-N = 2
+N = 7
 ss = ContinuousRectangularSearchSpace([-100.0 for i in 1:N], [100.0 for i in 1:N])
 prob = GlobalOptimization.OptimizationProblem(rastrigin, ss)
 
@@ -54,7 +54,9 @@ mutation_strategy = SelfMutationParameters(
 )
 crossover_strategy = SelfBinomialCrossoverParameters(;
     dist=Uniform(0.0, 1.0),
-    #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N),
+    #transform = GlobalOptimization.NoTransformation()
+    transform = GlobalOptimization.UncorrelatedCovarianceTransformation(0.5, 0.8, N; ps = 1.0),
+    #transform = GlobalOptimization.CovarianceTransformation(0.1, 0.5, N)
 )
 
 de = DE(
@@ -65,10 +67,10 @@ de = DE(
     max_stall_iterations=100,
     mutation_params=mutation_strategy,
     crossover_params=crossover_strategy,
-    show_trace=Val(true),
+    show_trace=Val(false),
 )
 
-res = optimize!(de)
+res = @btime optimize!(de)
 #iters_per_solve = map(i->optimize!(deepcopy(de)).iters, 1:100);
 
 # bb_res = bboptimize(
