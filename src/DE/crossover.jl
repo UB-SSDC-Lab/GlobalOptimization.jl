@@ -167,11 +167,8 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
     A transformation for performing crossover in the eigen-space of the covariance matrix of the
     best candidates in the population which are also not too closely correlated.
 
-    This is an implementation of the method proposed by Wang and Li in "Differential Evolution
-    Based on Covariance Matrix Learning and Bimodal Distribution Parameter Setting, " 2014,
-    DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
-
-    Correlation alteration based on "Covariance Matrix Learning Differential Evolution Algorithm Based on Correlation"
+    This is an implementation of the method proposed by Yuan and Feng in "Covariance Matrix
+    Learning Differential Evolution Algorithm Based on Correlation"
     DOI: https://doi.org/10.4236/ijis.2021.111002
 
     # Arguments
