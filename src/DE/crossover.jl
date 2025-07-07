@@ -264,7 +264,6 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         tril!(cor_mat, -1)
 
         #  find points where two candidates are strongly correlated
-        #idxs_cart = findall(abs.(cor_mat) .>= transformation.a); #lower alloc form (vectorized)
 
         @inbounds for j in axes(cor_mat,2)
             for i in j+1:size(cor_mat,1)
@@ -277,12 +276,6 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
                 end
             end
         end
-
-        # for pair in idxs_cart
-        #     if !in(pair.I[1], transformation.cidxs)
-        #         Base.push!(transformation.cidxs, pair.I[1])
-        #     end
-        # end
 
 
         # if we're removing all but one idx, set transformation to identity and return
