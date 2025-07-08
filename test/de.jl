@@ -302,9 +302,15 @@ end
     @test newm == collect(orig_c)
 
     # Test UncorrelatedCovarianceTransformation constructors
-    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.0, 0.5, 2)
-    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.5, 0.0, 2)
-    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(0.5, 0.5, 2; ps=0.0)
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(
+        0.0, 0.5, 2
+    )
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(
+        0.5, 0.0, 2
+    )
+    @test_throws ArgumentError GlobalOptimization.UncorrelatedCovarianceTransformation(
+        0.5, 0.5, 2; ps=0.0
+    )
     # Make all candidates identical so covariance is zero matrix
 
     # Test UncorrelatedCovarianceTransformation initialize
@@ -338,11 +344,11 @@ end
     ct5 = GlobalOptimization.UncorrelatedCovarianceTransformation(1.0, 0.8, 3)
     GlobalOptimization.initialize!(ct5, 5)
     pop2 = GlobalOptimization.DEPopulation(5, 3)
-    pop2.current_generation.candidates[1] .= SVector(0.333686,  0.22681,  0.939183)
-    pop2.current_generation.candidates[2] .= SVector(0.877709,  0.0211374,  0.791849)
-    pop2.current_generation.candidates[3] .= SVector(0.745745,  0.846223,  0.937728)
-    pop2.current_generation.candidates[4] .= SVector(0.181283,  0.716657,  0.202931)
-    pop2.current_generation.candidates[5] .= SVector(0.771286,  0.184219,  0.11133)
+    pop2.current_generation.candidates[1] .= SVector(0.333686, 0.22681, 0.939183)
+    pop2.current_generation.candidates[2] .= SVector(0.877709, 0.0211374, 0.791849)
+    pop2.current_generation.candidates[3] .= SVector(0.745745, 0.846223, 0.937728)
+    pop2.current_generation.candidates[4] .= SVector(0.181283, 0.716657, 0.202931)
+    pop2.current_generation.candidates[5] .= SVector(0.771286, 0.184219, 0.11133)
     pop2.current_generation.candidates_fitness .= [1, 1, 2, 3, 4]
     GlobalOptimization.update_transformation!(ct5, pop2)
     @test isapprox(
@@ -352,7 +358,7 @@ end
             0.13752647954958294 0.0030534951859484526 0.99049338392028;
             0.9679481354178778 0.21257893123736155 0.1337408132734163
         ];
-        atol=1.0e-8
+        atol=1.0e-8,
     )
 
     # Reduce threshold for 'correlated' terms so that we are removing all but one candidate, ensure transform is identity
@@ -360,7 +366,6 @@ end
     GlobalOptimization.initialize!(ct5, 5)
     GlobalOptimization.update_transformation!(ct5, pop2)
     @test isapprox(ct5.B, [1.0 0 0; 0 1.0 0; 0 0 1.0]; atol=1.0e-8)
-
 
     # Test to_transformed always transforms when pb=1.0
     orig_c = pop.current_generation.candidates[1]
