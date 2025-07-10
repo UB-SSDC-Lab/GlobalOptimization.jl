@@ -395,6 +395,7 @@ function bobyqa_solve!(
         maxfun = max_fevals,
         xl = prob.ss.dim_min,
         xu = prob.ss.dim_max,
+        rhobeg = minimum(prob.ss.dim_delta) / 4.0,
     )
     cache.x .= x
     cache.cost = info.fx
