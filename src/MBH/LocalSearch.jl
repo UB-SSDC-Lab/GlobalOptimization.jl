@@ -272,36 +272,6 @@ struct NonlinearSolveLocalSearch{T,A,UTO<:Union{Val{true},Val{false}}} <: Deriva
     end
 end
 
-struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <: DerivativeBasedLocalSearch{T}
-    # Tollerance on percent decrease of objective function for performing another local search
-    percent_decrease_tolerance::T
-
-    # Max solve function evaluations
-    max_fevals::Int
-
-    # Max time per solve
-    use_timeout::UTO
-    max_solve_time::Float64
-
-    # Solution cache
-    cache::LocalSearchSolutionCache{T}
-
-    function BOBYQALocalSearch{T}(;
-        percent_decrease_tol::Number=50.0,
-        max_fevals::Int=1000,
-        use_timeout::VT= Val{true}(),
-        max_solve_time::Float64=0.1,
-    ) where {T<:AbstractFloat,VT<:Union{Val{true},Val{false}}}
-        return new{T,VT}(
-            T(percent_decrease_tol),
-            max_fevals,
-            use_timeout,
-            max_solve_time,
-            LocalSearchSolutionCache{T}(),
-        )
-    end
-end
-
 function initialize!(ls::LocalStochasticSearch, num_dims)
     resize!(ls.step, num_dims)
     return nothing
@@ -311,10 +281,6 @@ function initialize!(ls::LBFGSLocalSearch, num_dims)
     return nothing
 end
 function initialize!(ls::NonlinearSolveLocalSearch, num_dims)
-    initialize!(ls.cache, num_dims)
-    return nothing
-end
-function initialize!(ls::BOBYQALocalSearch, num_dims)
     initialize!(ls.cache, num_dims)
     return nothing
 end
@@ -387,21 +353,6 @@ function nonlinear_solve!(
     return true
 end
 
-function bobyqa_solve!(
-    cache::LocalSearchSolutionCache, prob, x0, max_fevals
-)
-    x, info = PRIMA.bobyqa(
-        get_scalar_function(prob), x0;
-        maxfun = max_fevals,
-        xl = prob.ss.dim_min,
-        xu = prob.ss.dim_max,
-        rhobeg = minimum(prob.ss.dim_delta) / 4.0,
-    )
-    cache.x .= x
-    cache.cost = info.fx
-    return true
-end
-
 function get_solve_fun(evaluator, ls::OptimLocalSearch{T,Nothing}) where {T}
     @unpack prob = evaluator
     @unpack alg, options, cache = ls
@@ -431,15 +382,6 @@ function get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A
 
             x -> nonlinear_solve!(cache, prob, x, alg, abs_tol, max_solve_iters)
         end
-    return solve!
-end
-
-function get_solve_fun(evaluator, ls::BOBYQALocalSearch{T}) where {T}
-    @unpack prob = evaluator
-    @unpack max_fevals, cache = ls
-    solve! = let cache = cache, prob = prob, max_fevals = max_fevals
-        x -> bobyqa_solve!(cache, prob, x, max_fevals)
-    end
     return solve!
 end
 
@@ -499,15 +441,7 @@ function local_search!(hopper, evaluator, ls::DerivativeBasedLocalSearch)
     return nothing
 end
 
-function feasible(x, eval, ls::Union{OptimLocalSearch{T}, BOBYQALocalSearch{T}}) where {T}
-    _, penalty = evaluate_with_penalty(eval, x)
-    if abs(penalty) - eps(T) <= zero(T)
-        return true
-    else
-        return false
-    end
-end
-function feasible(x, eval, ls::NonlinearSolveLocalSearch{T}) where {T}
+function feasible(x, eval, ls::DerivativeBasedLocalSearch{T}) where {T}
     if !feasible(x, eval.prob.ss)
         return false
     else

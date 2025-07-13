@@ -15,7 +15,6 @@ using UnPack: @unpack
 
 using Base: Base
 using NonlinearSolve: NonlinearSolve
-using PRIMA: PRIMA
 using Optim: Optim
 
 # Base
@@ -70,5 +69,9 @@ export CovarianceTransformation
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
 export LocalStochasticSearch, LBFGSLocalSearch, NonlinearSolveLocalSearch
+
+# Handle extension symbols we want to export
+abstract type BOBYQALocalSearch{T} <: DerivativeBasedLocalSearch{T} end
+export BOBYQALocalSearch
 
 end

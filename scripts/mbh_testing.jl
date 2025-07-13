@@ -1,4 +1,5 @@
 
+using PRIMA
 using GlobalOptimization
 #using BenchmarkTools
 using Random
@@ -56,7 +57,7 @@ lsgb = LBFGSLocalSearch{Float64}(;
     max_solve_time=0.5,
     ad=AutoForwardDiff(),
 )
-lsbobyqa = GlobalOptimization.BOBYQALocalSearch{Float64}(;
+lsbobyqa = BOBYQALocalSearch{Float64}(;
     max_fevals = 500,
     use_timeout = Val{false}(),
 )
