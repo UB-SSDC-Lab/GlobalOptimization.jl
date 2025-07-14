@@ -69,12 +69,28 @@ end
 function bobyqa_solve!(
     cache::GlobalOptimization.LocalSearchSolutionCache, prob, x0, max_fevals
 )
+    # Handle rhobeg
+    rhobeg = 1.0
+    for i in eachindex(x0)
+        dmin = GlobalOptimization.dim_min(prob.ss, i)
+        dmax = GlobalOptimization.dim_max(prob.ss, i)
+        lbx = x0[i] - dmin <= eps() * max(1.0, abs(dmin))
+        ubx = x0[i] - dmax >= eps() * max(1.0, abs(dmax))
+        if !lbx && !ubx
+            rhobeg = max(
+                eps(),
+                min(rhobeg, x0[i] - dmin, dmax - x0[i]),
+            )
+        end
+    end
+
     x, info = PRIMA.bobyqa(
         GlobalOptimization.get_scalar_function(prob), x0;
         maxfun = max_fevals,
         xl = prob.ss.dim_min,
         xu = prob.ss.dim_max,
-        #rhobeg = minimum(prob.ss.dim_delta) / 4.0,
+        rhobeg = rhobeg,
+        honour_x0 = true,
     )
     cache.x .= x
     cache.cost = info.fx

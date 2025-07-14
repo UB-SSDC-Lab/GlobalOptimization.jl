@@ -14,7 +14,6 @@ using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using UnPack: @unpack
 
 using Base: Base
-using NonlinearSolve: NonlinearSolve
 using Optim: Optim
 
 # Base
@@ -68,10 +67,13 @@ export CovarianceTransformation
 
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
-export LocalStochasticSearch, LBFGSLocalSearch, NonlinearSolveLocalSearch
+export LocalStochasticSearch, LBFGSLocalSearch
 
 # Handle extension symbols we want to export
 abstract type BOBYQALocalSearch{T} <: DerivativeBasedLocalSearch{T} end
 export BOBYQALocalSearch
+
+abstract type NonlinearSolveLocalSearch{T} <: DerivativeBasedLocalSearch{T} end
+export NonlinearSolveLocalSearch
 
 end

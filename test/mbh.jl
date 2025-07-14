@@ -343,12 +343,13 @@ end
     @test isapprox(cache3.cost, sphere(cache3.x); atol=1e-6)
 
     # Test nonlinear problem solve
+    nlls_ext = Base.get_extension(GlobalOptimization, :NonlinearSolveLocalSearchExt)
     nonlinear_eq(x) = [x[1]^2 - 1.0, x[2]^2 - 1.0]
     prob2 = GlobalOptimization.NonlinearProblem(nonlinear_eq, ss)
     cache4 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache4, N)
     x0 = fill(2.0, N)
-    res = GlobalOptimization.nonlinear_solve!(
+    res = nlls_ext.nonlinear_solve!(
         cache4, prob2, x0, NonlinearSolve.NewtonRaphson(), 1e-8, 10
     )
     @test res == true
