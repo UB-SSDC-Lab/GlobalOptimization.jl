@@ -315,6 +315,7 @@ end
     @test cache.cost == 0.0
 
     # Test optim_solve!
+    optimls_ext = Base.get_extension(GlobalOptimization, :OptimLocalSearchExt)
     sphere(x) = sum(xx -> (xx - 1.0)^2, x)
     N = 2
     ss = GlobalOptimization.ContinuousRectangularSearchSpace(fill(-5.0, N), fill(5.0, N))
@@ -322,7 +323,7 @@ end
     cache2 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache2, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(
+    res = optimls_ext.optim_solve!(
         cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2)
     )
     @test res == true
@@ -331,7 +332,7 @@ end
     cache3 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache3, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(
+    res = optimls_ext.optim_solve!(
         cache3,
         prob,
         x0,
