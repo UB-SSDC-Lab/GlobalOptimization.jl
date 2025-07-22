@@ -11,7 +11,6 @@ function timeout(f, arg, seconds, fail)
     try
         return fetch(tsk)
     catch e
-        println("timeout")
         if isa(e, TaskFailedException)
             if isa(e.task.exception, TimeOutInterruptException)
                 return fail
