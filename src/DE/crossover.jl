@@ -191,7 +191,7 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
     UncorrelatedCovarianceTransformation(1.0, 0.5, 0.95, [1.0630691323565e-311 1.0630691151907e-311 … 1.063069230316e-311 1.063069119645e-311; 1.0630691158705e-311 1.063069115333e-311 … 1.063069172704e-311 1.0630692904614e-311; … ; 1.063069115428e-311 1.063069114246e-311 … 1.063069124886e-311 1.0630694190924e-311; 1.0630691153804e-311 1.0630691141986e-311 … 1.0630691348624e-311 1.063069428614e-311], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], UInt16[], UInt16[])
     ```
     """
-    function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps = 1.0)
+    function UncorrelatedCovarianceTransformation(pb, a, num_dims; ps=1.0)
         if ps <= 0.0 || ps > 1.0
             throw(ArgumentError("ps must be in the range (0, 1]."))
         end
@@ -202,13 +202,23 @@ struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTrans
             throw(ArgumentError("a must be in the range (0, 1]."))
         end
         B = Matrix{Float64}(undef, num_dims, num_dims)
-        return new(ps, pb, a, B, zeros(num_dims), zeros(num_dims), Vector{UInt16}(undef, 0), Vector{UInt16}(undef, 0))
+        return new(
+            ps,
+            pb,
+            a,
+            B,
+            zeros(num_dims),
+            zeros(num_dims),
+            Vector{UInt16}(undef, 0),
+            Vector{UInt16}(undef, 0),
+        )
     end
-
 end
 
 initialize!(transformation::NoTransformation, population_size) = nothing
-function initialize!(transformation::RotationMatrixBasedCrossoverTransformation, population_size)
+function initialize!(
+    transformation::RotationMatrixBasedCrossoverTransformation, population_size
+)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
@@ -241,7 +251,9 @@ function update_transformation!(transformation::CovarianceTransformation, popula
 
     return nothing
 end
-function update_transformation!(transformation::UncorrelatedCovarianceTransformation, population)
+function update_transformation!(
+    transformation::UncorrelatedCovarianceTransformation, population
+)
     # get correlation for each pair of vectors in population
     cor_mat = cor(stack(population.current_generation.candidates))
 
@@ -262,8 +274,8 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
 
         #  find points where two candidates are strongly correlated
 
-        @inbounds for j in axes(cor_mat,2)
-            for i in j+1:size(cor_mat,1)
+        @inbounds for j in axes(cor_mat, 2)
+            for i in (j + 1):size(cor_mat, 1)
                 abs_x = abs(cor_mat[i, j])
                 if abs_x >= transformation.a
                     #Base.push!(transformation.pairs, SVector(i, j))
@@ -273,7 +285,6 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
                 end
             end
         end
-
 
         # if we're removing all but one idx, set transformation to identity and return
         if length(transformation.cidxs) >= length(transformation.idxs) - 1
@@ -288,7 +299,11 @@ function update_transformation!(transformation::UncorrelatedCovarianceTransforma
         setdiff!(transformation.idxs, transformation.cidxs)
 
         # get number of candidates to use for covariance based on remaining candidates
-        n = clamp(ceil(Int, transformation.ps * length(transformation.idxs)), 2, length(transformation.idxs))
+        n = clamp(
+            ceil(Int, transformation.ps * length(transformation.idxs)),
+            2,
+            length(transformation.idxs),
+        )
 
         # Get indices of n best remaining candidates
         idxs = view(transformation.idxs, 1:n)
@@ -321,7 +336,9 @@ function to_transformed(transformation::RotationMatrixBasedCrossoverTransformati
 end
 
 from_transformed!(transformation::NoTransformation, mt, m) = nothing
-function from_transformed!(transformation::RotationMatrixBasedCrossoverTransformation, mt, m)
+function from_transformed!(
+    transformation::RotationMatrixBasedCrossoverTransformation, mt, m
+)
     mul!(m, transformation.B, mt)
     return nothing
 end

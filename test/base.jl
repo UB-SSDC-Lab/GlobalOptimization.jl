@@ -750,12 +750,11 @@ end
 @testset showtiming = true "Utils" begin
     # Test general utilities from utils.jl
 
-    mat = ones(3,3)
+    mat = ones(3, 3)
     @test GlobalOptimization.all_correlated(mat, 0.8) == true
-    mat[3,1] = 0.1
+    mat[3, 1] = 0.1
     @test GlobalOptimization.all_correlated(mat, 0.8) == false
 
     GlobalOptimization.fill_identity!(mat)
-    @test isapprox(mat, [1. 0 0; 0 1. 0; 0 0 1.], atol=1e-8)
-
+    @test isapprox(mat, [1.0 0 0; 0 1.0 0; 0 0 1.0], atol=1e-8)
 end
