@@ -37,12 +37,12 @@ Subtypes of this abstract type should define the following methods:
 abstract type AbstractCrossoverTransformation end
 
 """
-    RotationMatrixBasedCrossoverTransformation
+    LinearOperatorCrossoverTransformation
 
 An abstract type representing a transformation applied to a candidate prior to applying
-the crossover operator which uses an orthogonal rotation matrix.
+the crossover operator which uses a linear operator.
 """
-abstract type RotationMatrixBasedCrossoverTransformation <: AbstractCrossoverTransformation end
+abstract type LinearOperatorCrossoverTransformation <: AbstractCrossoverTransformation end
 
 """
     NoTransformation
@@ -70,7 +70,7 @@ DOI: [10.1016/j.asoc.2014.01.038](https://doi.org/10.1016/j.asoc.2014.01.038).
 - `ct::Vector{Float64}`: The transformed candidate.
 - `mt::Vector{Float64}`: The transformed mutant.
 """
-struct CovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
+struct CovarianceTransformation <: LinearOperatorCrossoverTransformation
     ps::Float64
     pb::Float64
     B::Matrix{Float64}
@@ -146,7 +146,7 @@ DOI: https://doi.org/10.4236/ijis.2021.111002
 - `idxs::Vector{UInt16}`: A vector of indexes for the population
 - `cidxs::Vector{UInt16}`: A vector of unique `correlated` indexes for the population set for removal
 """
-struct UncorrelatedCovarianceTransformation <: RotationMatrixBasedCrossoverTransformation
+struct UncorrelatedCovarianceTransformation <: LinearOperatorCrossoverTransformation
     ps::Float64
     pb::Float64
     a::Float64
@@ -217,7 +217,7 @@ end
 
 initialize!(transformation::NoTransformation, population_size) = nothing
 function initialize!(
-    transformation::RotationMatrixBasedCrossoverTransformation, population_size
+    transformation::LinearOperatorCrossoverTransformation, population_size
 )
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
@@ -262,7 +262,7 @@ function update_transformation!(
 
     if all_correlated(cor_mat, transformation.a)
         # If all correlated, set transform to identity and return
-        #let's just set the transformation to identity as it doesn't
+        # let's just set the transformation to identity as it doesn't
         # really make sense to compute the covariance matrix transformation given this
         # transformation is for specifically avoiding using correlated candidates when
         # computing the transformation.
@@ -272,13 +272,11 @@ function update_transformation!(
         # lower triangular so that we only have unique pairs (excluding diagonal, since all elements are 1.0)
         tril!(cor_mat, -1)
 
-        #  find points where two candidates are strongly correlated
-
+        # find points where two candidates are strongly correlated
         @inbounds for j in axes(cor_mat, 2)
             for i in (j + 1):size(cor_mat, 1)
                 abs_x = abs(cor_mat[i, j])
                 if abs_x >= transformation.a
-                    #Base.push!(transformation.pairs, SVector(i, j))
                     if !in(i, transformation.cidxs)
                         Base.push!(transformation.cidxs, i)
                     end
@@ -325,7 +323,7 @@ function update_transformation!(
 end
 
 to_transformed(transformation::NoTransformation, c, m) = c, m, false
-function to_transformed(transformation::RotationMatrixBasedCrossoverTransformation, c, m)
+function to_transformed(transformation::LinearOperatorCrossoverTransformation, c, m)
     if rand() < transformation.pb
         mul!(transformation.ct, transpose(transformation.B), c)
         mul!(transformation.mt, transpose(transformation.B), m)
@@ -337,7 +335,7 @@ end
 
 from_transformed!(transformation::NoTransformation, mt, m) = nothing
 function from_transformed!(
-    transformation::RotationMatrixBasedCrossoverTransformation, mt, m
+    transformation::LinearOperatorCrossoverTransformation, mt, m
 )
     mul!(m, transformation.B, mt)
     return nothing
@@ -612,9 +610,11 @@ function crossover!(
         # Perform crossover
         mbr_i = rand(1:length(mutant_t))
         for j in eachindex(mutant_t)
-            if rand() > CR && j != mbr_i
-                mutant_t[j] = candidate_t[j]
-            end
+            mutant_t[j] = ifelse(
+                rand() > CR && j != mbr_i,
+                candidate_t[j],
+                mutant_t[j]
+            )
         end
 
         # Transform back to original space
@@ -624,11 +624,7 @@ function crossover!(
 
         for j in eachindex(mutant)
             # Ensure mutant is within search space
-            if mutant[j] < dim_min(search_space, j)
-                mutant[j] = dim_min(search_space, j)
-            elseif mutant[j] > dim_max(search_space, j)
-                mutant[j] = dim_max(search_space, j)
-            end
+            mutant[j] = clamp(mutant[j], dim_min(search_space, j), dim_max(search_space, j))
         end
     end
 
