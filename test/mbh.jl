@@ -358,8 +358,44 @@ end
         cache4.cost, GlobalOptimization.scalar_function(prob2, cache4.x), atol=1e-6
     )
 
+    # Test UserLocalSearch constructor
+    function simple_user_search!(hopper)
+        # Simple local search: take a small step toward the optimum [1, 1]
+        optimum = [1.0, 1.0]
+        step_size = 0.1
+        direction = optimum .- GlobalOptimization.candidate(hopper)
+        norm_dir = sqrt(sum(direction.^2))
+        if norm_dir > 0
+            direction ./= norm_dir
+            new_candidate = GlobalOptimization.candidate(hopper) .+ step_size .* direction
+            # Update hopper candidate
+            hopper.candidate_step .+= new_candidate .- hopper.candidate
+            hopper.candidate .= new_candidate
+        end
+        return nothing
+    end
+
+    uls = UserLocalSearch{Float64}(simple_user_search!)
+    @test isa(uls.user_search_fun!, Function)
+    GlobalOptimization.initialize!(uls, 2)  # Should do nothing but not error
+
     # Test local_search!
     fhe = GlobalOptimization.FeasibilityHandlingEvaluator(prob)
+
+    # With UserLocalSearch
+    h1 = GlobalOptimization.Hopper{Float64}(2)
+    start_point = [-4.0, -4.0]
+    after_large_hop_point = [-4.5, -4.5]
+    after_large_hop_fitness = sphere(after_large_hop_point)
+    h1.candidate .= after_large_hop_point
+    h1.candidate_fitness = after_large_hop_fitness
+    h1.candidate_step .= after_large_hop_point .- start_point
+    GlobalOptimization.local_search!(h1, fhe, uls)
+    @test h1.candidate != after_large_hop_point
+    # Verify candidate_step consistency
+    for i in 1:GlobalOptimization.num_dims(h1)
+        @test isapprox(h1.candidate_step[i], h1.candidate[i] - start_point[i]; atol=1e-12)
+    end
 
     # With LocalStochasticSearch
     h2 = GlobalOptimization.Hopper{Float64}(2)
@@ -531,7 +567,7 @@ end
     @test res7.fbest == 0.0
     @test length(res7.xbest) == 2
 
-    # Test MBH with adaptive distribution and LocalStochasticSearch
+    # Test MBH with adaptive distribution and LBFGSLocalSearch
     ls5 = LBFGSLocalSearch{Float64}()
     mbh8 = MBH(
         prob;
@@ -542,6 +578,30 @@ end
     res8 = GlobalOptimization.optimize!(mbh8)
     @test res8.fbest == 0.0
     @test length(res8.xbest) == 2
+
+    # Test MBH with static distribution and UserLocalSearch
+    simple_user_ls!(hopper) = nothing  # No-op user local search for integration test
+    uls_integration = UserLocalSearch{Float64}(simple_user_ls!)
+    mbh9 = MBH(
+        prob;
+        hop_distribution=MBHStaticDistribution{Float64}(),
+        local_search=uls_integration,
+        max_time=2.0,
+    )
+    res9 = GlobalOptimization.optimize!(mbh9)
+    @test res9.fbest == 0.0
+    @test length(res9.xbest) == 2
+
+    # Test MBH with adaptive distribution and UserLocalSearch
+    mbh10 = MBH(
+        prob;
+        hop_distribution=MBHAdaptiveDistribution{Float64}(1, 0),
+        local_search=uls_integration,
+        max_time=2.0,
+    )
+    res10 = GlobalOptimization.optimize!(mbh10)
+    @test res10.fbest == 0.0
+    @test length(res10.xbest) == 2
 
     # Test MBH with MCH and each eval method for static distribution and LocalStochasticSearch
     eval_methods = [

@@ -61,6 +61,35 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     end
 end
 
+"""
+    UserLocalSearch{T,F<:Function}
+
+    A user provided local search algorithm to locally improve the candidate solution.
+
+    # Fields
+    - `user_search_fun!::F`: The user provided function. This must accept a Hopper{T} as the
+        single argument, mutating the Hopper{T} after performing the local search.
+"""
+struct UserLocalSearch{T,F<:Function} <: AbstractLocalSearch{T}
+    # User provided local search function
+    # Must be take a single argument that is a Hopper{T} and should mutate the Hopper{T}
+    # after performing the local search.
+    user_search_fun!::F
+
+    @doc """
+        UserLocalSearch{T}(user_search_fun!::F) where {T<:AbstractFloat,F<:Function}
+
+    Create a new `UserLocalSearch` object with the provided `user_search_fun!`.
+
+    # Arguments
+    - `user_search_fun::F`: The user provided function. This must accept a Hopper{T} as the
+        single argument, mutating the Hopper{T} after performing the local search.
+    """
+    function UserLocalSearch{T}(user_search_fun!::F) where {T<:AbstractFloat,F<:Function}
+        return new{T,F}(user_search_fun!)
+    end
+end
+
 # A simple cache for storing the solution from optimization with external extension solvers
 mutable struct LocalSearchSolutionCache{T}
     x::Vector{T}
@@ -79,6 +108,7 @@ function initialize!(ls::LocalStochasticSearch, num_dims)
     resize!(ls.step, num_dims)
     return nothing
 end
+initialize!(ls::UserLocalSearch, num_dims) = nothing
 function initialize!(ls_vec::Vector{<:AbstractLocalSearch}, num_dims)
     for ls in ls_vec
         initialize!(ls, num_dims)
@@ -112,6 +142,10 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
             end
         end
     end
+    return nothing
+end
+function local_search!(hopper, evaluator, ls::UserLocalSearch)
+    ls.user_search_fun!(hopper)
     return nothing
 end
 
