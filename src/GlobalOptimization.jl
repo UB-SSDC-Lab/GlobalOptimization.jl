@@ -69,7 +69,7 @@ export CovarianceTransformation, UncorrelatedCovarianceTransformation
 
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
-export LocalStochasticSearch
+export LocalStochasticSearch, UserLocalSearch
 
 # Handle extension symbols we want to export
 # NOTE: I really don't like this solution, but it seems to be the best option for now...
