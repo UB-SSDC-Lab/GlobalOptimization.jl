@@ -1,4 +1,5 @@
 
+using PRIMA
 using GlobalOptimization
 #using BenchmarkTools
 using Random
@@ -56,6 +57,10 @@ lsgb = LBFGSLocalSearch{Float64}(;
     max_solve_time=0.5,
     ad=AutoForwardDiff(),
 )
+lsbobyqa = BOBYQALocalSearch{Float64}(;
+    max_fevals = 500,
+    use_timeout = Val{false}(),
+)
 lss = LocalStochasticSearch{Float64}(1e-2, 1000)
 nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
     NonlinearSolve.NewtonRaphson();
@@ -66,17 +71,16 @@ nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
 )
 mbh = MBH(
     prob;
-    hopper_type=MCH(;
-        num_hoppers=50, eval_method=ThreadedFunctionEvaluation(; n=4*Threads.nthreads())
-    ),
+    hopper_type=SingleHopper(),
+    #hopper_type=MCH(; num_hoppers=4, eval_method=ThreadedFunctionEvaluation()),
     hop_distribution=dist,
-    local_search=lsgb,
+    local_search=lsbobyqa,
     max_time=20.0,
     min_cost=1e-6,
     max_stall_time=Inf,
     max_stall_iterations=10000,
     show_trace=Val(true),
-    trace_level=TraceAll(1),
+    trace_level=TraceDetailed(1),
 )
 
 res = optimize!(mbh);

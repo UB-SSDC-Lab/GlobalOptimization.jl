@@ -1,11 +1,9 @@
 module GlobalOptimization
 
-using ADTypes: AbstractADType
 using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
 using Distributions: Cauchy, Laplace, MixtureModel
 using LatinHypercubeSampling: scaleLHC, LHCoptim
 using LinearAlgebra: dot, eigen!, mul!, tril!
-using LineSearches: HagerZhang, InitialStatic
 using Polyester: @batch
 using Printf: format, Format
 using StaticArrays: SA, SVector
@@ -14,8 +12,10 @@ using Random: rand, rand!, shuffle!, AbstractRNG, GLOBAL_RNG
 using UnPack: @unpack
 
 using Base: Base
-using NonlinearSolve: NonlinearSolve
-using Optim: Optim
+
+# Needed to pass Aqua.jl tests (Stale Deps) until package extensions can have their own
+# dependencies
+import ADTypes, LineSearches
 
 # Base
 include("utils.jl")
@@ -69,6 +69,17 @@ export CovarianceTransformation, UncorrelatedCovarianceTransformation
 
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
-export LocalStochasticSearch, LBFGSLocalSearch, NonlinearSolveLocalSearch
+export LocalStochasticSearch
+
+# Handle extension symbols we want to export
+# NOTE: I really don't like this solution, but it seems to be the best option for now...
+abstract type BOBYQALocalSearch{T} <: DerivativeBasedLocalSearch{T} end
+export BOBYQALocalSearch
+
+abstract type NonlinearSolveLocalSearch{T} <: DerivativeBasedLocalSearch{T} end
+export NonlinearSolveLocalSearch
+
+abstract type LBFGSLocalSearch{T} <: DerivativeBasedLocalSearch{T} end
+export LBFGSLocalSearch
 
 end

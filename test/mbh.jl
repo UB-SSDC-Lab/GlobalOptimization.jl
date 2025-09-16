@@ -315,6 +315,7 @@ end
     @test cache.cost == 0.0
 
     # Test optim_solve!
+    optimls_ext = Base.get_extension(GlobalOptimization, :OptimLocalSearchExt)
     sphere(x) = sum(xx -> (xx - 1.0)^2, x)
     N = 2
     ss = GlobalOptimization.ContinuousRectangularSearchSpace(fill(-5.0, N), fill(5.0, N))
@@ -322,7 +323,7 @@ end
     cache2 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache2, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(
+    res = optimls_ext.optim_solve!(
         cache2, prob, x0, Optim.Fminbox(Optim.LBFGS()), Optim.Options(iterations=2)
     )
     @test res == true
@@ -331,7 +332,7 @@ end
     cache3 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache3, N)
     x0 = fill(0.0, N)
-    res = GlobalOptimization.optim_solve!(
+    res = optimls_ext.optim_solve!(
         cache3,
         prob,
         x0,
@@ -343,12 +344,13 @@ end
     @test isapprox(cache3.cost, sphere(cache3.x); atol=1e-6)
 
     # Test nonlinear problem solve
+    nlls_ext = Base.get_extension(GlobalOptimization, :NonlinearSolveLocalSearchExt)
     nonlinear_eq(x) = [x[1]^2 - 1.0, x[2]^2 - 1.0]
     prob2 = GlobalOptimization.NonlinearProblem(nonlinear_eq, ss)
     cache4 = GlobalOptimization.LocalSearchSolutionCache{Float64}()
     GlobalOptimization.initialize!(cache4, N)
     x0 = fill(2.0, N)
-    res = GlobalOptimization.nonlinear_solve!(
+    res = nlls_ext.nonlinear_solve!(
         cache4, prob2, x0, NonlinearSolve.NewtonRaphson(), 1e-8, 10
     )
     @test res == true
