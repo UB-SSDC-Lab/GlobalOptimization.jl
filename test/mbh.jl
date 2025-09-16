@@ -359,7 +359,7 @@ end
     )
 
     # Test UserLocalSearch constructor
-    function simple_user_search!(hopper)
+    function simple_user_search!(hopper, evaluator)
         # Simple local search: take a small step toward the optimum [1, 1]
         optimum = [1.0, 1.0]
         step_size = 0.1
@@ -368,9 +368,17 @@ end
         if norm_dir > 0
             direction ./= norm_dir
             new_candidate = GlobalOptimization.candidate(hopper) .+ step_size .* direction
-            # Update hopper candidate
-            hopper.candidate_step .+= new_candidate .- hopper.candidate
-            hopper.candidate .= new_candidate
+
+            # Check feasibility and evaluate fitness like LocalStochasticSearch does
+            if GlobalOptimization.feasible(new_candidate, evaluator.prob.ss)
+                fitness, penalty = GlobalOptimization.evaluate_with_penalty(evaluator, new_candidate)
+                if abs(penalty) - eps() <= 0.0
+                    # Update hopper candidate
+                    hopper.candidate_step .+= new_candidate .- hopper.candidate
+                    hopper.candidate .= new_candidate
+                    hopper.candidate_fitness = fitness
+                end
+            end
         end
         return nothing
     end
@@ -580,7 +588,7 @@ end
     @test length(res8.xbest) == 2
 
     # Test MBH with static distribution and UserLocalSearch
-    simple_user_ls!(hopper) = nothing  # No-op user local search for integration test
+    simple_user_ls!(hopper, evaluator) = nothing  # No-op user local search for integration test
     uls_integration = UserLocalSearch{Float64}(simple_user_ls!)
     mbh9 = MBH(
         prob;

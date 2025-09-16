@@ -68,12 +68,14 @@ end
 
     # Fields
     - `user_search_fun!::F`: The user provided function. This must accept a Hopper{T} as the
-        single argument, mutating the Hopper{T} after performing the local search.
+        first argument and an evaluator as the second, mutating the Hopper{T} after
+        performing the local search. The user defined local search should ensure that the
+        final solution is feasible (checking that it resides in the search space and that
+        penalty is approximately zero -- see LocalStochasticSearch search implementation for
+        an example), and should set the candidate fitness via
+        evaluate_with_penalty(evaluator, new_candidate).
 """
 struct UserLocalSearch{T,F<:Function} <: AbstractLocalSearch{T}
-    # User provided local search function
-    # Must be take a single argument that is a Hopper{T} and should mutate the Hopper{T}
-    # after performing the local search.
     user_search_fun!::F
 
     @doc """
@@ -81,9 +83,19 @@ struct UserLocalSearch{T,F<:Function} <: AbstractLocalSearch{T}
 
     Create a new `UserLocalSearch` object with the provided `user_search_fun!`.
 
+    Note that this essentially exposes the entire MBH local search step to the user. Thus,
+    care must be taken to ensure candidates updated via the user defined algorithm are
+    feasible and actually improve the objective/fitness function. If this is not done,
+    erroneous results may be produced.
+
     # Arguments
-    - `user_search_fun::F`: The user provided function. This must accept a Hopper{T} as the
-        single argument, mutating the Hopper{T} after performing the local search.
+    - `user_search_fun::F`:The user provided function. This must accept a Hopper{T} as the
+        first argument and an evaluator as the second, mutating the Hopper{T} after
+        performing the local search. The user defined local search should ensure that the
+        final solution is feasible (checking that it resides in the search space and that
+        penalty is approximately zero -- see LocalStochasticSearch search implementation for
+        an example), and should set the candidate fitness via
+        evaluate_with_penalty(evaluator, new_candidate).
     """
     function UserLocalSearch{T}(user_search_fun!::F) where {T<:AbstractFloat,F<:Function}
         return new{T,F}(user_search_fun!)
@@ -145,7 +157,7 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
     return nothing
 end
 function local_search!(hopper, evaluator, ls::UserLocalSearch)
-    ls.user_search_fun!(hopper)
+    ls.user_search_fun!(hopper, evaluator)
     return nothing
 end
 
