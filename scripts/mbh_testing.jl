@@ -57,10 +57,7 @@ lsgb = LBFGSLocalSearch{Float64}(;
     max_solve_time=0.5,
     ad=AutoForwardDiff(),
 )
-lsbobyqa = BOBYQALocalSearch{Float64}(;
-    max_fevals = 500,
-    use_timeout = Val{false}(),
-)
+lsbobyqa = BOBYQALocalSearch{Float64}(; max_fevals=500, use_timeout=Val{false}())
 lss = LocalStochasticSearch{Float64}(1e-2, 1000)
 nls = GlobalOptimization.NonlinearSolveLocalSearch{Float64}(
     NonlinearSolve.NewtonRaphson();

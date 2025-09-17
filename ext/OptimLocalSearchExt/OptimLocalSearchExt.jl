@@ -37,7 +37,9 @@ Note that this method employs the `LBFGS` algorithm with the `Fminbox` wrapper f
     used. Can be any of the autodiff methods from
     [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 """
-struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing},UTO<:Union{Val{true},Val{false}}} <: GlobalOptimization.LBFGSLocalSearch{T}
+struct LBFGSLocalSearch{
+    T,AT,OT,AD<:Union{AbstractADType,Nothing},UTO<:Union{Val{true},Val{false}}
+} <: GlobalOptimization.LBFGSLocalSearch{T}
 
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
@@ -117,7 +119,7 @@ struct LBFGSLocalSearch{T,AT,OT,AD<:Union{AbstractADType,Nothing},UTO<:Union{Val
         )
     end
 end
-function GlobalOptimization.LBFGSLocalSearch{T}(args...; kwargs...) where T
+function GlobalOptimization.LBFGSLocalSearch{T}(args...; kwargs...) where {T}
     return LBFGSLocalSearch{T}(args...; kwargs...)
 end
 
@@ -126,15 +128,24 @@ function GlobalOptimization.initialize!(ls::LBFGSLocalSearch, num_dims)
     return nothing
 end
 
-function optim_solve!(cache::GlobalOptimization.LocalSearchSolutionCache, prob, x0, alg, options)
+function optim_solve!(
+    cache::GlobalOptimization.LocalSearchSolutionCache, prob, x0, alg, options
+)
     res = Optim.optimize(
-        GlobalOptimization.get_scalar_function(prob), prob.ss.dim_min, prob.ss.dim_max, x0, alg, options;
+        GlobalOptimization.get_scalar_function(prob),
+        prob.ss.dim_min,
+        prob.ss.dim_max,
+        x0,
+        alg,
+        options;
     )
     cache.x .= Optim.minimizer(res)
     cache.cost = Optim.minimum(res)
     return true
 end
-function optim_solve!(cache::GlobalOptimization.LocalSearchSolutionCache, prob, x0, alg, ad, options)
+function optim_solve!(
+    cache::GlobalOptimization.LocalSearchSolutionCache, prob, x0, alg, ad, options
+)
     res = Optim.optimize(
         GlobalOptimization.get_scalar_function(prob),
         prob.ss.dim_min,
@@ -152,7 +163,9 @@ end
 HasAD(::LBFGSLocalSearch{T,AT,OT,Nothing}) where {T,AT,OT} = Val{false}()
 HasAD(::LBFGSLocalSearch{T,AT,OT,<:AbstractADType}) where {T,AT,OT} = Val{true}()
 
-GlobalOptimization.get_solve_fun(eval,ls::LBFGSLocalSearch) = get_solve_fun(eval, ls, HasAD(ls))
+function GlobalOptimization.get_solve_fun(eval, ls::LBFGSLocalSearch)
+    get_solve_fun(eval, ls, HasAD(ls))
+end
 function get_solve_fun(evaluator, ls::LBFGSLocalSearch, ::Val{false})
     @unpack prob = evaluator
     @unpack alg, options, cache = ls
