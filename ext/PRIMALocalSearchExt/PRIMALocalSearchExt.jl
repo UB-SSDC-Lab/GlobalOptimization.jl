@@ -28,7 +28,8 @@ A local search algorithm that uses the BOBYQA algorithm from PRIMA.jl to locally
 - `max_solve_time::Float64=0.1`: Max solve time in seconds.
 
 """
-struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <: GlobalOptimization.BOBYQALocalSearch{T}
+struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <:
+       GlobalOptimization.BOBYQALocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -45,7 +46,7 @@ struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <: GlobalOptimizati
     function BOBYQALocalSearch{T}(;
         percent_decrease_tol::Number=50.0,
         max_fevals::Int=1000,
-        use_timeout::VT= Val{true}(),
+        use_timeout::VT=Val{true}(),
         max_solve_time::Float64=0.1,
     ) where {T<:AbstractFloat,VT<:Union{Val{true},Val{false}}}
         return new{T,VT}(
@@ -57,7 +58,7 @@ struct BOBYQALocalSearch{T,UTO<:Union{Val{true},Val{false}}} <: GlobalOptimizati
         )
     end
 end
-function GlobalOptimization.BOBYQALocalSearch{T}(args...; kwargs...) where T
+function GlobalOptimization.BOBYQALocalSearch{T}(args...; kwargs...) where {T}
     return BOBYQALocalSearch{T}(args...; kwargs...)
 end
 
@@ -77,20 +78,18 @@ function bobyqa_solve!(
         lbx = x0[i] - dmin <= eps() * max(1.0, abs(dmin))
         ubx = x0[i] - dmax >= eps() * max(1.0, abs(dmax))
         if !lbx && !ubx
-            rhobeg = max(
-                eps(),
-                min(rhobeg, x0[i] - dmin, dmax - x0[i]),
-            )
+            rhobeg = max(eps(), min(rhobeg, x0[i] - dmin, dmax - x0[i]))
         end
     end
 
     x, info = PRIMA.bobyqa(
-        GlobalOptimization.get_scalar_function(prob), x0;
-        maxfun = max_fevals,
-        xl = prob.ss.dim_min,
-        xu = prob.ss.dim_max,
-        rhobeg = rhobeg,
-        honour_x0 = true,
+        GlobalOptimization.get_scalar_function(prob),
+        x0;
+        maxfun=max_fevals,
+        xl=prob.ss.dim_min,
+        xu=prob.ss.dim_max,
+        rhobeg=rhobeg,
+        honour_x0=true,
     )
     cache.x .= x
     cache.cost = info.fx

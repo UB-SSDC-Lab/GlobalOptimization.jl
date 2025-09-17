@@ -216,9 +216,7 @@ struct UncorrelatedCovarianceTransformation <: LinearOperatorCrossoverTransforma
 end
 
 initialize!(transformation::NoTransformation, population_size) = nothing
-function initialize!(
-    transformation::LinearOperatorCrossoverTransformation, population_size
-)
+function initialize!(transformation::LinearOperatorCrossoverTransformation, population_size)
     resize!(transformation.idxs, population_size)
     transformation.idxs .= 1:population_size
     return nothing
@@ -334,9 +332,7 @@ function to_transformed(transformation::LinearOperatorCrossoverTransformation, c
 end
 
 from_transformed!(transformation::NoTransformation, mt, m) = nothing
-function from_transformed!(
-    transformation::LinearOperatorCrossoverTransformation, mt, m
-)
+function from_transformed!(transformation::LinearOperatorCrossoverTransformation, mt, m)
     mul!(m, transformation.B, mt)
     return nothing
 end
@@ -610,11 +606,7 @@ function crossover!(
         # Perform crossover
         mbr_i = rand(1:length(mutant_t))
         for j in eachindex(mutant_t)
-            mutant_t[j] = ifelse(
-                rand() > CR && j != mbr_i,
-                candidate_t[j],
-                mutant_t[j]
-            )
+            mutant_t[j] = ifelse(rand() > CR && j != mbr_i, candidate_t[j], mutant_t[j])
         end
 
         # Transform back to original space

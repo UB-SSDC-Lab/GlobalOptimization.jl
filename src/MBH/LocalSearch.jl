@@ -165,14 +165,14 @@ end
 function get_solve_fun(eval, ::Any) end
 
 function call(
-    solve!::F, candidate, use_timeout::Val{true}, max_solve_time,
-) where F <: Function
+    solve!::F, candidate, use_timeout::Val{true}, max_solve_time
+) where {F<:Function}
     # Call the solve function with a timeout
     return timeout(solve!, candidate, max_solve_time, false)
 end
 function call(
-    solve!::F, candidate, use_timeout::Val{false}, max_solve_time,
-) where F <: Function
+    solve!::F, candidate, use_timeout::Val{false}, max_solve_time
+) where {F<:Function}
     solve!(candidate)
     return true
 end
