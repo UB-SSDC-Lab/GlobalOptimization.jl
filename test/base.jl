@@ -729,7 +729,16 @@ end
     threads_used = [false for _ in 1:Threads.nthreads()]
     for i in eachindex(tpop.candidates_fitness)
         thread_id = Int(tpop.candidates_fitness[i])
-        threads_used[thread_id] = true
+
+        # In VERSION >= v"1.12", the base thread is now separate from the :default
+        # thread pool. Thus, we need to handle things a bit differently here.
+        thread_index = @static if VERSION >= v"1.12"
+            findfirst(==(thread_id), Threads.threadpooltids(:default))
+        else
+            thread_id
+        end
+
+        threads_used[thread_index] = true
         if all(threads_used)
             break
         end
@@ -739,6 +748,9 @@ end
     threads_used = [false for _ in 1:Threads.nthreads()]
     for i in eachindex(ppop.candidates_fitness)
         thread_id = Int(ppop.candidates_fitness[i])
+
+        # Polyester doesn't use the :default thread pool in the same way that
+        # Threads does.
         threads_used[thread_id] = true
         if all(threads_used)
             break
