@@ -61,6 +61,47 @@ struct LocalStochasticSearch{T} <: AbstractLocalSearch{T}
     end
 end
 
+"""
+    UserLocalSearch{T,F<:Function}
+
+    A user provided local search algorithm to locally improve the candidate solution.
+
+    # Fields
+    - `user_search_fun!::F`: The user provided function. This must accept a Hopper{T} as the
+        first argument and an evaluator as the second, mutating the Hopper{T} after
+        performing the local search. The user defined local search should ensure that the
+        final solution is feasible (checking that it resides in the search space and that
+        penalty is approximately zero -- see LocalStochasticSearch search implementation for
+        an example), and should set the candidate fitness via
+        evaluate_with_penalty(evaluator, new_candidate).
+"""
+struct UserLocalSearch{T,F<:Function} <: AbstractLocalSearch{T}
+    user_search_fun!::F
+
+    @doc """
+        UserLocalSearch{T}(user_search_fun!::F) where {T<:AbstractFloat,F<:Function}
+
+    Create a new `UserLocalSearch` object with the provided `user_search_fun!`.
+
+    Note that this essentially exposes the entire MBH local search step to the user. Thus,
+    care must be taken to ensure candidates updated via the user defined algorithm are
+    feasible and actually improve the objective/fitness function. If this is not done,
+    erroneous results may be produced.
+
+    # Arguments
+    - `user_search_fun::F`:The user provided function. This must accept a Hopper{T} as the
+        first argument and an evaluator as the second, mutating the Hopper{T} after
+        performing the local search. The user defined local search should ensure that the
+        final solution is feasible (checking that it resides in the search space and that
+        penalty is approximately zero -- see LocalStochasticSearch search implementation for
+        an example), and should set the candidate fitness via
+        evaluate_with_penalty(evaluator, new_candidate).
+    """
+    function UserLocalSearch{T}(user_search_fun!::F) where {T<:AbstractFloat,F<:Function}
+        return new{T,F}(user_search_fun!)
+    end
+end
+
 # A simple cache for storing the solution from optimization with external extension solvers
 mutable struct LocalSearchSolutionCache{T}
     x::Vector{T}
@@ -79,6 +120,7 @@ function initialize!(ls::LocalStochasticSearch, num_dims)
     resize!(ls.step, num_dims)
     return nothing
 end
+initialize!(ls::UserLocalSearch, num_dims) = nothing
 function initialize!(ls_vec::Vector{<:AbstractLocalSearch}, num_dims)
     for ls in ls_vec
         initialize!(ls, num_dims)
@@ -112,6 +154,10 @@ function local_search!(hopper, evaluator, ls::LocalStochasticSearch)
             end
         end
     end
+    return nothing
+end
+function local_search!(hopper, evaluator, ls::UserLocalSearch)
+    ls.user_search_fun!(hopper, evaluator)
     return nothing
 end
 
