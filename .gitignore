@@ -14,4 +14,5 @@ format.sh
 /docs/Manifest.toml
 /docs/build/
 /scripts/Manifest.toml
+/scripts/PRIMA/*
 /bench/Manifest.toml
