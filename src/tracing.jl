@@ -119,10 +119,6 @@ function get_label_str(te::AbstractVector{TE}, fmt::Val) where {TE<:TraceElement
     return str
 end
 
-function get_label_str(te::Nothing, fmt::Val)
-    return ""
-end
-
 function get_line_str(te::TraceElement)
     fmt_str = Format("%-$(te.length)s")
     return format(fmt_str, '-'^(length(te.label) + 2))
@@ -171,10 +167,6 @@ end
 
 function get_str(te::TraceElement{T}, fmt::Val{true}) where {T<:AbstractVector}
     error("Tracing of vector values is not supported for show trace.")
-end
-
-function get_str(te::Nothing, fmt::Val)
-    return ""
 end
 
 # ===== Top level trace functions
