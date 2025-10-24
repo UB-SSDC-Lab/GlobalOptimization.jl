@@ -217,6 +217,16 @@ function get_show_trace_elements(opt::DE, trace_mode::Union{Val{:detailed},Val{:
     return get_show_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
 end
 
-function get_save_trace_elements(opt::DE, trace_mode::Union{Val{:detailed},Val{:all}})
+function get_save_trace_elements(opt::DE, trace_mode::Val{:detailed})
     return get_save_trace_elements(opt, Val{:minimal}()) # Minimal trace elements only
+end
+
+function get_save_trace_elements(opt::DE, trace_mode::Val{:all})
+    # get minimal elements
+    min_elements = get_save_trace_elements(opt, Val{:minimal}())
+    
+    # get candidate elements (only for :all trace mode)
+    cand_elements = get_save_trace_elements(opt.population.current_generation, trace_mode)
+
+    return (min_elements..., cand_elements...)
 end

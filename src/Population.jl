@@ -195,3 +195,17 @@ function initialize_population_vector!(
 
     return nothing
 end
+
+
+function get_save_trace_elements(pop::AbstractPopulation, trace_mode::Val{:all})
+    @unpack candidates = pop
+
+    tevec = Vector{TraceElement}(undef, 0)
+    for i in eachindex(candidates)
+        te = TraceElement("candidate_$i", 'c', 8, 2, candidates[i])
+        Base.push!(tevec, te)
+    end
+
+    return tevec
+
+end
