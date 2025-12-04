@@ -1,18 +1,18 @@
 """
     module PRIMALocalSearchExt
 
-Provides a local search extension using the BOBYQA algorithm via PRIMA.jl to perform derivative-based local optimization with constraints.
+Provides a local search extension using the BOBYQA algorithm via SSDC_PRIMA.jl to perform derivative-based local optimization with constraints.
 
 """
 module PRIMALocalSearchExt
 
 using GlobalOptimization, UnPack
-using PRIMA: PRIMA
+using SSDC_PRIMA: SSDC_PRIMA
 
 """
     BOBYQALocalSearch{T,UTO} <: DerivativeBasedLocalSearch{T}
 
-A local search algorithm that uses the BOBYQA algorithm from PRIMA.jl to locally improve the candidate solution.
+A local search algorithm that uses the BOBYQA algorithm from SSDC_PRIMA.jl to locally improve the candidate solution.
 
 # Fields
 - `percent_decrease_tolerance::T`: The tolerance on the percent decrease of the objective function for performing another local search. If the decrease after a local search is less than this percentage, the search terminates.
@@ -84,7 +84,7 @@ function bobyqa_solve!(
         end
     end
 
-    x, info = PRIMA.bobyqa(
+    x, info = SSDC_PRIMA.bobyqa(
         GlobalOptimization.get_scalar_function(prob), x0;
         maxfun = max_fevals,
         xl = prob.ss.dim_min,
