@@ -198,7 +198,7 @@ function get_show_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed},Val{
     return (minimal_elements..., vu_elements...)
 end
 
-function get_save_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed},Val{:all}})
+function get_save_trace_elements(opt::PSO, trace_mode::Val{:detailed})
     # Get minimal trace elements
     minimal_elements = get_save_trace_elements(opt, Val{:minimal}())
 
@@ -206,4 +206,17 @@ function get_save_trace_elements(opt::PSO, trace_mode::Union{Val{:detailed},Val{
     vu_elements = get_save_trace_elements(opt.options.velocity_update, trace_mode)
 
     return (minimal_elements..., vu_elements...)
+end
+
+function get_save_trace_elements(opt::PSO, trace_mode::Val{:all})
+    # Get minimal trace elements
+    minimal_elements = get_save_trace_elements(opt, Val{:minimal}())
+
+    # Get velocity update trace elements
+    vu_elements = get_save_trace_elements(opt.options.velocity_update, trace_mode)
+
+    # get population trace elements
+    pop_elements = get_save_trace_elements(opt.swarm, trace_mode)
+
+    return (minimal_elements..., vu_elements..., pop_elements...)
 end

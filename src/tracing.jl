@@ -161,6 +161,14 @@ function get_str(te::AbstractVector{TE}, fmt::Val) where {TE<:TraceElement}
     return str
 end
 
+function get_str(te::TraceElement{T}, fmt::Val{false}) where {T<:AbstractVector}
+    return string(te.value)
+end
+
+function get_str(te::TraceElement{T}, fmt::Val{true}) where {T<:AbstractVector}
+    error("Tracing of vector values is not supported for show trace.")
+end
+
 # ===== Top level trace functions
 
 function get_top_level_show_trace(opt, trace_mode)
