@@ -1,5 +1,6 @@
 
-using PRIMA
+using SSDC_PRIMA
+using Optim
 using GlobalOptimization
 #using BenchmarkTools
 using Random

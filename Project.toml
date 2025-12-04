@@ -1,7 +1,7 @@
 name = "GlobalOptimization"
 uuid = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
-authors = ["Grant Hecht"]
 version = "0.3.1"
+authors = ["Grant Hecht"]
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
@@ -19,8 +19,13 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [weakdeps]
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
-PRIMA = "0a7d04aa-8ac2-47b3-b7a7-9dbd6ad661ed"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+SSDC_PRIMA = "6aa5b8c0-d068-11f0-b7a0-99dc21418034"
+
+[extensions]
+NonlinearSolveLocalSearchExt = "NonlinearSolve"
+OptimLocalSearchExt = "Optim"
+PRIMALocalSearchExt = "SSDC_PRIMA"
 
 [compat]
 ADTypes = "1.14.0"
@@ -32,11 +37,11 @@ LineSearches = "7"
 LinearAlgebra = "1"
 NonlinearSolve = "4.8.0"
 Optim = "1"
-PRIMA = "0.2"
 Polyester = "0.7"
 Printf = "1.9 - 1.12"
 Random = "1"
 ReverseDiff = "1.16.1"
+SSDC_PRIMA = "0.2.3"
 StaticArrays = "1"
 Statistics = "1.9 - 1.12"
 Suppressor = "0.2"
@@ -44,19 +49,14 @@ Test = "1"
 UnPack = "1"
 julia = "1.9 - 1.12"
 
-[extensions]
-NonlinearSolveLocalSearchExt = "NonlinearSolve"
-PRIMALocalSearchExt = "PRIMA"
-OptimLocalSearchExt = "Optim"
-
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
-PRIMA = "0a7d04aa-8ac2-47b3-b7a7-9dbd6ad661ed"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+SSDC_PRIMA = "6aa5b8c0-d068-11f0-b7a0-99dc21418034"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "NonlinearSolve", "Optim", "PRIMA", "Suppressor", "ReverseDiff", "Test"]
+test = ["Aqua", "NonlinearSolve", "Optim", "SSDC_PRIMA", "Suppressor", "ReverseDiff", "Test"]
