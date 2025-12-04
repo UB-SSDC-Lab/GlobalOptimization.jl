@@ -1,6 +1,6 @@
 name = "GlobalOptimization"
 uuid = "25b58b08-a34a-4ec2-a22a-6e6adccd2f2d"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Grant Hecht"]
 
 [deps]
