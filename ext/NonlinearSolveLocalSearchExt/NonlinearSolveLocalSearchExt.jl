@@ -35,7 +35,8 @@ terminated.
 - `cache::LocalSearchSolutionCache{T}`: The solution cache for storing the solution from
     solving with NonlinearSolve.jl.
 """
-struct NonlinearSolveLocalSearch{T,A,UTO<:Union{Val{true},Val{false}}} <: GlobalOptimization.NonlinearSolveLocalSearch{T}
+struct NonlinearSolveLocalSearch{T,A,UTO<:Union{Val{true},Val{false}}} <:
+       GlobalOptimization.NonlinearSolveLocalSearch{T}
     # Tollerance on percent decrease of objective function for performing another local search
     percent_decrease_tolerance::T
 
@@ -115,7 +116,9 @@ function nonlinear_solve!(
     return true
 end
 
-function GlobalOptimization.get_solve_fun(evaluator, ls::NonlinearSolveLocalSearch{T,A}) where {T,A}
+function GlobalOptimization.get_solve_fun(
+    evaluator, ls::NonlinearSolveLocalSearch{T,A}
+) where {T,A}
     @unpack prob = evaluator
     @unpack alg, abs_tol, max_solve_iters, cache = ls
     solve! =

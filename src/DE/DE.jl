@@ -224,7 +224,7 @@ end
 function get_save_trace_elements(opt::DE, trace_mode::Val{:all})
     # get minimal elements
     min_elements = get_save_trace_elements(opt, Val{:minimal}())
-    
+
     # get candidate elements (only for :all trace mode)
     cand_elements = get_save_trace_elements(opt.population.current_generation, trace_mode)
 
