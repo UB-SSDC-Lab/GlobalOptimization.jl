@@ -29,17 +29,16 @@ end
 
 function set_next_generation!(population, elite::SimpleElitism)
     frac = elite.fraction
-    Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
     N = length(population)
 
     num_to_keep = Int(ceil(N*frac))
 
     # Sort parents smallest to largest
-    parent_idx_arr = population.parent_elitism_array
+    parent_idx_arr = population.parent_idx_array
     sortperm!(parent_idx_arr, population.current_generation.candidates_fitness)
 
     # Sort children opposite
-    child_idx_arr = population.child_elitism_array
+    child_idx_arr = population.child_idx_array
     sortperm!(child_idx_arr, population.children.candidates_fitness; rev=true) # reverse to put largest values at top
 
     # remove worst children and set parents

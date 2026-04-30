@@ -13,10 +13,9 @@ struct StochasticUniversalSampling <: AbstractGASelectionParameters
     function StochasticUniversalSampling(pop_size)
         new(zeros(pop_size), zeros(pop_size))
     end
-
 end
 
-function initialize!(sel::AbstractGASelectionParameters)
+function initialize!(sel::AbstractGASelectionParameters, pop)
     return nothing
 end
 
@@ -35,13 +34,13 @@ function selection!(pop::GAPopulation, selection_params::StochasticUniversalSamp
 
     N = length(pop)
 
-    Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
-
     # Fitness handling
-    fitness_cache = selection_params.fitness_cache;
-    fitness_cache[1:N] .= 1 ./ fitness # we want to select proportional to the 'goodness' of the candidate, which is the inverse of its fitness since we are minimizing
-    fitness_cache = fitness_cache ./ sum(fitness_cache); # normalize fitness values to sum to 1, so we can treat them as probabilities for selection
-    fitness_normed = fitness_cache;
+    idx_arr = pop.parent_idx_array
+    sortperm!(idx_arr, fitness)
+    selection_fitness_cache = selection_params.fitness_cache # best needs highest score
+    selection_fitness_cache[idx_arr] .= N:-1:1
+    selection_fitness_cache .= selection_fitness_cache/sum(selection_fitness_cache)
+    fitness_normed = selection_fitness_cache
 
     start = rand(); # pick start point
     pointers = selection_params.pointer_cache;

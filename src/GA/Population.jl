@@ -31,9 +31,9 @@ struct GAPopulation{T<:AbstractFloat}
     # children: generated and operated on in the crossover step
     children::GABasePopulation{T}
 
-    # Vectors of integers to store indexes for elitism purposes
-    parent_elitism_array::Vector{Int} # parents
-    child_elitism_array::Vector{Int} # children
+    # Vectors of integers to store indexes for elitism/selection purposes
+    parent_idx_array::Vector{Int} # parents
+    child_idx_array::Vector{Int} # children
 
     function GAPopulation{T}(num_candidates::Integer, num_dims::Integer) where {T}
         num_dims > 0 || throw(ArgumentError("num_dims must be greater than 0."))

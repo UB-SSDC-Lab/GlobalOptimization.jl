@@ -192,13 +192,14 @@ function initialize!(opt::GA)
     @unpack options, evaluator, population, cache = opt
     @unpack pop_init_method, mutation_params, crossover_params, selection_params = options
 
+    # Initialize population
+    initialize!(population, pop_init_method, options.initial_space)
+
     # Initialize selection, crossover, and mutation
     initialize!(mutation_params)
     initialize!(crossover_params)
-    initialize!(selection_params)
+    initialize!(selection_params, population)
 
-    # Initialize population
-    initialize!(population, pop_init_method, options.initial_space)
 
     # Handle fitness
     initialize_fitness!(population, evaluator)
