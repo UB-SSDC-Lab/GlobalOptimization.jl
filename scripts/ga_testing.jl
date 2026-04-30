@@ -54,7 +54,7 @@ mutation_strategy = RandomElementwiseMutation(
 )
 crossover_strategy = BLXAlphaCrossover(0.5)
 elitism_strategy = SimpleElitism(0.01)
-selection_strategy = StochasticUniversalSampling()
+selection_strategy = StochasticUniversalSampling(10)
 ga = GA(
     prob;
     eval_method=SerialFunctionEvaluation(),
