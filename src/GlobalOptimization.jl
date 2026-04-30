@@ -1,7 +1,7 @@
 module GlobalOptimization
 
 using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
-using Distributions: Cauchy, Laplace, MixtureModel
+using Distributions: Cauchy, Laplace, MixtureModel, Normal
 using LatinHypercubeSampling: scaleLHC, LHCoptim
 using LinearAlgebra: dot, eigen!, mul!, tril!
 using Polyester: @batch
@@ -48,6 +48,15 @@ include("MBH/Hopper.jl")
 include("MBH/LocalSearch.jl")
 include("MBH/MBH.jl")
 
+# GA
+include("GA/util.jl")
+include("GA/Population.jl")
+include("GA/mutation.jl")
+include("GA/crossover.jl")
+include("GA/selection.jl")
+include("GA/elitism.jl")
+include("GA/GA.jl")
+
 export TraceMinimal, TraceDetailed, TraceAll
 
 export ContinuousRectangularSearchSpace
@@ -56,10 +65,12 @@ export LatinHypercubeInitialization
 export OptimizationProblem, NonlinearProblem, NonlinearLeastSquaresProblem
 export optimize!
 
-export PSO, DE, MBH
+export PSO, DE, MBH, GA
 
+# PSO exports
 export MATLABVelocityUpdate, CSRNVelocityUpdate
 
+# DE exports
 export SimpleSelector, RadiusLimitedSelector, RandomSubsetSelector
 export Rand1, Rand2, Best1, Best2, CurrentToBest1, CurrentToBest2
 export CurrentToRand1, CurrentToRand2, RandToBest1, RandToBest2, Unified
@@ -67,9 +78,14 @@ export MutationParameters, SelfMutationParameters
 export SelfBinomialCrossoverParameters, BinomialCrossoverParameters
 export CovarianceTransformation, UncorrelatedCovarianceTransformation
 
+# MBH exports
 export SingleHopper, MCH
 export MBHStaticDistribution, MBHAdaptiveDistribution
 export LocalStochasticSearch, UserLocalSearch
+
+# GA exports
+export StochasticUniversalSampling, BLXAlphaCrossover, RandomElementwiseMutation
+export NoElitism, SimpleElitism
 
 # Handle extension symbols we want to export
 # NOTE: I really don't like this solution, but it seems to be the best option for now...
