@@ -43,6 +43,11 @@ N = 10
 ss = ContinuousRectangularSearchSpace([-5.12 for i in 1:N], [5.12 for i in 1:N])
 prob = OptimizationProblem(layeb_1, ss)
 
+# Rast
+N = 7
+ss = ContinuousRectangularSearchSpace([-100 for i in 1:N], [100 for i in 1:N])
+prob = OptimizationProblem(rastrigin, ss)
+
 # Instantiate PSO
 spso = PSO(
     prob;
@@ -54,7 +59,7 @@ spso = PSO(
 tpso = PSO(prob; eval_method=ThreadedFunctionEvaluation(), max_time=20.0)
 ppso = PSO(prob; eval_method=PolyesterFunctionEvaluation(), max_time=20.0)
 
-Random.seed!(1234)
+#Random.seed!(1234)
 res = optimize!(spso)
 # res = optimize!(spso); display(res)
 # res = optimize!(tpso); display(res)
