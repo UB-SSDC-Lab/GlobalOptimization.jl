@@ -34,7 +34,7 @@ struct GAPopulation{T<:AbstractFloat}
     # Vectors of integers to store indexes for elitism/selection purposes
     parent_idx_array::Vector{Int} # parents
     child_idx_array::Vector{Int} # children
-
+    
     function GAPopulation{T}(num_candidates::Integer, num_dims::Integer) where {T}
         num_dims > 0 || throw(ArgumentError("num_dims must be greater than 0."))
         num_candidates > 0 || throw(ArgumentError("num_candidates must be greater than 0."))
@@ -76,13 +76,16 @@ function initialize_fitness!(
     population::GAPopulation{T}, evaluator::BatchEvaluator
 ) where {T}
     # Evaluate the cost function for each candidate
-    return evaluate!(population.current_generation, evaluator)
+    evaluate!(population.current_generation, evaluator)
+    return nothing
 end
 
 function evaluate_fitness!(population, evaluator)
-    return evaluate!(population.current_generation, evaluator)
+    evaluate!(population.current_generation, evaluator)
+    return nothing
 end
 
 function evaluate_children!(population, evaluator)
-    return evaluate!(population.children, evaluator)
+    evaluate!(population.children, evaluator)
+    return nothing
 end

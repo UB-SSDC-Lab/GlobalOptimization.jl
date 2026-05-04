@@ -1,7 +1,7 @@
 module GlobalOptimization
 
 using ChunkSplitters: chunks, ChunkSplitters, RoundRobin
-using Distributions: Cauchy, Laplace, MixtureModel, Normal
+using Distributions: Cauchy, Laplace, MixtureModel, Normal, sample
 using LatinHypercubeSampling: scaleLHC, LHCoptim
 using LinearAlgebra: dot, eigen!, mul!, tril!
 using Polyester: @batch
@@ -84,7 +84,7 @@ export MBHStaticDistribution, MBHAdaptiveDistribution
 export LocalStochasticSearch, UserLocalSearch
 
 # GA exports
-export StochasticUniversalSampling, BLXAlphaCrossover, RandomElementwiseMutation
+export StochasticUniversalSampling, TournamentSelection, BLXAlphaCrossover, RandomElementwiseMutation
 export NoElitism, SimpleElitism
 
 # Handle extension symbols we want to export

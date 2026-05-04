@@ -131,7 +131,7 @@ function GA(
     selection_params::SP=StochasticUniversalSampling(100),
     crossover_params::CP=BLXAlphaCrossover(0.8, 0.5),
     mutation_params::MP=RandomElementwiseMutation(0.05, 0.01),
-    elitism_params::EP=SimpleElitism(0.03),
+    elitism_params::EP=NoElitism(),
     initial_space::Union{Nothing,ContinuousRectangularSearchSpace}=nothing,
     max_iterations::Integer=1000,
     function_tolerance::Real=1e-6,
@@ -235,6 +235,7 @@ function step!(opt::GA)
 
     # Update global best
     improved = update_global_best!(opt)
+    
     # Adapt mutation and crossover parameters if necessary
     adapt!(mutation_params, improved)
     adapt!(crossover_params, improved)

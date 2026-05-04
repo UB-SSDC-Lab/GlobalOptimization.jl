@@ -50,11 +50,11 @@ prob = GlobalOptimization.OptimizationProblem(rastrigin, ss)
 mutation_probability = 0.05;
 mutation_delta = 2
 mutation_strategy = RandomElementwiseMutation(
-    mutation_delta
+    mutation_delta; dist=Normal(mutation_probability, 0.001)
 )
-crossover_strategy = BLXAlphaCrossover(0.5)
+crossover_strategy = BLXAlphaCrossover(.8, 0.5)
 elitism_strategy = NoElitism()
-selection_strategy = StochasticUniversalSampling(100)
+selection_strategy = TournamentSelection()
 ga = GA(
     prob;
     eval_method=SerialFunctionEvaluation(),
@@ -68,7 +68,30 @@ ga = GA(
     show_trace=Val(false),
 )
 
-res = @btime optimize!(ga)
+res = @btime optimize!(ga) 
+
+# run 100 times and get avg
+println("beginning batch test")
+fbests = Float64[]
+for i = 1:100
+    #println("i=$i")
+    gai = GA(
+        prob;
+        eval_method=SerialFunctionEvaluation(),
+        num_candidates=100,
+        max_iterations=1000,
+        max_stall_iterations=100,
+        mutation_params=mutation_strategy,
+        selection_params=selection_strategy,
+        crossover_params=crossover_strategy,
+        elitism_params=elitism_strategy,
+        show_trace=Val(false),
+    )
+
+    resi = optimize!(gai)
+    push!(fbests, resi.fbest)
+end
+println("Avg Value: $(sum(fbests)/length(fbests))")
 #iters_per_solve = map(i->optimize!(deepcopy(de)).iters, 1:100);
 
 # bb_res = bboptimize(
