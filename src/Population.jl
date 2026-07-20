@@ -196,7 +196,6 @@ function initialize_population_vector!(
     return nothing
 end
 
-
 function get_save_trace_elements(pop::AbstractPopulation, trace_mode::Val{:all})
     @unpack candidates = pop
 
@@ -207,5 +206,4 @@ function get_save_trace_elements(pop::AbstractPopulation, trace_mode::Val{:all})
     end
 
     return tevec
-
 end

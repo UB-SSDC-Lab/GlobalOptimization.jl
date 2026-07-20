@@ -364,14 +364,16 @@ end
         optimum = [1.0, 1.0]
         step_size = 0.1
         direction = optimum .- GlobalOptimization.candidate(hopper)
-        norm_dir = sqrt(sum(direction.^2))
+        norm_dir = sqrt(sum(direction .^ 2))
         if norm_dir > 0
             direction ./= norm_dir
             new_candidate = GlobalOptimization.candidate(hopper) .+ step_size .* direction
 
             # Check feasibility and evaluate fitness like LocalStochasticSearch does
             if GlobalOptimization.feasible(new_candidate, evaluator.prob.ss)
-                fitness, penalty = GlobalOptimization.evaluate_with_penalty(evaluator, new_candidate)
+                fitness, penalty = GlobalOptimization.evaluate_with_penalty(
+                    evaluator, new_candidate
+                )
                 if abs(penalty) - eps() <= 0.0
                     # Update hopper candidate
                     hopper.candidate_step .+= new_candidate .- hopper.candidate

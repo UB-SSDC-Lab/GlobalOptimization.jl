@@ -15,7 +15,8 @@ using Base: Base
 
 # Needed to pass Aqua.jl tests (Stale Deps) until package extensions can have their own
 # dependencies
-import ADTypes, LineSearches
+using ADTypes: ADTypes
+using LineSearches: LineSearches
 
 # Base
 include("utils.jl")
